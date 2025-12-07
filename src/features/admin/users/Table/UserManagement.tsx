@@ -37,6 +37,7 @@ import {
   UserX,
   ChevronLeft,
   ChevronRight,
+  ArrowRight,
 } from "lucide-react";
 import { useI18n } from "@/i18n";
 import { useUserManagement } from "./UserManagement.logic";
@@ -79,6 +80,16 @@ export function UserManagement() {
   return (
     <div className="min-h-screen bg-[#F4F4F4]">
       <div className="max-w-[95%] mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Back to Dashboard Button */}
+        <Button
+          variant="ghost"
+          onClick={() => window.location.href = '/dashboard'}
+          className="mb-4 gap-2"
+        >
+          <ArrowRight className="w-5 h-5" />
+          {t("navigation.goToDashboard")}
+        </Button>
+
         {}
         <div className="mb-8 flex items-center justify-between">
           <div>
