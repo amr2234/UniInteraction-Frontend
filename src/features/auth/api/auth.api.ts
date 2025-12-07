@@ -33,7 +33,6 @@ export const authApi = {
       
       if (accessToken) {
         const decoded = decodeToken(accessToken);
-        console.log('Decoded token:', decoded);
         if (decoded) {
           let roleIds: number[] = [];
           let userId: number = 0;
@@ -62,7 +61,6 @@ export const authApi = {
           let userProfileData: UserInfo | null = null;
           try {
             userProfileData = await apiRequest.get<UserInfo>('/auth/me');
-            console.log('User profile data:', userProfileData);
             
             // Store complete user profile in localStorage
             if (userProfileData) {

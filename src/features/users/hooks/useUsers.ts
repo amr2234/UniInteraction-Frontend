@@ -9,26 +9,23 @@ import type {
 import { queryKeys } from '@/core/lib/queryKeys';
 import { PaginatedResponse, ApiError } from '@/core/types/api';
 import { toast } from 'sonner';
+import { useI18n } from '@/i18n';
 
-// ============================================
-// User Management Hooks (Admin)
-// ============================================
 
-/**
- * Hook to get all users with pagination and filters
- */
+
+
+
+
 export const useUsers = (filters?: UserFilters, options?: UseQueryOptions<PaginatedResponse<UserManagementDto>, ApiError>) => {
   return useQuery<PaginatedResponse<UserManagementDto>, ApiError>({
     queryKey: queryKeys.users.list(filters || {}),
     queryFn: () => usersApi.getUsers(filters),
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 5 * 60 * 1000, 
     ...options,
   });
 };
 
-/**
- * Hook to get user by ID
- */
+
 export const useUserById = (id: number, options?: UseQueryOptions<UserManagementDto, ApiError>) => {
   return useQuery<UserManagementDto, ApiError>({
     queryKey: queryKeys.users.detail(id),
@@ -38,133 +35,124 @@ export const useUserById = (id: number, options?: UseQueryOptions<UserManagement
   });
 };
 
-/**
- * Hook to create a new user
- */
+
 export const useCreateUser = () => {
   const queryClient = useQueryClient();
+  const { t } = useI18n();
 
   return useMutation<UserManagementDto, ApiError, UserDto>({
     mutationFn: usersApi.createUser,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.users.all });
-      toast.success('تم إنشاء المستخدم بنجاح');
+      // Toast handled by form component for better i18n
     },
     onError: (error) => {
-      toast.error('فشل إنشاء المستخدم', {
-        description: error.message,
-      });
+      // Error handled by form component for better i18n
     },
   });
 };
 
-/**
- * Hook to update a user
- */
+
 export const useUpdateUser = () => {
   const queryClient = useQueryClient();
+  const { t } = useI18n();
 
   return useMutation<UserManagementDto, ApiError, { id: number; payload: UserDto }>({
     mutationFn: ({ id, payload }) => usersApi.updateUser(id, payload),
     onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.users.all });
       queryClient.invalidateQueries({ queryKey: queryKeys.users.detail(variables.id) });
-      toast.success('تم تحديث المستخدم بنجاح');
+      
     },
     onError: (error) => {
-      toast.error('فشل تحديث المستخدم', {
+      toast.error(t('users.updateError'), {
         description: error.message,
       });
     },
   });
 };
 
-/**
- * Hook to delete a user
- */
+
 export const useDeleteUser = () => {
   const queryClient = useQueryClient();
+  const { t } = useI18n();
 
   return useMutation<void, ApiError, number>({
     mutationFn: usersApi.deleteUser,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.users.all });
-      toast.success('تم حذف المستخدم بنجاح');
+      toast.success(t('users.deleteSuccess'));
     },
     onError: (error) => {
-      toast.error('فشل حذف المستخدم', {
+      toast.error(t('users.deleteError'), {
         description: error.message,
       });
     },
   });
 };
 
-/**
- * Hook to toggle user active status
- */
+
 export const useToggleUserStatus = () => {
   const queryClient = useQueryClient();
+  const { t } = useI18n();
 
-  return useMutation<UserManagementDto, ApiError, number>({
+  return useMutation<UserManagementDto, ApiError, { id: number; isActive: boolean }>({
     mutationFn: usersApi.toggleUserStatus,
-    onSuccess: (data) => {
+    onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.users.all });
       queryClient.invalidateQueries({ queryKey: queryKeys.users.detail(data.id) });
-      toast.success(data.isActive ? 'تم تفعيل المستخدم بنجاح' : 'تم إلغاء تفعيل المستخدم بنجاح');
+      // Use the input variable (what we're setting TO) not the response
+      toast.success(variables.isActive ? t('users.activateSuccess') : t('users.deactivateSuccess'));
     },
     onError: (error) => {
-      toast.error('فشل تغيير حالة المستخدم', {
+      toast.error(t('users.toggleStatusError'), {
         description: error.message,
       });
     },
   });
 };
 
-/**
- * Hook to activate a user
- */
+
 export const useActivateUser = () => {
   const queryClient = useQueryClient();
+  const { t } = useI18n();
 
   return useMutation<UserManagementDto, ApiError, number>({
     mutationFn: usersApi.activateUser,
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.users.all });
       queryClient.invalidateQueries({ queryKey: queryKeys.users.detail(data.id) });
-      toast.success('تم تفعيل المستخدم بنجاح');
+      toast.success(t('users.activateSuccess'));
     },
     onError: (error) => {
-      toast.error('فشل تفعيل المستخدم', {
+      toast.error(t('users.activateError'), {
         description: error.message,
       });
     },
   });
 };
 
-/**
- * Hook to deactivate a user
- */
+
 export const useDeactivateUser = () => {
   const queryClient = useQueryClient();
+  const { t } = useI18n();
 
   return useMutation<UserManagementDto, ApiError, number>({
     mutationFn: usersApi.deactivateUser,
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.users.all });
       queryClient.invalidateQueries({ queryKey: queryKeys.users.detail(data.id) });
-      toast.success('تم إلغاء تفعيل المستخدم بنجاح');
+      toast.success(t('users.deactivateSuccess'));
     },
     onError: (error) => {
-      toast.error('فشل إلغاء تفعيل المستخدم', {
+      toast.error(t('users.deactivateError'), {
         description: error.message,
       });
     },
   });
 };
 
-/**
- * Hook to search users
- */
+
 export const useSearchUsers = (
   searchTerm: string,
   pageNumber = 1,
@@ -175,14 +163,12 @@ export const useSearchUsers = (
     queryKey: [...queryKeys.users.all, 'search', searchTerm, pageNumber, pageSize],
     queryFn: () => usersApi.searchUsers(searchTerm, pageNumber, pageSize),
     enabled: searchTerm.length > 0,
-    staleTime: 2 * 60 * 1000, // 2 minutes
+    staleTime: 2 * 60 * 1000, 
     ...options,
   });
 };
 
-/**
- * Hook to get users by role
- */
+
 export const useUsersByRole = (
   roleId: number,
   pageNumber = 1,
@@ -198,9 +184,7 @@ export const useUsersByRole = (
   });
 };
 
-/**
- * Hook to get users by department
- */
+
 export const useUsersByDepartment = (
   department: string,
   pageNumber = 1,
@@ -216,9 +200,7 @@ export const useUsersByDepartment = (
   });
 };
 
-/**
- * Hook to get active users only
- */
+
 export const useActiveUsers = (
   pageNumber = 1,
   pageSize = 10,
@@ -232,9 +214,7 @@ export const useActiveUsers = (
   });
 };
 
-/**
- * Hook to get inactive users only
- */
+
 export const useInactiveUsers = (
   pageNumber = 1,
   pageSize = 10,
@@ -248,77 +228,74 @@ export const useInactiveUsers = (
   });
 };
 
-/**
- * Hook to reset user password
- */
+
 export const useResetUserPassword = () => {
+  const { t } = useI18n();
+
   return useMutation<void, ApiError, { id: number; payload: ResetPasswordDto }>({
     mutationFn: ({ id, payload }) => usersApi.resetUserPassword(id, payload),
     onSuccess: () => {
-      toast.success('تم إعادة تعيين كلمة المرور بنجاح');
+      toast.success(t('users.resetPasswordSuccess'));
     },
     onError: (error) => {
-      toast.error('فشل إعادة تعيين كلمة المرور', {
+      toast.error(t('users.resetPasswordError'), {
         description: error.message,
       });
     },
   });
 };
 
-/**
- * Hook to bulk delete users
- */
+
 export const useBulkDeleteUsers = () => {
   const queryClient = useQueryClient();
+  const { t } = useI18n();
 
   return useMutation<void, ApiError, number[]>({
     mutationFn: usersApi.bulkDeleteUsers,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.users.all });
-      toast.success('تم حذف المستخدمين بنجاح');
+      toast.success(t('users.bulkDeleteSuccess'));
     },
     onError: (error) => {
-      toast.error('فشل حذف المستخدمين', {
+      toast.error(t('users.bulkDeleteError'), {
         description: error.message,
       });
     },
   });
 };
 
-/**
- * Hook to bulk activate users
- */
+
 export const useBulkActivateUsers = () => {
   const queryClient = useQueryClient();
+  const { t } = useI18n();
 
   return useMutation<void, ApiError, number[]>({
     mutationFn: usersApi.bulkActivateUsers,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.users.all });
-      toast.success('تم تفعيل المستخدمين بنجاح');
+      toast.success(t('users.bulkActivateSuccess'));
     },
     onError: (error) => {
-      toast.error('فشل تفعيل المستخدمين', {
+      toast.error(t('users.bulkActivateError'), {
         description: error.message,
       });
     },
   });
 };
 
-/**
- * Hook to bulk deactivate users
- */
+
 export const useBulkDeactivateUsers = () => {
   const queryClient = useQueryClient();
+  const { t } = useI18n();
 
   return useMutation<void, ApiError, number[]>({
     mutationFn: usersApi.bulkDeactivateUsers,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.users.all });
-      toast.success('تم إلغاء تفعيل المستخدمين بنجاح');
+      toast.success(t('users.bulkDeactivateSuccess'));
     },
     onError: (error) => {
-      toast.error('فشل إلغاء تفعيل المستخدمين', {
+      toast.error(t('users.bulkDeactivateError'), {
         description: error.message,
       });
     },

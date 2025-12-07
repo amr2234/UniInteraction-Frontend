@@ -14,7 +14,7 @@ export interface UserManagementDto {
   mobile?: string;
   nationalId?: string;
   studentId?: string;
-  departmentId?: string;
+  departmentId?: string | number; // API may return number, but form expects string
   roleId: number;
   roleName?: string;
   isActive: boolean;
@@ -51,7 +51,7 @@ export interface UserFilters {
   searchTerm?: string;
   roleId?: number;
   isActive?: boolean;
-  department?: string;
+  departmentId?: number;
   pageNumber?: number;
   pageSize?: number;
   sortBy?: string;

@@ -1,66 +1,73 @@
 import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { useUsers, useDeleteUser, useToggleUserStatus, UserManagementDto } from "@/features/users";
-
-// User Roles Enum
-export enum UserRole {
-  Admin = 1,
-  Employee = 2,
-  Visitor = 3,
-}
-
-// Role Labels for translations
-export const RoleLabels: Record<UserRole, string> = {
-  [UserRole.Admin]: "users.roles.admin",
-  [UserRole.Employee]: "users.roles.employee",
-  [UserRole.Visitor]: "users.roles.visitor",
-};
-
-// Available departments
-export const departments = [
-  "تقنية المعلومات",
-  "الموارد البشرية",
-  "الشؤون الأكاديمية",
-  "شؤون الطلاب",
-  "المالية",
-];
+import {
+  useUsers,
+  useDeleteUser,
+  useToggleUserStatus,
+  UserManagementDto,
+} from "@/features/users";
+import { useDepartmentsLookup } from "@/features/lookups/hooks/useLookups";
+import { UserRole, ROLE_TRANSLATION_KEYS } from "@/core/constants/roles";
+import { useI18n } from "@/i18n";
 
 export const useUserManagement = () => {
   const navigate = useNavigate();
-  
-  // Filters state
+  const { language } = useI18n();
+
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [departmentFilter, setDepartmentFilter] = useState<string>("all");
   const [roleFilter, setRoleFilter] = useState<string>("all");
   const [pageNumber, setPageNumber] = useState(1);
   const [pageSize] = useState(10);
-  
-  // Dialog state
+
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [selectedUser, setSelectedUser] = useState<UserManagementDto | null>(null);
+  const [selectedUser, setSelectedUser] = useState<UserManagementDto | null>(
+    null
+  );
 
-  // Build filters object for API
-  const filters = useMemo(() => ({
-    searchTerm: searchTerm || undefined,
-    roleId: roleFilter !== "all" ? parseInt(roleFilter) : undefined,
-    isActive: statusFilter === "all" ? undefined : statusFilter === "active",
-    department: departmentFilter !== "all" ? departmentFilter : undefined,
-    pageNumber,
-    pageSize,
-  }), [searchTerm, roleFilter, statusFilter, departmentFilter, pageNumber, pageSize]);
+  const { data: departmentsData } = useDepartmentsLookup();
+  const departments = useMemo(() => departmentsData || [], [departmentsData]);
 
-  // API hooks
+  const departmentMap = useMemo(() => {
+    const map = new Map<
+      number,
+      { id: number; nameAr: string; nameEn?: string }
+    >();
+    departments.forEach((dept) => {
+      map.set(dept.id, dept);
+    });
+    return map;
+  }, [departments]);
+
+  const filters = useMemo(
+    () => ({
+      searchTerm: searchTerm || undefined,
+      roleId: roleFilter !== "all" ? parseInt(roleFilter) : undefined,
+      isActive: statusFilter === "all" ? undefined : statusFilter === "active",
+      departmentId:
+        departmentFilter !== "all" ? parseInt(departmentFilter) : undefined,
+      pageNumber,
+      pageSize,
+    }),
+    [
+      searchTerm,
+      roleFilter,
+      statusFilter,
+      departmentFilter,
+      pageNumber,
+      pageSize,
+    ]
+  );
+
   const { data, isLoading, error, refetch } = useUsers(filters);
   const deleteUserMutation = useDeleteUser();
   const toggleStatusMutation = useToggleUserStatus();
 
-  // Reset to page 1 when filters change
   useEffect(() => {
     setPageNumber(1);
   }, [searchTerm, statusFilter, departmentFilter, roleFilter]);
 
-  // Handlers
   const handleSearchChange = (value: string) => {
     setSearchTerm(value);
   };
@@ -91,12 +98,13 @@ export const useUserManagement = () => {
 
   const handleToggleActive = async (user: UserManagementDto) => {
     try {
-      await toggleStatusMutation.mutateAsync(user.id);
-      // Refetch to get updated data
+      await toggleStatusMutation.mutateAsync({
+        id: user.id,
+        isActive: !user.isActive,
+      });
+
       refetch();
-    } catch (error) {
-      // Error is handled by the hook
-    }
+    } catch (error) {}
   };
 
   const handleDeleteClick = (user: UserManagementDto) => {
@@ -111,11 +119,9 @@ export const useUserManagement = () => {
       await deleteUserMutation.mutateAsync(selectedUser.id);
       setIsDeleteDialogOpen(false);
       setSelectedUser(null);
-      // Refetch to get updated data
+
       refetch();
-    } catch (error) {
-      // Error is handled by the hook
-    }
+    } catch (error) {}
   };
 
   const handleDeleteCancel = () => {
@@ -124,36 +130,55 @@ export const useUserManagement = () => {
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("ar-SA", {
+    const date = new Date(dateString);
+    return new Intl.DateTimeFormat("en-US", {
       year: "numeric",
-      month: "long",
+      month: "short",
       day: "numeric",
-    });
+    }).format(date);
+  };
+
+  const getDepartmentName = (
+    departmentId: string | number | undefined
+  ): string => {
+    if (!departmentId) return "-";
+
+    const deptId =
+      typeof departmentId === "string" ? parseInt(departmentId) : departmentId;
+    const department = departmentMap.get(deptId);
+
+    if (!department) {
+      return departments.length === 0 ? `Loading...` : `-`;
+    }
+
+    return language === "ar"
+      ? department.nameAr
+      : department.nameEn || department.nameAr;
+  };
+
+  const getUserFullName = (user: UserManagementDto): string => {
+    return language === "ar" ? user.nameAr : user.nameEn || user.nameAr;
   };
 
   return {
-    // Data
     users: data?.items || [],
     totalCount: data?.totalCount || 0,
     totalPages: data?.totalPages || 0,
     currentPage: pageNumber,
     isLoading,
     error,
-    
-    // Filters
+
     searchTerm,
     statusFilter,
     departmentFilter,
     roleFilter,
     departments,
-    
-    // Delete dialog
+
     isDeleteDialogOpen,
     selectedUser,
     isDeleting: deleteUserMutation.isPending,
     isToggling: toggleStatusMutation.isPending,
-    
-    // Handlers
+
     handleSearchChange,
     handleStatusFilterChange,
     handleDepartmentFilterChange,
@@ -166,9 +191,10 @@ export const useUserManagement = () => {
     handleDeleteConfirm,
     handleDeleteCancel,
     formatDate,
-    
-    // Constants
+    getDepartmentName,
+    getUserFullName,
+
     UserRole,
-    RoleLabels,
+    ROLE_TRANSLATION_KEYS,
   };
 };
