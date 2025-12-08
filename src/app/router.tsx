@@ -1,6 +1,6 @@
 import { Routes, Route } from "react-router-dom";
-import { LandingPage } from "@/pages/LandingPage";
-import { NotFoundPage } from "@/pages/NotFoundPage";
+import { LandingPage } from "@/features/pages/LandingPage";
+import { NotFoundPage } from "@/features/pages/NotFoundPage";
 import { LoginPage } from "@/features/auth/ui/LoginPage";
 import { RegisterPage } from "@/features/auth/ui/RegisterPage";
 import { DashboardPage } from "@/features/dashboard/ui/DashboardPage";
@@ -14,18 +14,15 @@ import { EditRequestPage } from "@/features/requests/ui/EditRequest";
 import { NotificationsPage } from "@/features/notifications/ui/NotificationsPage";
 import { ProfilePage } from "@/features/profile/ui/ProfilePage";
 import { FAQPage } from "@/features/faq/ui/FAQPage";
-import { FAQManagement } from "@/features/faq/admin/FAQManagement";
-import { FAQForm } from "@/features/faq/admin/FAQForm";
+import { FAQManagement } from "@/features/admin/faqs/Table/FAQManagement";
+import { FAQForm } from "@/features/admin/faqs/Form/FAQForm";
 import { UserManagement } from "@/features/admin/users/Table/UserManagement";
 import { UserForm } from "@/features/admin/users";
-import { LeadershipManagement } from "@/features/admin/leadership/LeadershipManagement";
-import { LeadershipForm } from "@/features/admin/leadership/LeadershipForm";
-import { MainCategoryManagement } from "@/features/admin/categories/MainCategoryManagement";
-import { MainCategoryForm } from "@/features/admin/categories/MainCategoryForm";
-import { DepartmentManagement } from "@/features/admin/departments/DepartmentManagement";
-import { DepartmentForm } from "@/features/admin/departments/DepartmentForm";
-import { SettingsPage } from "@/features/settings/ui/SettingsPage";
-import { LogsPage } from "@/features/logs/ui/LogsPage";
+import { LeadershipManagement, LeadershipForm } from "@/features/admin/leadership";
+import { MainCategoryManagement, MainCategoryForm } from "@/features/admin/categories";
+import { DepartmentManagement, DepartmentForm } from "@/features/admin/departments";
+import { SettingsPage } from "@/features/admin/settings/SettingsPage";
+import { LogsPage } from "@/features/admin/logs/LogsPage";
 import { CalendarPage } from "@/features/calendar/pages/CalendarPage";
 
 import {

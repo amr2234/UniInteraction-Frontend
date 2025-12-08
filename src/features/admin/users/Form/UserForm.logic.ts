@@ -14,8 +14,8 @@ import {
   useUserById,
   useCreateUser,
   useUpdateUser,
-  UserDto,
-} from "@/features/users";
+} from "../hooks/useUsers";
+import type { UserDto } from "../types/user.types";
 import { useDepartmentsLookup } from "@/features/lookups/hooks/useLookups";
 import { toast } from "sonner";
 

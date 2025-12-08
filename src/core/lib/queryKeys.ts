@@ -35,7 +35,7 @@ export const queryKeys = {
   // FAQs
   faqs: {
     all: ['faqs'] as const,
-    list: (filters?: Record<string, any>) => ['faqs', 'list', filters] as const,
+    list: ['faqs', 'list'] as const,
     detail: (id: number) => ['faqs', 'detail', id] as const,
   },
 

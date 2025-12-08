@@ -41,7 +41,7 @@ import {
 } from "lucide-react";
 import { useI18n } from "@/i18n";
 import { useUserManagement } from "./UserManagement.logic";
-import { UserRole, ROLE_TRANSLATION_KEYS } from "@/core/constants/roles";
+import { UserRole } from "@/core/constants/roles";
 
 export function UserManagement() {
   const { t, language } = useI18n();
@@ -168,37 +168,37 @@ export function UserManagement() {
         {}
         <Card className="rounded-xl border-0 shadow-soft bg-white overflow-hidden">
           <div className="overflow-x-auto">
-            <Table>
+            <Table className="w-full table-fixed">
               <TableHeader>
                 <TableRow className="bg-gray-50">
-                  <TableHead className="text-right font-semibold text-gray-700">
+                  <TableHead className="text-center font-semibold text-gray-700 w-[200px]">
                     {t("form.fullName")}
                   </TableHead>
-                  <TableHead className="text-right font-semibold text-gray-700">
+                  <TableHead className="text-center font-semibold text-gray-700 w-[120px]">
                     {t("users.role")}
                   </TableHead>
-                  <TableHead className="text-right font-semibold text-gray-700">
+                  <TableHead className="text-center font-semibold text-gray-700 w-[200px]">
                     {t("form.email")}
                   </TableHead>
-                  <TableHead className="text-right font-semibold text-gray-700">
+                  <TableHead className="text-center font-semibold text-gray-700 w-[130px]">
                     {t("form.mobile")}
                   </TableHead>
-                  <TableHead className="text-right font-semibold text-gray-700">
+                  <TableHead className="text-center font-semibold text-gray-700 w-[130px]">
                     {t("form.nationalId")}
                   </TableHead>
-                  <TableHead className="text-right font-semibold text-gray-700">
+                  <TableHead className="text-center font-semibold text-gray-700 w-[130px]">
                     {t("form.studentId")}
                   </TableHead>
-                  <TableHead className="text-right font-semibold text-gray-700">
+                  <TableHead className="text-center font-semibold text-gray-700 w-[180px]">
                     {t("form.department")}
                   </TableHead>
-                  <TableHead className="text-right font-semibold text-gray-700">
+                  <TableHead className="text-center font-semibold text-gray-700 w-[120px]">
                     {t("form.status")}
                   </TableHead>
-                  <TableHead className="text-right font-semibold text-gray-700">
+                  <TableHead className="text-center font-semibold text-gray-700 w-[130px]">
                     {t("users.createdAt")}
                   </TableHead>
-                  <TableHead className="text-center font-semibold text-gray-700">
+                  <TableHead className="text-center font-semibold text-gray-700 w-[120px]">
                     {t("users.actions")}
                   </TableHead>
                 </TableRow>
@@ -225,24 +225,24 @@ export function UserManagement() {
                 ) : (
                   users.map((user) => (
                     <TableRow key={user.id} className="hover:bg-gray-50">
-                      <TableCell className="text-right">
+                      <TableCell className="text-center overflow-hidden">
                         <div>
-                          <p className="font-medium text-[#2B2B2B]">
+                          <p className="font-medium text-[#2B2B2B]" style={{ wordBreak: 'break-all', maxWidth: '12.5rem', marginLeft: 'auto', marginRight: 'auto' }}>
                             {getUserFullName(user)}
                           </p>
                           {language === "en" && user.nameAr && user.nameEn && (
-                            <p className="text-xs text-gray-500">
+                            <p className="text-xs text-gray-500" style={{ wordBreak: 'break-all', maxWidth: '12.5rem', marginLeft: 'auto', marginRight: 'auto' }}>
                               {user.nameAr}
                             </p>
                           )}
                           {language === "ar" && user.nameEn && (
-                            <p className="text-xs text-gray-500" dir="ltr">
+                            <p className="text-xs text-gray-500" dir="ltr" style={{ wordBreak: 'break-all', maxWidth: '12.5rem', marginLeft: 'auto', marginRight: 'auto' }}>
                               {user.nameEn}
                             </p>
                           )}
                         </div>
                       </TableCell>
-                      <TableCell className="text-right">
+                      <TableCell className="text-center overflow-hidden">
                         <Badge
                           variant="outline"
                           className={
@@ -258,20 +258,22 @@ export function UserManagement() {
                             : t("users.roles.unknown")}
                         </Badge>
                       </TableCell>
-                      <TableCell className="text-right">{user.email}</TableCell>
-                      <TableCell className="text-right" dir="ltr">
-                        {user.mobile || "-"}
+                      <TableCell className="text-center overflow-hidden">
+                        <p style={{ wordBreak: 'break-all', maxWidth: '12.5rem', marginLeft: 'auto', marginRight: 'auto' }}>{user.email}</p>
                       </TableCell>
-                      <TableCell className="text-right" dir="ltr">
-                        {user.nationalId || "-"}
+                      <TableCell className="text-center overflow-hidden" dir="ltr">
+                        <p style={{ wordBreak: 'break-all', maxWidth: '8.125rem', marginLeft: 'auto', marginRight: 'auto' }}>{user.mobile || "-"}</p>
                       </TableCell>
-                      <TableCell className="text-right">
-                        {user.studentId || "-"}
+                      <TableCell className="text-center overflow-hidden" dir="ltr">
+                        <p style={{ wordBreak: 'break-all', maxWidth: '8.125rem', marginLeft: 'auto', marginRight: 'auto' }}>{user.nationalId || "-"}</p>
                       </TableCell>
-                      <TableCell className="text-right">
-                        {getDepartmentName(user.departmentId)}
+                      <TableCell className="text-center overflow-hidden">
+                        <p style={{ wordBreak: 'break-all', maxWidth: '8.125rem', marginLeft: 'auto', marginRight: 'auto' }}>{user.studentId || "-"}</p>
                       </TableCell>
-                      <TableCell className="text-right">
+                      <TableCell className="text-center overflow-hidden">
+                        <p style={{ wordBreak: 'break-all', maxWidth: '11.25rem', marginLeft: 'auto', marginRight: 'auto' }}>{getDepartmentName(user.departmentId)}</p>
+                      </TableCell>
+                      <TableCell className="text-center overflow-hidden">
                         <Badge
                           variant={user.isActive ? "default" : "secondary"}
                           className={
@@ -285,7 +287,7 @@ export function UserManagement() {
                             : t("users.inactive")}
                         </Badge>
                       </TableCell>
-                      <TableCell className="text-right" dir="ltr">
+                      <TableCell className="text-center overflow-hidden" dir="ltr">
                         {formatDate(user.createdAt)}
                       </TableCell>
                       <TableCell className="text-center">

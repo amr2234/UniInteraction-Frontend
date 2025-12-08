@@ -23,14 +23,14 @@ export * from '@/features/lookups/hooks/useLookups';
 // Notifications
 export * from '@/features/notifications/hooks/useNotifications';
 
-// FAQs
-export * from '@/features/faq/hooks/useFaqs';
+// FAQs (Admin)
+export * from '@/features/admin/faqs/hooks/useFaqs';
 
 // Leadership
-export * from '@/features/leadership/hooks/useLeadership';
+export * from '@/features/admin/leadership/hooks/useLeadership';
 
 // Users (Admin)
-export * from '@/features/users/hooks/useUsers';
+export * from '@/features/admin/users/hooks/useUsers';
 
 // Categories (Admin)
-export * from '@/features/categories/hooks/useCategories';
+export * from '@/features/admin/categories/hooks/useCategories';

@@ -204,6 +204,8 @@ export interface MainCategoryDto {
   descriptionAr?: string;
   descriptionEn?: string;
   isActive: boolean;
+  createdAt: string;
+  updatedAt?: string;
 }
 
 export interface SubCategoryDto {
@@ -215,6 +217,8 @@ export interface SubCategoryDto {
   mainCategoryId: number;
   mainCategoryName?: string;
   isActive: boolean;
+  createdAt: string;
+  updatedAt?: string;
 }
 
 export interface ServiceDto {
@@ -226,18 +230,21 @@ export interface ServiceDto {
   subCategoryId: number;
   subCategoryName?: string;
   isActive: boolean;
+  createdAt: string;
+  updatedAt?: string;
 }
 
 export interface UniversityLeadershipDto {
   id: number;
-  nameAr: string;
-  nameEn?: string;
-  positionAr: string;
-  positionEn?: string;
-  email?: string;
-  phone?: string;
-  imageUrl?: string;
+  fullNameAr: string;
+  fullNameEn?: string;
+  positionTitleAr: string;
+  positionTitleEn?: string;
+  departmentId?: number;
+  displayOrder?: number;
   isActive: boolean;
+  createdAt: string;
+  updatedAt?: string;
 }
 
 // ============================================
@@ -276,14 +283,12 @@ export interface UpdateFaqPayload extends CreateFaqPayload {
 // ============================================
 
 export interface CreateLeadershipPayload {
-  nameAr: string;
-  nameEn?: string;
-  positionAr: string;
-  positionEn?: string;
-  email?: string;
-  phone?: string;
-  imageUrl?: string;
-  order?: number;
+  fullNameAr: string;
+  fullNameEn?: string;
+  positionTitleAr: string;
+  positionTitleEn?: string;
+  departmentId?: number;
+  displayOrder?: number;
 }
 
 export interface UpdateLeadershipPayload extends CreateLeadershipPayload {

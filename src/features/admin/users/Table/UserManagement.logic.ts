@@ -4,8 +4,8 @@ import {
   useUsers,
   useDeleteUser,
   useToggleUserStatus,
-  UserManagementDto,
-} from "@/features/users";
+} from "../hooks/useUsers";
+import type { UserManagementDto } from "../types/user.types";
 import { useDepartmentsLookup } from "@/features/lookups/hooks/useLookups";
 import { UserRole, ROLE_TRANSLATION_KEYS } from "@/core/constants/roles";
 import { useI18n } from "@/i18n";
