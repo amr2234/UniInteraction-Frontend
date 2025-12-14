@@ -3,6 +3,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
 import {
   Select,
   SelectContent,
@@ -24,12 +25,16 @@ import {
   HelpCircle,
   Star,
   FileText,
-  UserPlus,
+  Building2,
   Calendar as CalendarIcon,
 } from "lucide-react";
 import { useRequestDetailsLogic } from "./RequestDetails.logic";
 import { useI18n } from "@/i18n";
 import { StatusStepper } from "./StatusStepper";
+import { RatingDialog } from "./RatingDialog";
+import { getRequestStatusColor, getRequestStatusName } from "@/core/constants/requestStatuses";
+import { getRequestTypeName } from "@/core/constants/requestTypes";
+import { ATTACHMENT_TYPES } from "@/core/constants/attachmentTypes";
 
 export function RequestDetailsPage() {
   const { t, language } = useI18n();
@@ -39,24 +44,27 @@ export function RequestDetailsPage() {
     newMessage,
     statusNote,
     visitDateTime,
-    visitLocation,
     responseText,
     attachments,
     rating,
     feedback,
-    requestMock,
-    messages,
+    isRatingDialogOpen,
+    request,
     requestAttachments,
-    selectedEmployeeId,
-    mockEmployees,
+    selectedDepartmentId,
+    selectedLeadershipId,
+    departments,
+    leaderships,
     
     // Constants
     RequestStatus,
+    RequestType,
     
     // Role checks
     isAdmin,
     isEmployee,
     isUser,
+    isSuperAdmin,
     canEditRequest,
     canAssignRequests,
     
@@ -64,24 +72,47 @@ export function RequestDetailsPage() {
     setNewMessage,
     setStatusNote,
     setVisitDateTime,
-    setVisitLocation,
     setResponseText,
     setAttachments,
     setRating,
     setFeedback,
-    setSelectedEmployeeId,
+    setIsRatingDialogOpen,
+    setSelectedDepartmentId,
+    setSelectedLeadershipId,
     handleStatusChange,
     handleSubmitResponse,
     handleSubmitFeedback,
+    handleOpenRatingDialog,
+    handleRatingSubmit,
+    handleAcceptVisit,
+    handleDeclineVisit,
     handleFileChange,
     handleSendMessage,
-    handleAssignEmployee,
+    handleAssignDepartment,
+    handleAssignLeadership,
+    handleThankYou,
+    handleDownloadAttachment,
+    getDepartmentName,
+    getLeadershipName,
     navigate
   } = useRequestDetailsLogic();
 
+  // If still loading or no request, show loading state
+  if (!request) {
+    return <div>Loading...</div>;
+  }
+
+  // Filter attachments by type
+  const requestFormAttachments = requestAttachments?.filter(
+    (att) => att.attachmentTypeId === ATTACHMENT_TYPES.REQUEST
+  ) || [];
+  
+  const resolutionAttachments = requestAttachments?.filter(
+    (att) => att.attachmentTypeId === ATTACHMENT_TYPES.RESOLUTION
+  ) || [];
 
   // Dynamically generate status steps based on current request status
-  const currentStatusId = requestMock.statusId;
+  const currentStatusId = request.requestStatusId;
   const statusSteps = [
     {
       label: t("requests.requestStatuses.received"),
@@ -110,38 +141,142 @@ export function RequestDetailsPage() {
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="mb-8">
-          <div className="flex items-center justify-between mb-4">
+          {/* Back Button & Edit Button Row */}
+          <div className="flex items-center justify-between mb-6">
             <button
               onClick={() => navigate("/dashboard/track")}
-              className="flex items-center gap-2 text-gray-600 hover:text-[#115740]"
+              className="flex items-center gap-2 text-gray-600 hover:text-[#115740] transition-colors"
             >
-              <ArrowRight className="w-5 h-5" />
-              <span>{t("requests.backToRequestsList")}</span>
+              <ArrowRight className={`w-5 h-5 ${isRTL ? 'rotate-180' : ''}`} />
+              <span className="font-medium">{t("requests.backToRequestsList")}</span>
             </button>
             {canEditRequest() && (
               <Button
                 variant="outline"
                 className="gap-2 border-[#115740] text-[#115740] hover:bg-[#115740] hover:text-white"
-                onClick={() => navigate(`/dashboard/request/${requestMock.id}/edit`)}
+                onClick={() => navigate(`/dashboard/request/${request.id}/edit`)}
               >
                 <Edit className="w-4 h-4" />
                 {t("requests.updateRequest")}
               </Button>
             )}
           </div>
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <div className="flex items-center gap-3 mb-2">
-                <h1 className="text-[#115740]">{requestMock.titleAr}</h1>
+
+          {/* Title, Status, Type, Request Number, and Status Change Dropdown */}
+          <div className="space-y-4">
+            {/* Request Title */}
+            <h1 className="text-3xl font-bold text-[#115740]">
+              {isRTL ? request.titleAr : (request.titleEn || request.titleAr)}
+            </h1>
+            
+            {/* Request Metadata: Status, Type, Request Number, Status Dropdown, and Department Assignment */}
+            <div className="flex flex-wrap items-center gap-3">
+              {/* Status Badge */}
+              <Badge 
+                variant="outline" 
+                className={`px-3 py-1 font-medium ${getRequestStatusColor(request.requestStatusId)}`}
+              >
+                {getRequestStatusName(request.requestStatusId, isRTL ? 'ar' : 'en')}
+              </Badge>
+              
+              {/* Request Type Badge */}
+              <Badge variant="outline" className="px-3 py-1 bg-purple-100 text-purple-800 border-purple-200">
+                {getRequestTypeName(request.requestTypeId, isRTL ? 'ar' : 'en')}
+              </Badge>
+              
+              {/* Request Number */}
+              <div className="flex items-center gap-2 text-sm text-gray-600">
+                <FileText className="w-4 h-4" />
+                <span className="font-mono font-medium">{request.requestNumber}</span>
               </div>
-              <div className="flex items-center gap-3">
-                <span className={`px-3 py-1 rounded-full text-sm ${requestMock.statusColor}`}>
-                  {requestMock.status}
-                </span>
-                <span className="text-sm text-gray-500">{requestMock.type}</span>
-                <span className="text-sm text-gray-400">•</span>
-                <span className="text-sm text-gray-500">{requestMock.id || 'N/A'}</span>
-              </div>
+              
+              {/* Spacer to push controls to the end */}
+              <div className="flex-1"></div>
+              
+              {/* Admin Department Assignment - For non-visit requests */}
+              {(canAssignRequests || isSuperAdmin) && request.requestTypeId !== RequestType.VISIT && (
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-gray-600">{t("requests.track.assignDepartment")}:</span>
+                  <Select
+                    value={selectedDepartmentId !== null ? selectedDepartmentId.toString() : ""}
+                    onValueChange={(value: string) => setSelectedDepartmentId(value ? parseInt(value, 10) : null)}
+                  >
+                    <SelectTrigger className="w-[180px] h-9">
+                      <SelectValue placeholder={t("requests.track.selectDepartment")} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {departments.map((dept) => (
+                        <SelectItem key={dept.id} value={dept.id.toString()}>
+                          {isRTL ? dept.nameAr : (dept.nameEn || dept.nameAr)}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Button
+                    onClick={() => {
+                      if (selectedDepartmentId) {
+                        handleAssignDepartment(selectedDepartmentId);
+                      }
+                    }}
+                    disabled={!selectedDepartmentId}
+                    size="sm"
+                    className="bg-[#115740] hover:bg-[#0d4230] text-white h-9"
+                  >
+                    {t("requests.track.assign")}
+                  </Button>
+                </div>
+              )}
+              
+              {/* Admin/Employee Status Change Dropdown - At the end of row */}
+              {(isAdmin || isEmployee || isSuperAdmin) && (
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-gray-600">{t("requests.changeRequestStatus")}:</span>
+                  <Select
+                    value={request.requestStatusId.toString()}
+                    onValueChange={(value: string) => {
+                      handleStatusChange(parseInt(value));
+                    }}
+                  >
+                    <SelectTrigger className="w-[180px] h-9">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="1">{t("requests.requestStatuses.received")}</SelectItem>
+                      <SelectItem value="2">{t("requests.requestStatuses.underReview")}</SelectItem>
+                      <SelectItem value="3">{t("requests.requestStatuses.replied")}</SelectItem>
+                      <SelectItem value="4">{t("requests.requestStatuses.closed")}</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+              
+              {/* Leadership Assignment for Visit Requests */}
+              {(isAdmin || isEmployee || isSuperAdmin) && request.requestTypeId === RequestType.VISIT && (
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-gray-600">{t("requests.assignLeadership")}:</span>
+                  <Select
+                    value={selectedLeadershipId !== null ? selectedLeadershipId.toString() : ""}
+                    onValueChange={(value: string) => {
+                      const leadershipId = value ? parseInt(value, 10) : null;
+                      setSelectedLeadershipId(leadershipId);
+                      if (leadershipId) {
+                        handleAssignLeadership(leadershipId);
+                      }
+                    }}
+                  >
+                    <SelectTrigger className="w-[200px] h-9">
+                      <SelectValue placeholder={t("requests.selectLeadership")} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {leaderships.map((leadership) => (
+                        <SelectItem key={leadership.id} value={leadership.id.toString()}>
+                          {isRTL ? leadership.nameAr : (leadership.nameEn || leadership.nameAr)}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -153,130 +288,462 @@ export function RequestDetailsPage() {
           <div className="lg:col-span-2 space-y-6">
             {/* Request Details */}
             <Card className="p-6">
-              <h3 className="text-[#115740] mb-4">{t("requests.requestDetails")}</h3>
+              <h3 className="text-xl font-semibold text-[#115740] mb-4">{t("requests.requestDetails")}</h3>
               <div className="space-y-4">
-                <div>
-                  <p className="text-sm text-gray-500 mb-1">{t("requests.description")}</p>
-                  <p className="text-gray-700">{requestMock.subjectAr}</p>
-                </div>
-                {requestAttachments.length > 0 && (
+                {/* For Visit Requests - Show Leadership Name */}
+                {request.requestTypeId === RequestType.VISIT && request.universityLeadershipName && (
                   <div>
-                    <p className="text-sm text-gray-500 mb-2">{t("requests.attachments")}</p>
-                    {requestAttachments.map((attachment, index) => (
-                      <div
-                        key={index}
-                        className="flex items-center justify-between p-3 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors"
-                      >
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 bg-[#115740] rounded-lg flex items-center justify-center">
-                            <Download className="w-5 h-5 text-white" />
+                    <p className="text-sm font-medium text-gray-500 mb-2">{t("requests.leadershipToVisit")}</p>
+                    <p className="text-gray-700 leading-relaxed font-medium">
+                      {request.universityLeadershipName}
+                    </p>
+                  </div>
+                )}
+                
+                <div>
+                  <p className="text-sm font-medium text-gray-500 mb-2">{t("requests.description")}</p>
+                  <p className="text-gray-700 leading-relaxed">
+                    {isRTL 
+                      ? request.subjectAr 
+                      : (request.subjectEn || request.subjectAr)
+                    }
+                  </p>
+                </div>
+                
+                {/* Additional Details if available */}
+                {(request.additionalDetailsAr || request.additionalDetailsEn) && (
+                  <div>
+                    <p className="text-sm font-medium text-gray-500 mb-2">{t("requests.additionalDetails")}</p>
+                    <p className="text-gray-700 leading-relaxed">
+                      {isRTL 
+                        ? request.additionalDetailsAr 
+                        : (request.additionalDetailsEn || request.additionalDetailsAr)
+                      }
+                    </p>
+                  </div>
+                )}
+                {/* Attachments section - Only show REQUEST type attachments (AttachmentTypeId = 1) */}
+                {requestFormAttachments && requestFormAttachments.length > 0 && (
+                  <div>
+                    <p className="text-sm font-medium text-gray-500 mb-3">{t("requests.attachments")}</p>
+                    <div className="space-y-2">
+                      {requestFormAttachments.map((attachment) => (
+                        <div
+                          key={attachment.id}
+                          className="flex items-center justify-between p-3 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors border border-gray-200"
+                        >
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 bg-[#115740] rounded-lg flex items-center justify-center">
+                              <Download className="w-5 h-5 text-white" />
+                            </div>
+                            <div>
+                              <p className="text-sm font-medium text-gray-900">{attachment.fileName}</p>
+                              <p className="text-xs text-gray-500">{attachment.fileSize ? `${(attachment.fileSize / 1024).toFixed(2)} KB` : ''}</p>
+                            </div>
                           </div>
-                          <div>
-                            <p className="text-sm font-medium text-gray-900">{attachment.name}</p>
-                            <p className="text-xs text-gray-500">{attachment.size}</p>
-                          </div>
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            className="hover:bg-[#115740] hover:text-white"
+                            onClick={() => handleDownloadAttachment(attachment)}
+                          >
+                            <Download className="w-4 h-4 mr-2" />
+                            {t("requests.download")}
+                          </Button>
                         </div>
-                        <Button variant="ghost" size="sm">
-                          {t("requests.download")}
-                        </Button>
-                      </div>
-                    ))}
+                      ))}
+                    </div>
                   </div>
                 )}
               </div>
             </Card>
             
-            {/* Employee Response Section - Show when status is تم الرد (REPLIED) */}
-            {isUser && requestMock.statusId === RequestStatus.REPLIED && (
-              <Card className="p-6 bg-green-50 border-green-200">
-                <h3 className="text-[#115740] mb-4">
-                  {requestMock.requestTypeId === 4 ? 'معلومات الزيارة' : 'الرد على الطلب'}
+            {/* Employee Response Section - Add Reply/Visit Schedule */}
+            {/* For Visit Type: Show when employee/admin AND status is UnderReview AND has leadership assigned */}
+            {/* For Inquiry/Complaint: Show when has department AND status is UnderReview */}
+            {(isEmployee || isAdmin || isSuperAdmin) && (
+              (request.requestTypeId === RequestType.VISIT && request.requestStatusId === RequestStatus.UNDER_REVIEW && request.universityLeadershipId) ||
+              ((request.requestTypeId === RequestType.INQUIRY || request.requestTypeId === RequestType.COMPLAINT) && request.assignedDepartmentId && request.requestStatusId === RequestStatus.UNDER_REVIEW)
+            ) && (
+              <Card className="p-6 bg-white border-gray-200">
+                <h4 className="text-lg font-semibold text-[#115740] mb-4 flex items-center gap-2">
+                  <Send className="w-5 h-5" />
+                  {request.requestTypeId === RequestType.VISIT ? t("requests.scheduleVisit") : t("requests.addResponse")}
+                </h4>
+                <div className="space-y-4">
+                  {request.requestTypeId === RequestType.VISIT ? (
+                    // Visit scheduling form - Only date/time
+                    <div>
+                      <Label htmlFor="visitDateTime" className="text-sm font-medium text-gray-700 mb-2 block">
+                        {t("requests.visitDateTime")}
+                      </Label>
+                      <Input
+                        id="visitDateTime"
+                        type="datetime-local"
+                        value={visitDateTime}
+                        onChange={(e) => setVisitDateTime(e.target.value)}
+                        className="w-full"
+                      />
+                    </div>
+                  ) : (
+                    // Response text for complaints/inquiries
+                    <>
+                      <div>
+                        <Label htmlFor="responseText" className="text-sm font-medium text-gray-700 mb-2 block">
+                          {t("requests.responseText")}
+                        </Label>
+                        <Textarea
+                          id="responseText"
+                          placeholder={t("requests.writeResponseHere")}
+                          value={responseText}
+                          onChange={(e) => setResponseText(e.target.value)}
+                          rows={4}
+                        />
+                      </div>
+                      
+                      <div>
+                        <Label htmlFor="attachments" className="text-sm font-medium text-gray-700 mb-2 block">
+                          {t("requests.attachments")}
+                        </Label>
+                        <Input
+                          id="attachments"
+                          type="file"
+                          multiple
+                          onChange={handleFileChange}
+                          className="w-full"
+                        />
+                        {attachments.length > 0 && (
+                          <div className="mt-2 text-sm text-gray-600 bg-gray-50 p-2 rounded">
+                            {attachments.length} {t("requests.fileAttached")}
+                          </div>
+                        )}
+                      </div>
+                    </>
+                  )}
+                  
+                  <Button 
+                    onClick={handleSubmitResponse}
+                    className="w-full bg-[#115740] hover:bg-[#0d4230] text-white shadow-md"
+                    disabled={request.requestTypeId === RequestType.VISIT ? !visitDateTime : !responseText.trim()}
+                  >
+                    <Send className="w-4 h-4 mr-2" />
+                    {t("requests.send")}
+                  </Button>
+                </div>
+              </Card>
+            )}
+            
+            {/* Employee Response Section - Show when status is REPLIED or CLOSED */}
+            {isUser && (request.requestStatusId === RequestStatus.REPLIED || request.requestStatusId === RequestStatus.CLOSED) && (
+              <Card className="p-6 bg-gradient-to-br from-green-50 to-emerald-50 border-green-200 shadow-sm">
+                <h3 className="text-xl font-semibold text-[#115740] mb-4 flex items-center gap-2">
+                  <CheckCircle className="w-6 h-6 text-green-600" />
+                  {request.requestTypeId === RequestType.VISIT ? t("requests.visitInfo") : t("requests.responseToRequest")}
                 </h3>
                 
-                {/* For Visit Requests - Show Visit Schedule */}
-                {requestMock.requestTypeId === 4 && requestMock.visitSchedule && (
+                {/* For Visit Requests - Show Visit Schedule using available fields */}
+                {request.requestTypeId === RequestType.VISIT && request.visitStartAt && (
                   <div className="space-y-4">
-                    <div className="bg-white p-4 rounded-xl">
-                      <div className="space-y-3">
-                        <div className="flex items-start gap-3">
-                          <Calendar className="w-5 h-5 text-[#115740] mt-1" />
-                          <div className="flex-1">
-                            <p className="text-sm text-gray-500 mb-1">تاريخ الزيارة</p>
-                            <p className="text-gray-900 font-medium">{requestMock.visitSchedule.visitDate}</p>
-                          </div>
+                    {/* Cool Visit Card */}
+                    <div className="bg-white p-6 rounded-2xl shadow-md border-2 border-green-300">
+                      <div className="flex items-center gap-3 mb-4">
+                        <div className="w-12 h-12 bg-gradient-to-br from-[#115740] to-green-700 rounded-xl flex items-center justify-center">
+                          <CalendarIcon className="w-6 h-6 text-white" />
                         </div>
-                        
-                        <div className="flex items-start gap-3">
-                          <Clock className="w-5 h-5 text-[#115740] mt-1" />
-                          <div className="flex-1">
-                            <p className="text-sm text-gray-500 mb-1">وقت الزيارة</p>
-                            <p className="text-gray-900 font-medium">{requestMock.visitSchedule.visitTime}</p>
-                          </div>
-                        </div>
-                        
-                        <div className="flex items-start gap-3">
-                          <User className="w-5 h-5 text-[#115740] mt-1" />
-                          <div className="flex-1">
-                            <p className="text-sm text-gray-500 mb-1">مكان الزيارة</p>
-                            <p className="text-gray-900 font-medium">{requestMock.visitSchedule.visitLocation}</p>
-                          </div>
-                        </div>
-                        
-                        <div className="pt-3 border-t">
-                          <p className="text-xs text-gray-500">تم الجدولة بواسطة: {requestMock.visitSchedule.scheduledBy}</p>
-                          <p className="text-xs text-gray-500">{requestMock.visitSchedule.scheduledAt}</p>
+                        <div>
+                          <p className="text-lg font-semibold text-gray-900">{t("requests.visitScheduled")}</p>
+                          <p className="text-sm text-gray-600">{t("requests.visitDetailsBelow")}</p>
                         </div>
                       </div>
+
+                      <div className="space-y-4">
+                        <div className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
+                          <Calendar className="w-5 h-5 text-[#115740] mt-1" />
+                          <div className="flex-1">
+                            <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">{t("requests.visitDate")}</p>
+                            <p className="text-base font-semibold text-gray-900">
+                              {new Date(request.visitStartAt).toLocaleDateString(isRTL ? 'ar-SA' : 'en-US', {
+                                weekday: 'long',
+                                year: 'numeric',
+                                month: 'long',
+                                day: 'numeric'
+                              })}
+                            </p>
+                          </div>
+                        </div>
+                        
+                        <div className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
+                          <Clock className="w-5 h-5 text-[#115740] mt-1" />
+                          <div className="flex-1">
+                            <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">{t("requests.visitTime")}</p>
+                            <p className="text-base font-semibold text-gray-900">
+                              {new Date(request.visitStartAt).toLocaleTimeString(isRTL ? 'ar-SA' : 'en-US', { hour: '2-digit', minute: '2-digit' })}
+                              {request.visitEndAt && ` - ${new Date(request.visitEndAt).toLocaleTimeString(isRTL ? 'ar-SA' : 'en-US', { hour: '2-digit', minute: '2-digit' })}`}
+                            </p>
+                          </div>
+                        </div>
+                        
+                        {request.resolutionDetailsAr && (
+                          <div className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
+                            <Building2 className="w-5 h-5 text-[#115740] mt-1" />
+                            <div className="flex-1">
+                              <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">{t("requests.visitLocation")}</p>
+                              <p className="text-base font-semibold text-gray-900">
+                                {isRTL ? request.resolutionDetailsAr : (request.resolutionDetailsEn || request.resolutionDetailsAr)}
+                              </p>
+                            </div>
+                          </div>
+                        )}
+                        
+                        {request.resolvedBy && (
+                          <div className="pt-3 border-t border-gray-200">
+                            <p className="text-xs text-gray-500">
+                              <span className="font-medium">{t("requests.scheduledBy")}:</span> {request.resolvedBy}
+                            </p>
+                            {request.resolvedAt && (
+                              <p className="text-xs text-gray-500 mt-1">
+                                {new Date(request.resolvedAt).toLocaleString(isRTL ? 'ar-SA' : 'en-US')}
+                              </p>
+                            )}
+                          </div>
+                        )}
+                      </div>
                     </div>
+                    
+                    {/* Accept/Decline Buttons for Visit - Only show when REPLIED */}
+                    {request.requestStatusId === RequestStatus.REPLIED && (
+                      <div className="grid grid-cols-2 gap-3">
+                        <Button 
+                          className="w-full bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white shadow-md"
+                          onClick={handleAcceptVisit}
+                        >
+                          <CheckCircle className="w-5 h-5 mr-2" />
+                          {t("requests.acceptVisit")}
+                        </Button>
+                        <Button 
+                          variant="outline"
+                          className="w-full border-2 border-red-600 text-red-600 hover:bg-red-50 font-medium"
+                          onClick={handleDeclineVisit}
+                        >
+                          {t("requests.declineVisit")}
+                        </Button>
+                      </div>
+                    )}
+                    
+                    {/* Message for declined visit */}
+                    {!!request?.needDateReschedule && (
+                      <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                        <p className="text-yellow-800 text-sm">
+                          {t("requests.visitDeclinedMessage")}
+                        </p>
+                      </div>
+                    )}
                   </div>
                 )}
                 
-                {/* For Inquiry/Complaint - Show Employee Response */}
-                {(requestMock.requestTypeId === 1 || requestMock.requestTypeId === 2) && requestMock.employeeResponse && (
+                {/* For Inquiry/Complaint - Show Employee Response using resolutionDetails */}
+                {(request.requestTypeId === RequestType.INQUIRY || request.requestTypeId === RequestType.COMPLAINT) && request.resolutionDetailsAr && (
                   <div className="space-y-4">
-                    <div className="bg-white p-4 rounded-xl">
-                      <p className="text-gray-700 whitespace-pre-wrap mb-4">{requestMock.employeeResponse.responseText}</p>
+                    <div className="bg-white p-6 rounded-xl border-2 border-green-200 shadow-md">
+                      <div className="flex items-start gap-3 mb-4">
+                        <div className="w-12 h-12 bg-gradient-to-br from-[#115740] to-green-700 rounded-xl flex items-center justify-center">
+                          <MessageSquare className="w-6 h-6 text-white" />
+                        </div>
+                        <div>
+                          <p className="text-lg font-semibold text-gray-900">{t("requests.employeeResponse")}</p>
+                          <p className="text-sm text-gray-600">{t("requests.responseFromDepartment")}</p>
+                        </div>
+                      </div>
                       
-                      {requestMock.employeeResponse.responseAttachments && requestMock.employeeResponse.responseAttachments.length > 0 && (
+                      <div className="bg-gray-50 p-4 rounded-lg mb-4">
+                        <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">
+                          {isRTL ? request.resolutionDetailsAr : (request.resolutionDetailsEn || request.resolutionDetailsAr)}
+                        </p>
+                      </div>
+                      
+                      {/* Only show RESOLUTION type attachments (AttachmentTypeId = 2) */}
+                      {resolutionAttachments && resolutionAttachments.length > 0 && (
                         <div className="border-t pt-4">
-                          <p className="text-sm text-gray-500 mb-2">مرفقات الرد</p>
-                          {requestMock.employeeResponse.responseAttachments.map((attachment, index) => (
-                            <div
-                              key={index}
-                              className="flex items-center justify-between p-3 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors mb-2"
-                            >
-                              <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 bg-[#115740] rounded-lg flex items-center justify-center">
-                                  <Download className="w-5 h-5 text-white" />
+                          <p className="text-sm font-medium text-gray-700 mb-3">{t("requests.responseAttachments")}</p>
+                          <div className="space-y-2">
+                            {resolutionAttachments.map((attachment) => (
+                              <div
+                                key={attachment.id}
+                                className="flex items-center justify-between p-3 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors border border-gray-200"
+                              >
+                                <div className="flex items-center gap-3">
+                                  <div className="w-10 h-10 bg-[#115740] rounded-lg flex items-center justify-center">
+                                    <Download className="w-5 h-5 text-white" />
+                                  </div>
+                                  <div>
+                                    <p className="text-sm font-medium text-gray-900">
+                                      {attachment.fileName}
+                                    </p>
+                                    <p className="text-xs text-gray-500">
+                                      {attachment.fileSize ? `${(attachment.fileSize / 1024).toFixed(2)} KB` : ''}
+                                    </p>
+                                  </div>
                                 </div>
-                                <div>
-                                  <p className="text-sm font-medium text-gray-900">{attachment.name}</p>
-                                  <p className="text-xs text-gray-500">{attachment.size}</p>
-                                </div>
+                                <Button 
+                                  variant="ghost" 
+                                  size="sm"
+                                  className="hover:bg-[#115740] hover:text-white"
+                                  onClick={() => handleDownloadAttachment(attachment)}
+                                >
+                                  <Download className="w-4 h-4 mr-1" />
+                                  {t("requests.download")}
+                                </Button>
                               </div>
-                              <Button variant="ghost" size="sm">
-                                تحميل
-                              </Button>
-                            </div>
-                          ))}
+                            ))}
+                          </div>
                         </div>
                       )}
                       
-                      <div className="border-t pt-4 mt-4">
-                        <p className="text-xs text-gray-500">تم الرد بواسطة: {requestMock.employeeResponse.respondedBy}</p>
-                        <p className="text-xs text-gray-500">{requestMock.employeeResponse.respondedAt}</p>
-                      </div>
+                      {request.resolvedBy && (
+                        <div className="border-t pt-4 mt-4">
+                          <p className="text-xs text-gray-500">{t("requests.respondedBy")}: {request.resolvedBy}</p>
+                          {request.resolvedAt && (
+                            <p className="text-xs text-gray-500">
+                              {new Date(request.resolvedAt).toLocaleString(isRTL ? 'ar-SA' : 'en-US')}
+                            </p>
+                          )}
+                        </div>
+                      )}
                     </div>
                   </div>
                 )}
               </Card>
             )}
+
             
-            {/* User Feedback Section - Show when status is تم الإغلاق (CLOSED) */}
-            {isUser && requestMock.statusId === RequestStatus.CLOSED && (
-              <Card className="p-6 bg-yellow-50 border-yellow-200">
-                <h3 className="text-[#115740] mb-4">{t("requests.requestEvaluation")}</h3>
+          </div>
+
+          {/* Sidebar */}
+          <div className="space-y-6">
+            {/* Request Info */}
+            <Card className="p-6">
+              <h4 className="text-[#115740] mb-4">{t("requests.requestInfo")}</h4>
+              <div className="space-y-3">
+                <div className="flex items-center gap-3 text-sm">
+                  <Calendar className="w-4 h-4 text-gray-400" />
+                  <div>
+                    <p className="text-gray-500">{t("requests.submissionDate")}</p>
+                    <p className="text-gray-900">
+                      {new Date(request.createdAt).toLocaleDateString(isRTL ? 'ar-SA' : 'en-US')}
+                    </p>
+                  </div>
+                </div>
+                
+                {/* For Visit Requests (Type 3) - Show Leadership and Visit Date */}
+                {request.requestTypeId === RequestType.VISIT && (
+                  <>
+                    {/* Leadership Name - Always show */}
+                    <div className="flex items-center gap-3 text-sm">
+                      <User className="w-4 h-4 text-gray-400" />
+                      <div>
+                        <p className="text-gray-500">{t("requests.leadershipToVisit")}</p>
+                        <p className="text-gray-900">
+                          {request.universityLeadershipId
+                            ? getLeadershipName(request.universityLeadershipId, isRTL ? 'ar' : 'en') || t("requests.notAssigned")
+                            : t("requests.notAssigned")}
+                        </p>
+                      </div>
+                    </div>
+                    
+                    {/* Visit Date - Show if scheduled or Not Assigned */}
+                    <div className="flex items-center gap-3 text-sm">
+                      <CalendarIcon className="w-4 h-4 text-gray-400" />
+                      <div className="flex-1">
+                        <p className="text-gray-500">{t("requests.visitDate")}</p>
+                        <p className="text-gray-900">
+                          {request.visitStartAt 
+                            ? new Date(request.visitStartAt).toLocaleDateString(isRTL ? 'ar-SA' : 'en-US')
+                            : t("requests.notAssigned")}
+                        </p>
+                        {/* Show rescheduling notice if needed */}
+                        {request.needDateReschedule && (
+                          <p className="text-xs text-orange-600 mt-1 font-medium flex items-center gap-1">
+                            <span>⚠️</span>
+                            <span>{t("requests.needsRescheduling")}</span>
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </>
+                )}
+                
+                {/* For Non-Visit Requests (Type 1, 2) - Show Department */}
+                {(request.requestTypeId === RequestType.INQUIRY || request.requestTypeId === RequestType.COMPLAINT) && (
+                  <div className="flex items-center gap-3 text-sm">
+                    <User className="w-4 h-4 text-gray-400" />
+                    <div>
+                      <p className="text-gray-500">{t("requests.responsibleDepartment")}</p>
+                      <p className="text-gray-900">
+                        {request.assignedDepartmentId 
+                          ? getDepartmentName(request.assignedDepartmentId, isRTL ? 'ar' : 'en') || t("requests.notAssigned")
+                          : t("requests.notAssigned")
+                        }
+                      </p>
+                    </div>
+                  </div>
+                )}
+                
+                <div className="flex items-center gap-3 text-sm">
+                  <Clock className="w-4 h-4 text-gray-400" />
+                  <div>
+                    <p className="text-gray-500">{t("requests.processingTime")}</p>
+                    <p className="text-gray-900">3-5 {t("requests.workDays")}</p>
+                  </div>
+                </div>
+              </div>
+            </Card>
+            
+            {/* User Response Actions - Show when status is REPLIED */}
+            {isUser && request.requestStatusId === RequestStatus.REPLIED && (
+              <Card className="p-6">
                 <div className="space-y-4">
+                  <div className="flex items-center gap-2 mb-3">
+                    <HelpCircle className="w-5 h-5 text-[#115740]" />
+                    <h4 className="text-[#115740] font-semibold">{t("requests.satisfiedWithResponse")}</h4>
+                  </div>
+                  <div className="space-y-3">
+                    <Button 
+                      variant="outline"
+                      className="w-full border-2 border-orange-600 text-orange-600 hover:bg-orange-50"
+                      onClick={() => {
+                        navigate(`/dashboard/request/new?type=${request.requestTypeId}&relatedTo=${request.id}`);
+                      }}
+                    >
+                      <span className="text-sm">{t("requests.reactivateRequest")}</span>
+                    </Button>
+                    <Button 
+                      className="w-full bg-[#115740] hover:bg-[#0d4230] text-white"
+                      onClick={handleOpenRatingDialog}
+                    >
+                      <Star className="w-4 h-4 mr-2" />
+                      {t("requests.thankYou")}
+                    </Button>
+                  </div>
+                </div>
+              </Card>
+            )}
+
+            {/* User Feedback Section - Show when status is CLOSED */}
+            {isUser && request.requestStatusId === RequestStatus.CLOSED && (
+              <Card className="p-6">
+                <h4 className="text-[#115740] font-semibold mb-4">{t("requests.requestEvaluation")}</h4>
+                <div className="space-y-4">
+                  {/* Reactivate Request Button */}
+                  <Button 
+                    variant="outline"
+                    className="w-full border-2 border-orange-600 text-orange-600 hover:bg-orange-50"
+                    onClick={() => {
+                      navigate(`/dashboard/request/new?type=${request.requestTypeId}&relatedTo=${request.id}`);
+                    }}
+                  >
+                    <span className="text-sm">{t("requests.reactivateRequest")}</span>
+                  </Button>
+                  
                   <div>
                     <Label className="text-sm text-gray-700 mb-2 block">
                       {t("requests.rating")}
@@ -285,7 +752,7 @@ export function RequestDetailsPage() {
                       {[1, 2, 3, 4, 5].map((star) => (
                         <Star
                           key={star}
-                          className={`w-8 h-8 cursor-pointer ${
+                          className={`w-6 h-6 cursor-pointer ${
                             star <= rating 
                               ? "text-yellow-500 fill-current" 
                               : "text-gray-300"
@@ -306,12 +773,13 @@ export function RequestDetailsPage() {
                       value={feedback}
                       onChange={(e) => setFeedback(e.target.value)}
                       rows={3}
+                      className="resize-none"
                     />
                   </div>
                   
                   <Button 
                     onClick={handleSubmitFeedback}
-                    className="bg-[#115740] hover:bg-[#0d4230] text-white"
+                    className="w-full bg-[#115740] hover:bg-[#0d4230] text-white"
                     disabled={rating === 0}
                   >
                     {t("requests.submitRating")}
@@ -319,231 +787,17 @@ export function RequestDetailsPage() {
                 </div>
               </Card>
             )}
-
-            {/* Messages */}
-            {/* <Card className="p-6">
-              <h3 className="text-[#115740] mb-4 flex items-center gap-2">
-                <MessageSquare className="w-5 h-5" />
-                <span>الرسائل والتحديثات</span>
-              </h3>
-              <div className="space-y-4 mb-4">
-                {messages.map((msg, index) => (
-                  <div
-                    key={index}
-                    className={`p-4 rounded-2xl ${
-                      msg.isAdmin
-                        ? "bg-blue-50 border border-blue-100"
-                        : "bg-gray-50"
-                    }`}
-                  >
-                    <div className="flex items-center gap-2 mb-2">
-                      <User className="w-4 h-4 text-gray-500" />
-                      <span className="text-sm font-medium text-gray-900">
-                        {msg.sender}
-                      </span>
-                      <span className="text-xs text-gray-500 mr-auto">{msg.date}</span>
-                    </div>
-                    <p className="text-gray-700 text-sm">{msg.message}</p>
-                  </div>
-                ))}
-              </div>
-              <div className="flex gap-2">
-                <Textarea
-                  placeholder="اكتب رسالتك هنا..."
-                  value={newMessage}
-                  onChange={(e) => setNewMessage(e.target.value)}
-                  rows={3}
-                  className="flex-1"
-                />
-                <Button
-                  onClick={handleSendMessage}
-                  className="bg-[#115740] hover:bg-[#0d4230]"
-                >
-                  <Send className="w-5 h-5" />
-                </Button>
-              </div>
-            </Card> */}
-          </div>
-
-          {/* Sidebar */}
-          <div className="space-y-6">
-            {/* Request Info */}
-            <Card className="p-6">
-              <h4 className="text-[#115740] mb-4">{t("requests.requestInfo")}</h4>
-              <div className="space-y-3">
-                <div className="flex items-center gap-3 text-sm">
-                  <Calendar className="w-4 h-4 text-gray-400" />
-                  <div>
-                    <p className="text-gray-500">{t("requests.submissionDate")}</p>
-                    <p className="text-gray-900">{requestMock.date}</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3 text-sm">
-                  <User className="w-4 h-4 text-gray-400" />
-                  <div>
-                    <p className="text-gray-500">{t("requests.responsibleDepartment")}</p>
-                    <p className="text-gray-900">{requestMock.department}</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3 text-sm">
-                  <Clock className="w-4 h-4 text-gray-400" />
-                  <div>
-                    <p className="text-gray-500">{t("requests.processingTime")}</p>
-                    <p className="text-gray-900">3-5 {t("requests.workDays")}</p>
-                  </div>
-                </div>
-              </div>
-            </Card>
             
-            {/* Admin Employee Assignment Section */}
-            {canAssignRequests && (
-              <Card className="p-6 bg-blue-50 border-blue-200">
-                <h4 className="text-[#115740] mb-4 flex items-center gap-2">
-                  <UserPlus className="w-5 h-5" />
-                  {t("requests.track.assignEmployee")}
-                </h4>
-                <div className="space-y-3">
-                  <Select
-                    value={selectedEmployeeId !== null ? selectedEmployeeId.toString() : ""}
-                    onValueChange={(value: string) => setSelectedEmployeeId(value ? parseInt(value, 10) : null)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder={t("requests.track.selectEmployee")} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {mockEmployees.map((emp) => (
-                        <SelectItem key={emp.id} value={emp.id.toString()}>
-                          {isRTL ? emp.nameAr : emp.nameEn}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  
-                  <Button
-                    onClick={() => {
-                      if (selectedEmployeeId) {
-                        handleAssignEmployee(selectedEmployeeId);
-                      }
-                    }}
-                    disabled={!selectedEmployeeId}
-                    className="w-full bg-[#115740] hover:bg-[#0d4230] text-white"
-                  >
-                    {t("requests.track.assign")}
-                  </Button>
-                </div>
-              </Card>
-            )}
-            
-            {/* Employee Status Change Dropdown */}
-            {isEmployee && (
-              <Card className="p-6">
-                <h4 className="text-[#115740] mb-4">{t("requests.changeRequestStatus")}</h4>
-                <div className="flex gap-2">
-                  <select 
-                    id="statusChange"
-                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 flex-1"
-                    onChange={(e) => handleStatusChange(parseInt(e.target.value))}
-                    defaultValue=""
-                  >
-                    <option value="" disabled>{t("requests.selectOption")}</option>
-                    <option value="1">{t("requests.requestStatuses.received")}</option>
-                    <option value="2">{t("requests.requestStatuses.underReview")}</option>
-                    <option value="3">{t("requests.requestStatuses.replied")}</option>
-                    <option value="4">{t("requests.requestStatuses.closed")}</option>
-                  </select>
-                  <Button 
-                    onClick={() => {
-                      const selectElement = document.getElementById('statusChange') as HTMLSelectElement;
-                      if (selectElement && selectElement.value) {
-                        handleStatusChange(parseInt(selectElement.value));
-                      }
-                    }}
-                    className="bg-[#115740] hover:bg-[#0d4230] text-white"
-                  >
-                    {t("requests.change")}
-                  </Button>
-                </div>
-              </Card>
-            )}
-            
-            {/* Employee Response Section */}
-            {isEmployee && (
-              <Card className="p-6">
-                <h4 className="text-[#115740] mb-4">
-                  {requestMock.requestTypeId === 4 ? t("requests.scheduleVisit") : t("requests.addResponse")}
-                </h4>
-                <div className="space-y-3">
-                  {requestMock.requestTypeId === 4 ? (
-                    // Visit scheduling form
-                    <>
-                      <div>
-                        <Input
-                          type="datetime-local"
-                          value={visitDateTime}
-                          onChange={(e) => setVisitDateTime(e.target.value)}
-                          className="w-full text-sm"
-                        />
-                      </div>
-                      <div>
-                        <Input
-                          placeholder={t("requests.visitLocation")}
-                          value={visitLocation}
-                          onChange={(e) => setVisitLocation(e.target.value)}
-                          className="w-full text-sm"
-                        />
-                      </div>
-                    </>
-                  ) : (
-                    // Response text for complaints/inquiries
-                    <Textarea
-                      placeholder={t("requests.writeResponseHere")}
-                      value={responseText}
-                      onChange={(e) => setResponseText(e.target.value)}
-                      rows={3}
-                      className="text-sm"
-                    />
-                  )}
-                  
-                  <div>
-                    <Input
-                      type="file"
-                      multiple
-                      onChange={handleFileChange}
-                      className="w-full text-sm"
-                    />
-                    {attachments.length > 0 && (
-                      <div className="mt-1 text-xs text-gray-600">
-                        {attachments.length} {t("requests.fileAttached")}
-                      </div>
-                    )}
-                  </div>
-                  
-                  <Button 
-                    onClick={handleSubmitResponse}
-                    className="bg-[#115740] hover:bg-[#0d4230] text-white text-sm h-8"
-                  >
-                    {t("requests.send")}
-                  </Button>
-                </div>
-              </Card>
-            )}
-
-            {/* Support */}
-            {/* <Card className="p-6 bg-blue-50 border-blue-200">
-              <h4 className="text-[#115740] mb-2">هل تحتاج مساعدة؟</h4>
-              <p className="text-sm text-gray-600 mb-4">
-                تواصل مع فريق الدعم للحصول على المساعدة
-              </p>
-              <Link to="/support">
-                <Button variant="outline" className="w-full gap-2">
-                  <HelpCircle className="w-4 h-4" />
-                  تواصل مع الدعم
-                </Button>
-              </Link>
-            </Card> */}
           </div>
         </div>
       </div>
+      
+      {/* Rating Dialog */}
+      <RatingDialog
+        open={isRatingDialogOpen}
+        onOpenChange={setIsRatingDialogOpen}
+        onSubmit={handleRatingSubmit}
+      />
     </div>
   );
 }

@@ -49,8 +49,8 @@ export const useLeadershipForm = (): UseLeadershipFormReturn => {
     resolver: zodResolver(validationSchema),
     mode: "onChange",
     defaultValues: {
-      fullNameAr: "",
-      fullNameEn: "",
+      nameAr: "",
+      nameEn: "",
       positionTitleAr: "",
       positionTitleEn: "",
       departmentId: undefined,
@@ -63,8 +63,8 @@ export const useLeadershipForm = (): UseLeadershipFormReturn => {
   useEffect(() => {
     if (leadershipData && isEditMode) {
       reset({
-        fullNameAr: leadershipData.fullNameAr,
-        fullNameEn: leadershipData.fullNameEn || "",
+        nameAr: leadershipData.nameAr,
+        nameEn: leadershipData.nameEn || "",
         positionTitleAr: leadershipData.positionTitleAr,
         positionTitleEn: leadershipData.positionTitleEn || "",
         departmentId: leadershipData.departmentId,
@@ -86,8 +86,8 @@ export const useLeadershipForm = (): UseLeadershipFormReturn => {
     try {
       if (isEditMode) {
         const payload: UpdateLeadershipPayload = {
-          fullNameAr: currentFormData.fullNameAr,
-          fullNameEn: currentFormData.fullNameEn || undefined,
+          nameAr: currentFormData.nameAr,
+          nameEn: currentFormData.nameEn || undefined,
           positionTitleAr: currentFormData.positionTitleAr,
           positionTitleEn: currentFormData.positionTitleEn || undefined,
           departmentId: currentFormData.departmentId,
@@ -97,8 +97,8 @@ export const useLeadershipForm = (): UseLeadershipFormReturn => {
         toast.success(t("leadership.updateSuccess"));
       } else {
         const payload: CreateLeadershipPayload = {
-          fullNameAr: currentFormData.fullNameAr,
-          fullNameEn: currentFormData.fullNameEn || undefined,
+          nameAr: currentFormData.nameAr,
+          nameEn: currentFormData.nameEn || undefined,
           positionTitleAr: currentFormData.positionTitleAr,
           positionTitleEn: currentFormData.positionTitleEn || undefined,
           departmentId: currentFormData.departmentId,

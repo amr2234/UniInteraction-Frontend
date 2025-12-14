@@ -101,6 +101,7 @@ export function LogsPage() {
   const [selectedLevel, setSelectedLevel] = useState<string>("all");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [isExporting, setIsExporting] = useState(false);
+  const [isClearDialogOpen, setIsClearDialogOpen] = useState(false);
 
   const handleSearch = (term: string) => {
     setSearchTerm(term);
@@ -271,21 +272,30 @@ export function LogsPage() {
               {t("logs.exportAs")} PDF
             </Button>
 
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button variant="destructive" size="sm" className="flex items-center gap-2 ml-auto">
-                  <Trash2 className="w-4 h-4" />
-                  {t("logs.clearLogs")}
-                </Button>
-              </AlertDialogTrigger>
+            <Button 
+              variant="destructive" 
+              size="sm" 
+              className="flex items-center gap-2 ml-auto"
+              onClick={() => setIsClearDialogOpen(true)}
+            >
+              <Trash2 className="w-4 h-4" />
+              {t("logs.clearLogs")}
+            </Button>
+
+            <AlertDialog open={isClearDialogOpen} onOpenChange={setIsClearDialogOpen}>
               <AlertDialogContent>
                 <AlertDialogHeader>
                   <AlertDialogTitle>{t("logs.clearLogs")}</AlertDialogTitle>
                   <AlertDialogDescription>{t("logs.clearConfirm")}</AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
-                  <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
-                  <AlertDialogAction onClick={handleClearLogs} className="bg-red-600 hover:bg-red-700">
+                  <AlertDialogCancel onClick={() => setIsClearDialogOpen(false)}>
+                    {t("common.cancel")}
+                  </AlertDialogCancel>
+                  <AlertDialogAction onClick={() => {
+                    handleClearLogs();
+                    setIsClearDialogOpen(false);
+                  }} className="bg-red-600 hover:bg-red-700">
                     {t("common.confirm")}
                   </AlertDialogAction>
                 </AlertDialogFooter>

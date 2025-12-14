@@ -31,7 +31,17 @@ export const lookupsApi = {
    * Get all main categories
    */
   getMainCategories: async (): Promise<MainCategoryDto[]> => {
-    return apiRequest.get<MainCategoryDto[]>('/lookups/main-categories');
+    const response = await apiRequest.get<any>('/lookups/main-categories');
+    // Handle paginated response with items array
+    if (response?.items && Array.isArray(response.items)) {
+      return response.items;
+    }
+    // Handle if response is a direct array
+    if (Array.isArray(response)) {
+      return response;
+    }
+    // Fallback to empty array
+    return [];
   },
 
   /**
@@ -41,7 +51,17 @@ export const lookupsApi = {
     const url = mainCategoryId 
       ? `/lookups/sub-categories?mainCategoryId=${mainCategoryId}`
       : '/lookups/sub-categories';
-    return apiRequest.get<SubCategoryDto[]>(url);
+    const response = await apiRequest.get<any>(url);
+    // Handle paginated response with items array
+    if (response?.items && Array.isArray(response.items)) {
+      return response.items;
+    }
+    // Handle if response is a direct array
+    if (Array.isArray(response)) {
+      return response;
+    }
+    // Fallback to empty array
+    return [];
   },
 
   /**
@@ -51,14 +71,34 @@ export const lookupsApi = {
     const url = subCategoryId
       ? `/lookups/services?subCategoryId=${subCategoryId}`
       : '/lookups/services';
-    return apiRequest.get<ServiceDto[]>(url);
+    const response = await apiRequest.get<any>(url);
+    // Handle paginated response with items array
+    if (response?.items && Array.isArray(response.items)) {
+      return response.items;
+    }
+    // Handle if response is a direct array
+    if (Array.isArray(response)) {
+      return response;
+    }
+    // Fallback to empty array
+    return [];
   },
 
   /**
    * Get university leadership members
    */
   getUniversityLeaderships: async (): Promise<UniversityLeadershipDto[]> => {
-    return apiRequest.get<UniversityLeadershipDto[]>('/lookups/university-leaderships');
+    const response = await apiRequest.get<any>('/lookups/university-leaderships');
+    // Handle paginated response with items array
+    if (response?.items && Array.isArray(response.items)) {
+      return response.items;
+    }
+    // Handle if response is a direct array
+    if (Array.isArray(response)) {
+      return response;
+    }
+    // Fallback to empty array
+    return [];
   },
 
   /**

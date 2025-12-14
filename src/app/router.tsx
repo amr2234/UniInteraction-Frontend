@@ -4,10 +4,9 @@ import { NotFoundPage } from "@/features/pages/NotFoundPage";
 import { LoginPage } from "@/features/auth/ui/LoginPage";
 import { RegisterPage } from "@/features/auth/ui/RegisterPage";
 import { DashboardPage } from "@/features/dashboard/ui/DashboardPage";
-import { SubmitSuggestion } from "@/features/requests/ui/SubmitSuggestion";
-import { SubmitComplaint } from "@/features/requests/ui/SubmitComplaint";
-import { SubmitInquiry } from "@/features/requests/ui/SubmitInquiry";
-import { BookVisit } from "@/features/requests/ui/BookVisit";
+import { ComplaintPage } from "@/features/requests/pages/ComplaintPage";
+import { InquiryPage } from "@/features/requests/pages/InquiryPage";
+import { VisitPage } from "@/features/requests/pages/VisitPage";
 import { TrackRequestsPage } from "@/features/requests/pages/TrackRequestsPage";
 import { RequestDetailsPage } from "@/features/requests/ui/RequestDetails";
 import { EditRequestPage } from "@/features/requests/ui/EditRequest";
@@ -18,9 +17,18 @@ import { FAQManagement } from "@/features/admin/faqs/Table/FAQManagement";
 import { FAQForm } from "@/features/admin/faqs/Form/FAQForm";
 import { UserManagement } from "@/features/admin/users/Table/UserManagement";
 import { UserForm } from "@/features/admin/users";
-import { LeadershipManagement, LeadershipForm } from "@/features/admin/leadership";
-import { MainCategoryManagement, MainCategoryForm } from "@/features/admin/categories";
-import { DepartmentManagement, DepartmentForm } from "@/features/admin/departments";
+import {
+  LeadershipManagement,
+  LeadershipForm,
+} from "@/features/admin/leadership";
+import {
+  MainCategoryManagement,
+  MainCategoryForm,
+} from "@/features/admin/categories";
+import {
+  DepartmentManagement,
+  DepartmentForm,
+} from "@/features/admin/departments";
 import { SettingsPage } from "@/features/admin/settings/SettingsPage";
 import { LogsPage } from "@/features/admin/logs/LogsPage";
 import { CalendarPage } from "@/features/calendar/pages/CalendarPage";
@@ -53,24 +61,24 @@ export function AppRouter() {
       />
 
       <Route
-        path="/dashboard/suggestion"
-        element={
-          <ProtectedRoute
-            anyRoleId={[UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.USER]}
-            showAccessDenied
-          >
-            <SubmitSuggestion />
-          </ProtectedRoute>
-        }
-      />
-      <Route
         path="/dashboard/complaint"
         element={
           <ProtectedRoute
             anyRoleId={[UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.USER]}
             showAccessDenied
           >
-            <SubmitComplaint />
+            <ComplaintPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/dashboard/suggestion"
+        element={
+          <ProtectedRoute
+            anyRoleId={[UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.USER]}
+            showAccessDenied
+          >
+            <ComplaintPage />
           </ProtectedRoute>
         }
       />
@@ -81,7 +89,7 @@ export function AppRouter() {
             anyRoleId={[UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.USER]}
             showAccessDenied
           >
-            <SubmitInquiry />
+            <InquiryPage />
           </ProtectedRoute>
         }
       />
@@ -92,7 +100,7 @@ export function AppRouter() {
             anyRoleId={[UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.USER]}
             showAccessDenied
           >
-            <BookVisit />
+            <VisitPage />
           </ProtectedRoute>
         }
       />
@@ -360,7 +368,6 @@ export function AppRouter() {
           </ProtectedRoute>
         }
       />
-
 
       <Route path="*" element={<NotFoundPage />} />
     </Routes>

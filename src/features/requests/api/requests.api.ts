@@ -6,6 +6,13 @@ import {
   UpdateRequestStatusPayload,
   RequestAttachment,
   PaginatedResponse,
+  SubmitResolutionPayload,
+  AssignVisitPayload,
+  ScheduleVisitPayload,
+  UpdateVisitStatusPayload,
+  SubmitRatingPayload,
+  RequestNewVisitDatePayload,
+  Result,
 } from '@/core/types/api';
 
 // ============================================
@@ -26,11 +33,13 @@ export const requestsApi = {
   getUserRequests: async (filters?: RequestFilters): Promise<UserRequestDto[]> => {
     const params = new URLSearchParams();
     
-    if (filters?.statusId) params.append('statusId', filters.statusId.toString());
+    if (filters?.requestStatusId) params.append('requestStatusId', filters.requestStatusId.toString());
     if (filters?.requestTypeId) params.append('requestTypeId', filters.requestTypeId.toString());
     if (filters?.startDate) params.append('startDate', filters.startDate);
     if (filters?.endDate) params.append('endDate', filters.endDate);
     if (filters?.searchTerm) params.append('searchTerm', filters.searchTerm);
+    if (filters?.departmentId) params.append('departmentId', filters.departmentId.toString());
+    if (filters?.universityLeadershipId) params.append('universityLeadershipId', filters.universityLeadershipId.toString());
 
     const queryString = params.toString();
     const url = queryString ? `/requests?${queryString}` : '/requests';
@@ -51,11 +60,13 @@ export const requestsApi = {
       pageSize: pageSize.toString(),
     });
     
-    if (filters?.statusId) params.append('statusId', filters.statusId.toString());
+    if (filters?.requestStatusId) params.append('requestStatusId', filters.requestStatusId.toString());
     if (filters?.requestTypeId) params.append('requestTypeId', filters.requestTypeId.toString());
     if (filters?.startDate) params.append('startDate', filters.startDate);
     if (filters?.endDate) params.append('endDate', filters.endDate);
     if (filters?.searchTerm) params.append('searchTerm', filters.searchTerm);
+    if (filters?.departmentId) params.append('departmentId', filters.departmentId.toString());
+    if (filters?.universityLeadershipId) params.append('universityLeadershipId', filters.universityLeadershipId.toString());
 
     return apiRequest.get<PaginatedResponse<UserRequestDto>>(`/requests?${params.toString()}`);
   },
@@ -74,7 +85,26 @@ export const requestsApi = {
     id: number | string,
     payload: UpdateRequestStatusPayload
   ): Promise<UserRequestDto> => {
-    return apiRequest.put<UserRequestDto>(`/requests/${id}/status`, payload);
+    const result = await apiRequest.put<Result<UserRequestDto>>(`/requests/${id}/status`, payload);
+    
+    // Handle Result<T> wrapper
+    if ('isSuccess' in result && 'value' in result) {
+      if (result.isSuccess && result.value) {
+        return result.value;
+      }
+      // If isSuccess is false but we got 200, still treat as success if value exists
+      if (result.value) {
+        return result.value;
+      }
+      throw new Error(result.message || 'Failed to update request status');
+    }
+    
+    // If response is UserRequestDto directly (no wrapper)
+    if (result && typeof result === 'object' && 'id' in result && 'requestNumber' in result) {
+      return result as any as UserRequestDto;
+    }
+    
+    throw new Error('Unexpected response structure from API');
   },
 
   /**
@@ -120,5 +150,98 @@ export const requestsApi = {
     attachmentId: number
   ): Promise<void> => {
     return apiRequest.delete<void>(`/requests/${requestId}/attachments/${attachmentId}`);
+  },
+
+  /**
+   * Assign department to a request
+   */
+  assignDepartment: async (
+    requestId: number | string,
+    departmentId: number
+  ): Promise<UserRequestDto> => {
+    return apiRequest.put<UserRequestDto>(`/requests/${requestId}/assign-department`, { departmentId });
+  },
+
+  /**
+   * Submit employee resolution/response
+   */
+  submitResolution: async (
+    requestId: number | string,
+    payload: SubmitResolutionPayload
+  ): Promise<UserRequestDto> => {
+    const formData = new FormData();
+    formData.append('resolutionDetailsAr', payload.resolutionDetailsAr);
+    if (payload.resolutionDetailsEn) {
+      formData.append('resolutionDetailsEn', payload.resolutionDetailsEn);
+    }
+    if (payload.attachments) {
+      payload.attachments.forEach((file) => {
+        formData.append('attachments', file);
+      });
+    }
+
+    return apiRequest.uploadFile<UserRequestDto>(`/requests/${requestId}/resolution`, formData);
+  },
+
+  /**
+   * Assign visit date/time
+   */
+  assignVisit: async (
+    requestId: number | string,
+    payload: AssignVisitPayload
+  ): Promise<UserRequestDto> => {
+    return apiRequest.put<UserRequestDto>(`/requests/${requestId}/assign-visit`, payload);
+  },
+
+  /**
+   * Accept visit by user
+   */
+  acceptVisit: async (requestId: number | string): Promise<UserRequestDto> => {
+    return apiRequest.put<UserRequestDto>(`/requests/${requestId}/accept-visit`, {});
+  },
+
+  /**
+   * Decline visit by user
+   */
+  declineVisit: async (requestId: number | string): Promise<UserRequestDto> => {
+    return apiRequest.put<UserRequestDto>(`/requests/${requestId}/decline-visit`, {});
+  },
+
+  /**
+   * Submit user rating and feedback
+   */
+  submitRating: async (
+    requestId: number | string,
+    payload: SubmitRatingPayload
+  ): Promise<UserRequestDto> => {
+    return apiRequest.put<UserRequestDto>(`/requests/${requestId}/rating`, payload);
+  },
+
+  /**
+   * Download attachment
+   */
+  downloadAttachment: async (attachmentId: number): Promise<Blob> => {
+    return apiRequest.get<Blob>(`/attachments/${attachmentId}/download`, {
+      responseType: 'blob',
+    });
+  },
+  
+ 
+  scheduleVisit: async (payload: ScheduleVisitPayload): Promise<UserRequestDto> => {
+    return apiRequest.post<UserRequestDto>('/visits/schedule', payload);
+  },
+
+  /**
+   * Update visit status (Accept/Reschedule/Complete/Cancel)
+   */
+  updateVisitStatus: async (visitId: number, payload: UpdateVisitStatusPayload): Promise<UserRequestDto> => {
+    return apiRequest.put<UserRequestDto>(`/visits/${visitId}/status`, payload);
+  },
+
+  /**
+   * Submit rating (new endpoint)
+   */
+  submitRatingNew: async (payload: SubmitRatingPayload & { userRequestId: number }): Promise<UserRequestDto> => {
+    return apiRequest.post<UserRequestDto>('/ratings', payload);
   },
 };

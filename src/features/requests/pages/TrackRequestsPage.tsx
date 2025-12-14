@@ -8,6 +8,9 @@ import {
   ArrowRight,
   Calendar,
   Eye,
+  ChevronLeft,
+  ChevronRight,
+  RotateCcw,
 } from "lucide-react";
 import {
   Select,
@@ -17,7 +20,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useTrackRequests, REQUEST_TYPES } from "./TrackRequests.logic";
-import { useState } from "react";
 
 export function TrackRequestsPage() {
   const {
@@ -25,11 +27,18 @@ export function TrackRequestsPage() {
     filterStatus,
     filterType,
     filterDepartment,
+    filterLeadership,
     filterAssignment,
+    startDate,
+    endDate,
     filteredRequests,
     stats,
     departments,
-    employees,
+    leadership,
+    currentPage,
+    totalPages,
+    totalCount,
+    isLoadingRequests,
     canAssignRequests,
     isRTL,
     t,
@@ -40,33 +49,17 @@ export function TrackRequestsPage() {
     handleStatusChange,
     handleTypeChange,
     handleDepartmentChange,
+    handleLeadershipChange,
     handleAssignmentChange,
+    handleStartDateChange,
+    handleEndDateChange,
+    handlePageChange,
     handleBackToDashboard,
     handleViewRequest,
-    handleAssignEmployee,
+    handleAssignDepartment,
+    handleResetFilters,
+    handleResetDates,
   } = useTrackRequests();
-
-  // State to track employee selection for each request
-  const [employeeSelections, setEmployeeSelections] = useState<Record<string, number | null>>({});
-
-  const handleEmployeeSelect = (requestId: string, employeeId: string) => {
-    const empId = employeeId ? parseInt(employeeId, 10) : null;
-    setEmployeeSelections(prev => ({
-      ...prev,
-      [requestId]: empId
-    }));
-    
-    if (empId) {
-      handleAssignEmployee(requestId, empId);
-      // Clear selection after assignment
-      setTimeout(() => {
-        setEmployeeSelections(prev => ({
-          ...prev,
-          [requestId]: null
-        }));
-      }, 1000);
-    }
-  };
 
   return (
     <div className="min-h-screen bg-[#F5F7FA]">
@@ -93,9 +86,21 @@ export function TrackRequestsPage() {
 
         {/* Filters */}
         <Card className="p-6 mb-6">
-          <div className={`grid gap-4 ${canAssignRequests ? 'md:grid-cols-6' : 'md:grid-cols-5'}`}>
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-lg font-semibold text-gray-900">{t("requests.track.filters")}</h3>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleResetFilters}
+              className="gap-2"
+            >
+              <RotateCcw className="w-4 h-4" />
+              {t("requests.track.resetFilters")}
+            </Button>
+          </div>
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {/* Search */}
-            <div className="md:col-span-2">
+            <div className="md:col-span-2 lg:col-span-1">
               <div className="relative">
                 <Search
                   className={`absolute ${isRTL ? 'right-3' : 'left-3'} top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5`}
@@ -134,9 +139,6 @@ export function TrackRequestsPage() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">{t("requests.track.allTypes")}</SelectItem>
-                  <SelectItem value={REQUEST_TYPES.SUGGESTION.toString()}>
-                    {getRequestTypeName(REQUEST_TYPES.SUGGESTION)}
-                  </SelectItem>
                   <SelectItem value={REQUEST_TYPES.COMPLAINT.toString()}>
                     {getRequestTypeName(REQUEST_TYPES.COMPLAINT)}
                   </SelectItem>
@@ -159,12 +161,68 @@ export function TrackRequestsPage() {
                 <SelectContent>
                   <SelectItem value="all">{t("requests.track.allDepartments")}</SelectItem>
                   {departments.map((dept) => (
-                    <SelectItem key={dept} value={dept}>
-                      {dept}
+                    <SelectItem key={dept.id} value={dept.id.toString()}>
+                      {isRTL ? dept.nameAr : (dept.nameEn || dept.nameAr)}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
+            </div>
+
+            {/* Leadership Filter */}
+            <div>
+              <Select value={filterLeadership} onValueChange={handleLeadershipChange}>
+                <SelectTrigger>
+                  <SelectValue placeholder={t("requests.track.filterByLeadership")} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">{t("requests.track.allLeadership")}</SelectItem>
+                  {leadership.map((leader) => (
+                    <SelectItem key={leader.id} value={leader.id.toString()}>
+                      {isRTL ? leader.nameAr : (leader.nameEn || leader.nameAr)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Start Date Filter */}
+            <div>
+              <label className="text-sm font-medium text-gray-700 mb-1 block">
+                {t("requests.track.startDate")}
+              </label>
+              <Input
+                type="date"
+                value={startDate}
+                onChange={(e) => handleStartDateChange(e.target.value)}
+                className="w-full"
+              />
+            </div>
+
+            {/* End Date Filter */}
+            <div>
+              <label className="text-sm font-medium text-gray-700 mb-1 block">
+                {t("requests.track.endDate")}
+              </label>
+              <Input
+                type="date"
+                value={endDate}
+                onChange={(e) => handleEndDateChange(e.target.value)}
+                className="w-full"
+                min={startDate}
+              />
+            </div>
+
+            {/* Reset Dates Button */}
+            <div className="flex items-end">
+              <Button
+                variant="outline"
+                onClick={handleResetDates}
+                className="w-full gap-2"
+              >
+                <RotateCcw className="w-4 h-4" />
+                {t("requests.track.resetDates")}
+              </Button>
             </div>
 
             {/* Assignment Filter - Admin Only */}
@@ -201,70 +259,167 @@ export function TrackRequestsPage() {
         </div>
 
         {/* Requests List */}
-        <div className="space-y-4">
-          {filteredRequests.map((request) => (
-            <Card key={request.id} className="p-6 hover:shadow-lg transition-shadow">
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex-1">
-                  <div className="flex items-center gap-3 mb-2">
-                    <span className={`px-3 py-1 rounded-full text-xs ${getStatusColor(request.statusId)}`}>
-                      {getStatusName(request.statusId)}
-                    </span>
-                    <span className="text-sm text-gray-500">{getRequestTypeName(request.typeId)}</span>
-                    <span className="text-sm text-gray-400">•</span>
-                    <span className="text-sm text-gray-500">{request.id}</span>
-                  </div>
-                  <h4 className="text-gray-900 mb-2">
-                    {isRTL ? request.titleAr : request.titleEn}
-                  </h4>
-                  <div className="flex items-center gap-4 text-sm text-gray-600">
-                    <div className="flex items-center gap-1">
-                      <Calendar className="w-4 h-4" />
-                      <span>{request.date}</span>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <span>{isRTL ? request.departmentAr : request.departmentEn}</span>
-                    </div>
-                    {request.assignedToName && (
-                      <div className="flex items-center gap-1">
-                        <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded">
-                          {t("requests.track.assignedTo")}: {request.assignedToName}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  {canAssignRequests && (
-                    <Select
-                      value={employeeSelections[request.id] !== null && employeeSelections[request.id] !== undefined ? employeeSelections[request.id]!.toString() : ""}
-                      onValueChange={(value: string) => handleEmployeeSelect(request.id, value)}
-                    >
-                      <SelectTrigger className="w-[180px]">
-                        <SelectValue placeholder={t("requests.track.assignEmployee")} />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {employees.map((emp) => (
-                          <SelectItem key={emp.id} value={emp.id.toString()}>
-                            {isRTL ? emp.nameAr : emp.nameEn}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  )}
-                  <Link to={`/dashboard/request/${request.id}`}>
-                    <Button variant="outline" size="sm" className="gap-2">
-                      <Eye className="w-4 h-4" />
-                      <span>{t("common.viewDetails")}</span>
-                    </Button>
-                  </Link>
-                </div>
-              </div>
-            </Card>
-          ))}
-        </div>
+        {isLoadingRequests ? (
+          <Card className="p-12 text-center">
+            <p className="text-gray-600">{t("common.loading")}</p>
+          </Card>
+        ) : (
+          <div className="space-y-4">
+            {filteredRequests.map((request) => {
+              const isVisitRequest = request.requestTypeId === REQUEST_TYPES.VISIT;
 
-        {filteredRequests.length === 0 && (
+              return (
+                <Card key={request.id} className="p-6 hover:shadow-lg transition-shadow">
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-3 mb-2">
+                        <span className={`px-3 py-1 rounded-full text-xs ${getStatusColor(request.requestStatusId)}`}>
+                          {getStatusName(request.requestStatusId)}
+                        </span>
+                        <span className="text-sm text-gray-500">{getRequestTypeName(request.requestTypeId)}</span>
+                        <span className="text-sm text-gray-400">•</span>
+                        <span className="text-sm text-gray-500">{request.requestNumber}</span>
+                      </div>
+                      <h4 className="text-gray-900 mb-2">
+                        {isRTL ? request.titleAr : (request.titleEn || request.titleAr)}
+                      </h4>
+                      <div className="flex items-center gap-4 text-sm text-gray-600">
+                        <div className="flex items-center gap-1">
+                          <Calendar className="w-4 h-4" />
+                          <span>{new Date(request.createdAt).toLocaleDateString(isRTL ? 'ar-SA' : 'en-US')}</span>
+                        </div>
+                        
+                        {/* Visit Request - Show Leadership and Visit Date */}
+                        {isVisitRequest && (
+                          <>
+                            {request.universityLeadershipName ? (
+                              <div className="flex items-center gap-1">
+                                <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded">
+                                  {t("requests.track.assignedTo")}: {request.universityLeadershipName}
+                                </span>
+                              </div>
+                            ) : (
+                              <div className="flex items-center gap-1">
+                                <span className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded">
+                                  {t("requests.track.noLeadershipAssigned")}
+                                </span>
+                              </div>
+                            )}
+                            {request.visitStartAt ? (
+                              <div className="flex items-center gap-1">
+                                <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded">
+                                  {t("requests.track.visitDate")}: {new Date(request.visitStartAt).toLocaleDateString(isRTL ? 'ar-SA' : 'en-US')}
+                                </span>
+                              </div>
+                            ) : (
+                              <div className="flex items-center gap-1">
+                                <span className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded">
+                                  {t("requests.track.noDateAssigned")}
+                                </span>
+                              </div>
+                            )}
+                          </>
+                        )}
+                        
+                        {/* Other Request Types - Show Category and Department */}
+                        {!isVisitRequest && (
+                          <>
+                            {request.mainCategoryName && (
+                              <div className="flex items-center gap-1">
+                                <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded">
+                                  {request.mainCategoryName}
+                                </span>
+                              </div>
+                            )}
+                            {request.departmentName ? (
+                              <div className="flex items-center gap-1">
+                                <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded">
+                                  {t("requests.track.assignedToDept")}: {request.departmentName}
+                                </span>
+                              </div>
+                            ) : (
+                              <div className="flex items-center gap-1">
+                                <span className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded">
+                                  {t("requests.track.notAssignedToDept")}
+                                </span>
+                              </div>
+                            )}
+                          </>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Link to={`/dashboard/request/${request.id}`}>
+                        <Button variant="outline" size="sm" className="gap-2">
+                          <Eye className="w-4 h-4" />
+                          <span>{t("common.viewDetails")}</span>
+                        </Button>
+                      </Link>
+                    </div>
+                  </div>
+                </Card>
+              );
+            })}
+          </div>
+        )}
+
+        {/* Pagination */}
+        {!isLoadingRequests && totalPages > 1 && (
+          <Card className="p-4 mt-6">
+            <div className="flex items-center justify-between">
+              <div className="text-sm text-gray-600">
+                {t("common.showing")} {(currentPage - 1) * 10 + 1} - {Math.min(currentPage * 10, totalCount)} {t("common.of")} {totalCount}
+              </div>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  disabled={currentPage === 1}
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                  {t("common.previous")}
+                </Button>
+                <div className="flex items-center gap-1">
+                  {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                    let pageNum;
+                    if (totalPages <= 5) {
+                      pageNum = i + 1;
+                    } else if (currentPage <= 3) {
+                      pageNum = i + 1;
+                    } else if (currentPage >= totalPages - 2) {
+                      pageNum = totalPages - 4 + i;
+                    } else {
+                      pageNum = currentPage - 2 + i;
+                    }
+                    return (
+                      <Button
+                        key={pageNum}
+                        variant={currentPage === pageNum ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => handlePageChange(pageNum)}
+                        className="w-10"
+                      >
+                        {pageNum}
+                      </Button>
+                    );
+                  })}
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                >
+                  {t("common.next")}
+                  <ChevronRight className="w-4 h-4" />
+                </Button>
+              </div>
+            </div>
+          </Card>
+        )}
+
+        {!isLoadingRequests && filteredRequests.length === 0 && (
           <Card className="p-12 text-center">
             <FileSearch className="w-16 h-16 text-gray-300 mx-auto mb-4" />
             <h3 className="text-gray-600 mb-2">{t("requests.track.noRequests")}</h3>

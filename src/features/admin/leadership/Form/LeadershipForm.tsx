@@ -173,19 +173,19 @@ export function LeadershipForm() {
             {/* Name Fields */}
             <div className="grid md:grid-cols-2 gap-4">
               <Controller
-                name="fullNameAr"
+                name="nameAr"
                 control={control}
                 render={({ field }) => (
                   <FormField
                     label={t("leadership.nameArLabel")}
                     required
-                    error={errors.fullNameAr?.message}
+                    error={errors.nameAr?.message}
                   >
                     <Input
                       {...field}
-                      id="fullNameAr"
+                      id="nameAr"
                       className={`rounded-xl mt-2 ${
-                        errors.fullNameAr ? "border-red-500" : ""
+                        errors.nameAr ? "border-red-500" : ""
                       }`}
                       placeholder={t("leadership.nameArPlaceholder")}
                     />
@@ -194,18 +194,18 @@ export function LeadershipForm() {
               />
 
               <Controller
-                name="fullNameEn"
+                name="nameEn"
                 control={control}
                 render={({ field }) => (
                   <FormField
                     label={t("leadership.nameEnLabel")}
-                    error={errors.fullNameEn?.message}
+                    error={errors.nameEn?.message}
                   >
                     <Input
                       {...field}
-                      id="fullNameEn"
+                      id="nameEn"
                       className={`rounded-xl mt-2 ${
-                        errors.fullNameEn ? "border-red-500" : ""
+                        errors.nameEn ? "border-red-500" : ""
                       }`}
                       dir="ltr"
                       placeholder={t("leadership.nameEnPlaceholder")}
@@ -338,7 +338,7 @@ export function LeadershipForm() {
       <ConfirmDialog
         open={isConfirmDialogOpen}
         isEditMode={isEditMode}
-        leaderName={currentFormData?.fullNameAr || ""}
+        leaderName={currentFormData?.nameAr || ""}
         onOpenChange={setIsConfirmDialogOpen}
         onConfirm={handleConfirmSubmit}
         t={t}

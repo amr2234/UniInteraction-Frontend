@@ -9,6 +9,13 @@ export interface ApiResponse<T = any> {
   errors?: Record<string, string[]>;
 }
 
+export interface Result<T> {
+  isSuccess: boolean;
+  value?: T;
+  message: string;
+  errors?: string[];
+}
+
 export interface ApiError {
   status: number;
   message: string;
@@ -80,6 +87,7 @@ export interface UserInfo {
 // ============================================
 
 export interface CreateRequestPayload {
+  userId: number;
   nameAr: string;
   nameEn?: string;
   email: string;
@@ -99,6 +107,7 @@ export interface CreateRequestPayload {
   visitReasonEn?: string;
   visitStartAt?: string;
   visitEndAt?: string;
+  requestStatusId?: number;
   universityLeadershipId?: number;
 }
 
@@ -116,9 +125,11 @@ export interface UserRequestDto {
   additionalDetailsAr?: string;
   additionalDetailsEn?: string;
   requestTypeId: number;
-  requestTypeName: string;
-  statusId: number;
-  statusName: string;
+  requestTypeNameAr: string;
+  requestTypeNameEn?: string;
+  requestStatusId: number;
+  requestStatusNameAr: string;
+  requestStatusNameEn?: string;
   requestCategoryId?: number;
   requestCategoryName?: string;
   mainCategoryId?: number;
@@ -131,25 +142,87 @@ export interface UserRequestDto {
   visitReasonEn?: string;
   visitStartAt?: string;
   visitEndAt?: string;
+  visitStatus?: number; // 1=Scheduled, 2=Accepted, 3=Rescheduled, 4=Completed
   universityLeadershipId?: number;
   universityLeadershipName?: string;
+  departmentId?: number;
+  assignedDepartmentId?: number;
+  departmentNameAr?: string;
+  departmentNameEn?: string;
+  departmentName?: string; 
   submittedChannel?: string;
   createdAt: string;
   updatedAt?: string;
+  resolutionDetailsAr?: string;
+  resolutionDetailsEn?: string;
+  Attachments?: RequestAttachment[];
+  resolvedBy?: string;
+  resolvedAt?: string;
+  relatedRequestId?: number;
+  relatedRequestNumber?: string;
+  rating?: number;
+  feedbackAr?: string;
+  feedbackEn?: string;
+  ratedAt?: string;
+  needDateReschedule?: boolean;
 }
 
 export interface RequestFilters {
-  statusId?: number;
+  requestStatusId?: number;
   requestTypeId?: number;
   startDate?: string;
   endDate?: string;
   searchTerm?: string;
+  departmentId?: number;
+  universityLeadershipId?: number;
 }
 
 export interface UpdateRequestStatusPayload {
-  statusId: number;
-  noteAr?: string;
-  noteEn?: string;
+  requestId: number;
+  newStatusId: number;
+  changeNoteAr?: string;
+  changeNoteEn?: string;
+  changedByUserId?: number;
+}
+
+export interface SubmitResolutionPayload {
+  resolutionDetailsAr: string;
+  resolutionDetailsEn?: string;
+  attachments?: File[];
+}
+
+export interface AssignVisitPayload {
+  visitStartAt: string;
+  visitEndAt?: string;
+  visitLocation?: string;
+  universityLeadershipId: number;
+}
+
+export interface SubmitRatingPayload {
+  rating: number;
+  feedbackAr?: string;
+  feedbackEn?: string;
+}
+
+export interface RequestNewVisitDatePayload {
+  needDateReschedule: boolean;
+}
+
+export interface ScheduleVisitPayload {
+  requestId: number;
+  visitDate: string; // Single visit date
+  universityLeadershipId: number;
+  visitStatus: number; // 1=Scheduled, 2=Accepted, 3=Rescheduled, 4=Completed
+}
+
+export interface UpdateVisitStatusPayload {
+  visitStatus: number; // 1=Scheduled, 2=Accepted, 3=Rescheduled, 4=Completed
+  visitDate?: string; // Optional new visit date when rescheduling
+}
+
+export interface CreateRelatedRequestPayload {
+  relatedRequestId: number;
+  // ... other request fields
 }
 
 export interface RequestAttachment {
@@ -158,6 +231,7 @@ export interface RequestAttachment {
   fileUrl: string;
   fileSize: number;
   uploadedAt: string;
+  attachmentTypeId: number; // 1 = Request Form, 2 = Resolution Response, 3 = Profile Picture
 }
 
 // ============================================
@@ -236,8 +310,8 @@ export interface ServiceDto {
 
 export interface UniversityLeadershipDto {
   id: number;
-  fullNameAr: string;
-  fullNameEn?: string;
+  nameAr: string;
+  nameEn?: string;
   positionTitleAr: string;
   positionTitleEn?: string;
   departmentId?: number;
@@ -283,8 +357,8 @@ export interface UpdateFaqPayload extends CreateFaqPayload {
 // ============================================
 
 export interface CreateLeadershipPayload {
-  fullNameAr: string;
-  fullNameEn?: string;
+  nameAr: string;
+  nameEn?: string;
   positionTitleAr: string;
   positionTitleEn?: string;
   departmentId?: number;

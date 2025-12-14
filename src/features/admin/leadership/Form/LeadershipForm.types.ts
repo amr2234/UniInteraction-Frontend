@@ -1,8 +1,8 @@
 import { UseFormReturn } from "react-hook-form";
 
 export interface LeadershipFormData {
-  fullNameAr: string;
-  fullNameEn?: string;
+  nameAr: string;
+  nameEn?: string;
   positionTitleAr: string;
   positionTitleEn?: string;
   departmentId?: number;

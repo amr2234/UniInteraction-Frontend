@@ -5,12 +5,12 @@ const englishRegex = /^[a-zA-Z\s]+$/;
 
 export const createLeadershipFormSchema = (t: (key: string) => string) => {
   return z.object({
-    fullNameAr: z
+    nameAr: z
       .string()
       .min(1, t("validation.nameArRequired"))
       .regex(arabicRegex, t("validation.arabicOnly")),
 
-    fullNameEn: z
+    nameEn: z
       .string()
       .optional()
       .refine((val) => !val || val.trim() === "" || englishRegex.test(val), {

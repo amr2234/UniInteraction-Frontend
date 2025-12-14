@@ -1,6 +1,6 @@
 import React from "react";
-import { Card } from "../../components/ui/card";
-import { Label } from "../../components/ui/label";
+import { Card } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
 import { Upload, X } from "lucide-react";
 
 interface FileUploadSectionProps {
@@ -12,6 +12,7 @@ interface FileUploadSectionProps {
   bgColor?: string;
   title?: string;
   description?: string;
+  language?: 'ar' | 'en';
 }
 
 export const FileUploadSection: React.FC<FileUploadSectionProps> = ({
@@ -23,7 +24,16 @@ export const FileUploadSection: React.FC<FileUploadSectionProps> = ({
   bgColor = "bg-[#6CAEBD]/10",
   title = "المرفقات",
   description = "رفع الملفات (إن وجدت)",
+  language = 'ar',
 }) => {
+  const isRTL = language === 'ar';
+  
+  const translations = {
+    clickToSelect: isRTL ? 'اضغط لاختيار الملفات أو اسحبها هنا' : 'Click to select files or drag them here',
+    acceptedFiles: isRTL 
+      ? 'الملفات المقبولة: PDF, DOC, DOCX, XLS, XLSX, JPG, JPEG, PNG, GIF (حتى 10MB)'
+      : 'Accepted files: PDF, DOC, DOCX, XLS, XLSX, JPG, JPEG, PNG, GIF (up to 10MB)'
+  };
   return (
     <Card className="p-6 rounded-xl border-0 shadow-soft bg-white">
       <h3 className="text-[#6CAEBD] mb-6">{title}</h3>
@@ -36,9 +46,11 @@ export const FileUploadSection: React.FC<FileUploadSectionProps> = ({
             htmlFor="files"
             className={`flex flex-col items-center justify-center w-full h-32 border-2 border-dashed ${borderColor} rounded-xl cursor-pointer hover:${bgColor.replace('/10', '/5')} transition`}
           >
-            <Upload className={`w-8 h-8 ${iconColor} mb-2`} />
-            <span className="text-sm text-[#6F6F6F]">اضغط لاختيار الملفات أو اسحبها هنا</span>
-            <span className="text-xs text-[#6F6F6F] mt-1">PDF, DOC, DOCX, JPG, PNG (حتى 10MB)</span>
+             <Upload className={`w-8 h-8 ${iconColor} mb-2`} />
+            <span className="text-xs text-[#6F6F6F]">{translations.clickToSelect}</span>
+            <span className="text-[10px] text-[#6F6F6F] mt-1 text-center px-2">
+              {translations.acceptedFiles}
+            </span>
           </label>
           <input
             id="files"
@@ -46,7 +58,7 @@ export const FileUploadSection: React.FC<FileUploadSectionProps> = ({
             multiple
             onChange={onFileChange}
             className="hidden"
-            accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+            accept=".jpg,.jpeg,.png,.gif,.pdf,.doc,.docx,.xls,.xlsx"
           />
         </div>
 

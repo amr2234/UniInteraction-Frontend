@@ -1,4 +1,5 @@
 import { CheckCircle, Circle } from "lucide-react";
+import { Fragment } from "react";
 
 interface Step {
   label: string;
@@ -15,7 +16,7 @@ export function StatusStepper({ steps }: StatusStepperProps) {
     <div className="bg-white rounded-2xl shadow-soft p-8 my-6">
       <div className="flex items-center" dir="rtl">
         {steps.map((step, index) => (
-          <>
+          <Fragment key={index}>
             {/* Step Content */}
             <div className="flex flex-col items-center flex-shrink-0">
               {/* Circle Icon */}
@@ -66,7 +67,7 @@ export function StatusStepper({ steps }: StatusStepperProps) {
                 style={{ marginBottom: '56px' }}
               />
             )}
-          </>
+          </Fragment>
         ))}
       </div>
     </div>

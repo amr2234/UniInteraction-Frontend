@@ -17,10 +17,10 @@ export enum RequestStatus {
  * Request Status Names (Arabic)
  */
 export const REQUEST_STATUS_NAMES_AR: Record<RequestStatus, string> = {
-  [RequestStatus.RECEIVED]: 'تم الاستلام',
+  [RequestStatus.RECEIVED]: 'مستلم',
   [RequestStatus.UNDER_REVIEW]: 'قيد المراجعة',
   [RequestStatus.REPLIED]: 'تم الرد',
-  [RequestStatus.CLOSED]: 'تم الإغلاق',
+  [RequestStatus.CLOSED]: 'مغلق',
 };
 
 /**
@@ -86,3 +86,21 @@ export const getRequestStatusDescription = (statusId: number, language: 'ar' | '
 export const ALL_REQUEST_STATUSES = Object.values(RequestStatus).filter(
   (value): value is RequestStatus => typeof value === 'number'
 );
+
+/**
+ * Helper function to get status color for badges
+ */
+export const getRequestStatusColor = (statusId: number): string => {
+  switch (statusId) {
+    case RequestStatus.RECEIVED:
+      return 'bg-blue-100 text-blue-800 border-blue-200';
+    case RequestStatus.UNDER_REVIEW:
+      return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+    case RequestStatus.REPLIED:
+      return 'bg-green-100 text-green-800 border-green-200';
+    case RequestStatus.CLOSED:
+      return 'bg-gray-100 text-gray-800 border-gray-200';
+    default:
+      return 'bg-gray-100 text-gray-800 border-gray-200';
+  }
+};

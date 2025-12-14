@@ -41,8 +41,8 @@ export function LandingPage() {
   const services = [
     {
       icon: AlertCircle,
-      title: t("requests.submitComplaint"),
-      description: t("requests.submitComplaintDesc"),
+      title: t("requests.submitComplaintOrSuggestion"),
+      description: t("requests.submitComplaintOrSuggestionDesc"),
       link: "/dashboard/complaint",
       color: "from-[#875E9E] to-[#6CAEBD]",
       bgColor: "bg-purple-50",
@@ -190,7 +190,7 @@ export function LandingPage() {
               >
                 {/* Show service quick links only for regular users or non-employees */}
                 {(isUser || !isLoggedIn) && [
-                  { to: "/dashboard/complaint", label: t("requests.submitComplaint") },
+                  { to: "/dashboard/complaint", label: t("requests.submitComplaintOrSuggestion") },
                   { to: "/dashboard/inquiry", label: t("requests.submitInquiry") },
                   { to: "/dashboard/book-visit", label: t("requests.bookVisit") },
                   { to: "/faqs", label: t("navigation.faq") },
@@ -570,7 +570,7 @@ export function LandingPage() {
                 <li>
                   <Link to="/dashboard/complaint" className="hover:text-white transition flex items-center gap-2 group">
                     <motion.span whileHover={{ x: -4 }}>←</motion.span>
-                    {t("requests.submitComplaint")}
+                    {t("requests.submitComplaintOrSuggestion")}
                   </Link>
                 </li>
                 <li>

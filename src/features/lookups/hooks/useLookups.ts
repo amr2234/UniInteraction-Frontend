@@ -45,12 +45,13 @@ export const useRequestStatuses = () => {
  * Hook to get all main categories
  * Cached for 30 minutes
  */
-export const useMainCategories = () => {
+export const useMainCategories = () => {  
   return useQuery<MainCategoryDto[], ApiError>({
     queryKey: queryKeys.lookups.mainCategories,
     queryFn: lookupsApi.getMainCategories,
     staleTime: 30 * 60 * 1000, // 30 minutes
     gcTime: 60 * 60 * 1000, // 1 hour
+    retry: 2,
   });
 };
 
@@ -90,6 +91,7 @@ export const useLeadershipLookup = () => {
     queryFn: lookupsApi.getUniversityLeaderships,
     staleTime: 60 * 60 * 1000, // 1 hour
     gcTime: 2 * 60 * 60 * 1000, // 2 hours
+    retry: 2,
   });
 };
 

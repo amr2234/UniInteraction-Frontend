@@ -72,7 +72,7 @@ export function DashboardPage() {
       titleEn: 'Inquiry about registration dates for next semester',
       subjectAr: 'أرغب في معرفة المواعيد المحددة لتسجيل المقررات للفصل الدراسي القادم وهل هناك أي متطلبات خاصة؟',
       subjectEn: 'I would like to know the specific dates for course registration for the next semester',
-      statusId: 1,
+      requestStatusId: 1,
       statusName: 'قيد الانتظار',
       requestTypeId: 2,
       requestTypeName: 'استفسار',
@@ -89,7 +89,7 @@ export function DashboardPage() {
       titleEn: 'Complaint regarding delayed response to previous request',
       subjectAr: 'تقدمت بطلب قبل أسبوعين ولم أتلق أي رد حتى الآن. أرجو النظر في الأمر بشكل عاجل.',
       subjectEn: 'I submitted a request two weeks ago and have not received any response yet',
-      statusId: 2,
+      requestStatusId: 2,
       statusName: 'قيد التنفيذ',
       requestTypeId: 1,
       requestTypeName: 'شكوى',
@@ -106,7 +106,7 @@ export function DashboardPage() {
       titleEn: 'Booking an appointment with the Dean of the College',
       subjectAr: 'أرغب في حجز موعد لمقابلة عميد الكلية لمناقشة موضوع مهم يتعلق بالدراسة.',
       subjectEn: 'I would like to book an appointment with the Dean of the College to discuss an important matter regarding my studies.',
-      statusId: 1,
+      requestStatusId: 1,
       statusName: 'قيد الانتظار',
       requestTypeId: 4,
       requestTypeName: 'زيارة',
@@ -120,16 +120,16 @@ export function DashboardPage() {
   
   // Calculate request counts by status for employees
   const requestCounts = {
-    pending: requestsToShow.filter(r => r.statusId === 1).length,
-    inProgress: requestsToShow.filter(r => r.statusId === 2).length,
-    completed: requestsToShow.filter(r => r.statusId === 3).length,
-    rejected: requestsToShow.filter(r => r.statusId === 4).length,
+    pending: requestsToShow.filter(r => r.requestStatusId === 1).length,
+    inProgress: requestsToShow.filter(r => r.requestStatusId === 2).length,
+    completed: requestsToShow.filter(r => r.requestStatusId === 3).length,
+    rejected: requestsToShow.filter(r => r.requestStatusId === 4).length,
     total: requestsToShow.length,
   };
   
   // Get recent requests that need action (Pending or In Progress) - limit to 2
   const recentRequestsNeedingAction = requestsToShow
-    .filter(r => r.statusId === 1 || r.statusId === 2)
+    .filter(r => r.requestStatusId === 1 || r.requestStatusId === 2)
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
     .slice(0, 2);
   
@@ -139,7 +139,7 @@ export function DashboardPage() {
     
     updateStatus.mutate({
       id: requestId,
-      payload: { statusId }
+      payload: { requestStatusId: statusId }
     });
   };
   
@@ -181,15 +181,14 @@ export function DashboardPage() {
   const requestTypesData = [
     { name: t("requests.types.complaints"), count: 145, fill: "#875E9E" },
     { name: t("requests.types.inquiries"), count: 198, fill: "#6CAEBD" },
-    { name: t("requests.types.suggestions"), count: 87, fill: "#EABB4E" },
-    { name: t("requests.types.visits"), count: 45, fill: "#115740" },
+    { name: t("requests.types.visits"), count: 45, fill: "#EABB4E" },
   ];
 
   const services = [
     {
       icon: AlertCircle,
-      title: t("requests.submitComplaint"),
-      description: t("requests.submitComplaintDesc"),
+      title: t("requests.submitComplaintOrSuggestion"),
+      description: t("requests.submitComplaintOrSuggestionDesc"),
       link: "/dashboard/complaint",
       color: "from-[#875E9E] to-[#6CAEBD]",
       bgColor: "bg-purple-50",
@@ -201,14 +200,6 @@ export function DashboardPage() {
       link: "/dashboard/inquiry",
       color: "from-[#6CAEBD] to-[#875E9E]",
       bgColor: "bg-blue-50",
-    },
-    {
-      icon: Lightbulb,
-      title: t("requests.submitSuggestion"),
-      description: t("requests.submitSuggestionDesc"),
-      link: "/dashboard/suggestion",
-      color: "from-[#EABB4E] to-[#875E9E]",
-      bgColor: "bg-yellow-50",
     },
     {
       icon: Calendar,
@@ -423,7 +414,7 @@ export function DashboardPage() {
                               #{request.requestNumber}
                             </span>
                             <span className={`px-2.5 py-0.5 rounded-md text-xs font-medium ${
-                              request.statusId === 1 
+                              request.requestStatusId === 1 
                                 ? 'bg-[#EABB4E] text-white' 
                                 : 'bg-[#6CAEBD] text-white'
                             }`}>
@@ -451,7 +442,7 @@ export function DashboardPage() {
                         
                         <div className="flex flex-col gap-2 min-w-[180px]">
                           <Select
-                            value={selectedStatus[request.id]?.toString() || request.statusId.toString()}
+                            value={selectedStatus[request.id]?.toString() || request.requestStatusId.toString()}
                             onValueChange={(value: string) => handleStatusChange(request.id, value)}
                           >
                             <SelectTrigger className="rounded-lg h-9 text-sm border-[#6CAEBD]/30 hover:border-[#6CAEBD] transition-colors">

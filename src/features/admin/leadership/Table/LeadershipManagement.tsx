@@ -188,11 +188,11 @@ export function LeadershipManagement() {
                       <TableCell className="text-center overflow-hidden">
                         <div>
                           <p className="font-medium text-[#2B2B2B]" style={{ wordBreak: 'break-all', maxWidth: '15.625rem', marginLeft: 'auto', marginRight: 'auto' }}>
-                            {leader.fullNameAr}
+                            {leader.nameAr}
                           </p>
-                          {leader.fullNameEn && (
+                          {leader.nameEn && (
                             <p className="text-xs text-gray-500" dir="ltr" style={{ wordBreak: 'break-all', maxWidth: '15.625rem', marginLeft: 'auto', marginRight: 'auto' }}>
-                              {leader.fullNameEn}
+                              {leader.nameEn}
                             </p>
                           )}
                         </div>
@@ -319,7 +319,7 @@ export function LeadershipManagement() {
           <AlertDialogHeader>
             <AlertDialogTitle>{t("messages.confirmDelete")}</AlertDialogTitle>
             <AlertDialogDescription>
-              {t("leadership.deleteConfirm")} "{selectedLeader?.fullNameAr}"؟
+              {t("leadership.deleteConfirm")} "{selectedLeader?.nameAr}"؟
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

@@ -1,210 +1,177 @@
 import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useI18n } from "@/i18n";
-import { useHasPermission, useUserPermissions } from "@/core/hooks/usePermissions";
+import { useHasPermission } from "@/core/hooks/usePermissions";
 import { PERMISSIONS } from "@/core/constants/permissions";
+import { RequestStatus, getRequestStatusName } from "@/core/constants/requestStatuses";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { requestsApi } from "@/features/requests/api/requests.api";
+import { lookupsApi } from "@/features/lookups/api/lookups.api";
+import { apiRequest } from "@/core/lib/apiClient";
+import { toast } from "sonner";
+import type { UserRequestDto } from "@/core/types/api";
 
-// Mock request type - replace with actual API types
-export interface Request {
-  id: string;
-  typeId: number; // 1: complaint, 2: inquiry, 3: suggestion, 4: visit
-  titleAr: string;
-  titleEn: string;
-  statusId: number; // Using RequestStatus enum values
-  date: string;
-  messages: number;
-  departmentAr: string;
-  departmentEn: string;
-  assignedToId?: number;
-  assignedToName?: string;
-}
+
 
 export const REQUEST_TYPES = {
-  COMPLAINT: 1,
-  INQUIRY: 2,
-  SUGGESTION: 3,
-  VISIT: 4,
+  INQUIRY: 1,
+  COMPLAINT: 2,  // Handles both complaints and suggestions
+  VISIT: 3,
 } as const;
 
 export const REQUEST_TYPE_NAMES_AR = {
-  [REQUEST_TYPES.COMPLAINT]: "شكوى",
   [REQUEST_TYPES.INQUIRY]: "استفسار",
-  [REQUEST_TYPES.SUGGESTION]: "مقترح",
+  [REQUEST_TYPES.COMPLAINT]: "شكوى أو مقترح",
   [REQUEST_TYPES.VISIT]: "حجز زيارة",
 } as const;
 
 export const REQUEST_TYPE_NAMES_EN = {
-  [REQUEST_TYPES.COMPLAINT]: "Complaint",
   [REQUEST_TYPES.INQUIRY]: "Inquiry",
-  [REQUEST_TYPES.SUGGESTION]: "Suggestion",
+  [REQUEST_TYPES.COMPLAINT]: "Complaint or Suggestion",
   [REQUEST_TYPES.VISIT]: "Visit Booking",
 } as const;
 
-// Mock employees - replace with actual API
-export interface Employee {
+// Department type
+export interface Department {
   id: number;
   nameAr: string;
-  nameEn: string;
+  nameEn?: string;
+  code?: string;
 }
 
-const MOCK_EMPLOYEES: Employee[] = [
-  { id: 1, nameAr: "أحمد محمد", nameEn: "Ahmed Mohammed" },
-  { id: 2, nameAr: "فاطمة علي", nameEn: "Fatima Ali" },
-  { id: 3, nameAr: "محمد خالد", nameEn: "Mohammed Khaled" },
-  { id: 4, nameAr: "نورة عبدالله", nameEn: "Noura Abdullah" },
-];
 
-// Mock requests - replace with actual API call
-const MOCK_REQUESTS: Request[] = [
-  {
-    id: "SG-2025-001234",
-    typeId: REQUEST_TYPES.SUGGESTION,
-    titleAr: "تطوير خدمات المكتبة الرقمية",
-    titleEn: "Develop Digital Library Services",
-    statusId: 2, // Under Review
-    date: "2025-01-14",
-    messages: 2,
-    departmentAr: "تقنية المعلومات",
-    departmentEn: "Information Technology",
-  },
-  {
-    id: "CM-2025-001233",
-    typeId: REQUEST_TYPES.COMPLAINT,
-    titleAr: "مشكلة في نظام البوابة الإلكترونية",
-    titleEn: "Issue with Electronic Portal System",
-    statusId: 2, // Processing (mapped to under review)
-    date: "2025-01-11",
-    messages: 5,
-    departmentAr: "الدعم الفني",
-    departmentEn: "Technical Support",
-    assignedToId: 1,
-    assignedToName: "أحمد محمد",
-  },
-  {
-    id: "IQ-2025-001232",
-    typeId: REQUEST_TYPES.INQUIRY,
-    titleAr: "استفسار عن مواعيد التسجيل",
-    titleEn: "Inquiry about Registration Dates",
-    statusId: 4, // Closed
-    date: "2025-01-13",
-    messages: 3,
-    departmentAr: "القبول والتسجيل",
-    departmentEn: "Admission and Registration",
-  },
-  {
-    id: "VS-2025-001231",
-    typeId: REQUEST_TYPES.VISIT,
-    titleAr: "موعد مع عميد شؤون الطلاب",
-    titleEn: "Appointment with Dean of Student Affairs",
-    statusId: 4, // Confirmed (mapped to closed)
-    date: "2025-01-20",
-    messages: 1,
-    departmentAr: "شؤون الطلاب",
-    departmentEn: "Student Affairs",
-    assignedToId: 2,
-    assignedToName: "فاطمة علي",
-  },
-  {
-    id: "SG-2025-001230",
-    typeId: REQUEST_TYPES.SUGGESTION,
-    titleAr: "تحسين مواقف السيارات",
-    titleEn: "Improve Parking Facilities",
-    statusId: 1, // New
-    date: "2025-01-15",
-    messages: 0,
-    departmentAr: "الخدمات العامة",
-    departmentEn: "General Services",
-  },
-  {
-    id: "CM-2025-001229",
-    typeId: REQUEST_TYPES.COMPLAINT,
-    titleAr: "تأخر في صرف المكافآت",
-    titleEn: "Delay in Disbursing Rewards",
-    statusId: 2, // Under Review
-    date: "2025-01-10",
-    messages: 4,
-    departmentAr: "الشؤون المالية",
-    departmentEn: "Financial Affairs",
-  },
-];
 
 export const useTrackRequests = () => {
   const navigate = useNavigate();
   const { t, language } = useI18n();
   const isRTL = language === "ar";
+  const queryClient = useQueryClient();
   
-  // Permission check - now reactive to localStorage changes
+  // Permission check
   const canAssignRequests = useHasPermission(PERMISSIONS.REQUESTS_ASSIGN);
-  const allPermissions = useUserPermissions();
-  
-  // Debug: Check localStorage and hook state
-  console.log('🔍 DEBUG - canAssignRequests:', canAssignRequests);
-  console.log('🔍 DEBUG - allPermissions from hook:', allPermissions);
-  console.log('🔍 DEBUG - localStorage userInfo:', localStorage.getItem('userInfo'));
 
   // State
   const [searchQuery, setSearchQuery] = useState("");
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [filterType, setFilterType] = useState<string>("all");
   const [filterDepartment, setFilterDepartment] = useState<string>("all");
-  const [filterAssignment, setFilterAssignment] = useState<string>("all"); // New assignment filter
-  const [requests] = useState<Request[]>(MOCK_REQUESTS);
+  const [filterLeadership, setFilterLeadership] = useState<string>("all");
+  const [filterAssignment, setFilterAssignment] = useState<string>("all");
+  const [startDate, setStartDate] = useState<string>("");
+  const [endDate, setEndDate] = useState<string>("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize] = useState(10);
 
-  // Get unique departments
-  const departments = useMemo(() => {
-    const deptSet = new Set(
-      requests.map((req) => (isRTL ? req.departmentAr : req.departmentEn))
-    );
-    return Array.from(deptSet).sort();
-  }, [requests, isRTL]);
+  // Fetch requests with pagination
+  const { data: requestsData, isLoading: isLoadingRequests } = useQuery({
+    queryKey: ['requests', 'paginated', currentPage, pageSize, searchQuery, filterStatus, filterType, filterDepartment, filterLeadership, startDate, endDate],
+    queryFn: async () => {
+      const filters: any = {};
+      if (searchQuery) filters.searchTerm = searchQuery;
+      if (filterStatus !== 'all') {
+        const statusMap: Record<string, RequestStatus> = {
+          new: RequestStatus.RECEIVED,
+          review: RequestStatus.UNDER_REVIEW,
+          processing: RequestStatus.UNDER_REVIEW,
+          closed: RequestStatus.CLOSED,
+        };
+        filters.requestStatusId = statusMap[filterStatus];
+      }
+      if (filterType !== 'all') filters.requestTypeId = parseInt(filterType);
+      if (filterDepartment !== 'all') filters.departmentId = parseInt(filterDepartment);
+      if (filterLeadership !== 'all') filters.universityLeadershipId = parseInt(filterLeadership);
+      if (startDate) filters.startDate = startDate;
+      if (endDate) filters.endDate = endDate;
+      
+      return requestsApi.getUserRequestsPaginated(filters, currentPage, pageSize);
+    },
+  });
 
-  // Filter requests
+  // Fetch departments
+  const { data: departmentsData } = useQuery({
+    queryKey: ['departments', 'lookup'],
+    queryFn: lookupsApi.getDepartments,
+  });
+
+  // Fetch leadership
+  const { data: leadershipData } = useQuery({
+    queryKey: ['leadership', 'lookup'],
+    queryFn: lookupsApi.getUniversityLeaderships,
+  });
+
+  const requests = requestsData?.items || [];
+  const totalPages = requestsData?.totalPages || 1;
+  const totalCount = requestsData?.totalCount || 0;
+  const departments: Department[] = departmentsData || [];
+  const leadership = leadershipData || [];
+
+  // Enrich requests with leadership names and department names if missing
+  const enrichedRequests = useMemo(() => {
+    return requests.map((request) => {
+      let enrichedRequest = { ...request };
+      
+      // If request has universityLeadershipId but no universityLeadershipName, find it
+      if (request.universityLeadershipId && !request.universityLeadershipName && leadership.length > 0) {
+        const leadershipInfo = leadership.find(l => l.id === request.universityLeadershipId);
+        if (leadershipInfo) {
+          enrichedRequest.universityLeadershipName = isRTL 
+            ? leadershipInfo.fullNameAr 
+            : (leadershipInfo.fullNameEn || leadershipInfo.fullNameAr);
+        }
+      }
+      
+      // If request has assignedDepartmentId, enrich with department name
+      if (request.assignedDepartmentId && departments.length > 0) {
+        const departmentInfo = departments.find(d => d.id === request.assignedDepartmentId);
+        if (departmentInfo) {
+          enrichedRequest.departmentName = isRTL 
+            ? departmentInfo.nameAr 
+            : (departmentInfo.nameEn || departmentInfo.nameAr);
+        }
+      }
+      
+      return enrichedRequest;
+    });
+  }, [requests, leadership, departments, isRTL]);
+
+  // Assign department mutation
+  const assignDepartmentMutation = useMutation({
+    mutationFn: async ({ requestId, departmentId }: { requestId: number; departmentId: number }) => {
+      return apiRequest.put(`/requests/${requestId}/assign-department`, { departmentId });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['requests', 'paginated'] });
+      toast.success(t("requests.track.assignmentSuccess"));
+    },
+    onError: () => {
+      toast.error(t("requests.track.assignmentError"));
+    },
+  });
+
+  // Filter requests locally for department assignment filter
   const filteredRequests = useMemo(() => {
-    return requests.filter((req) => {
-      // Search filter
-      const searchLower = searchQuery.toLowerCase();
-      const title = isRTL ? req.titleAr : req.titleEn;
-      const matchesSearch =
-        !searchQuery ||
-        req.id.toLowerCase().includes(searchLower) ||
-        title.toLowerCase().includes(searchLower);
-
-      // Status filter
-      const matchesStatus =
-        filterStatus === "all" ||
-        (filterStatus === "new" && req.statusId === 1) ||
-        (filterStatus === "review" && req.statusId === 2) ||
-        (filterStatus === "processing" && req.statusId === 2) ||
-        (filterStatus === "closed" && (req.statusId === 4 || req.statusId === 3));
-
-      // Type filter
-      const matchesType =
-        filterType === "all" || req.typeId === parseInt(filterType);
-
-      // Department filter
-      const department = isRTL ? req.departmentAr : req.departmentEn;
-      const matchesDepartment =
-        filterDepartment === "all" || department === filterDepartment;
-
-      // Assignment filter (admin only)
+    return enrichedRequests.filter((req) => {
+      // Assignment filter (admin only) - based on whether request has assigned department or leadership
+      const hasAssignment = (req.mainCategoryId !== undefined && req.mainCategoryId !== null) || 
+                           (req.universityLeadershipId !== undefined && req.universityLeadershipId !== null);
       const matchesAssignment =
         filterAssignment === "all" ||
-        (filterAssignment === "assigned" && req.assignedToId !== undefined) ||
-        (filterAssignment === "unassigned" && req.assignedToId === undefined);
+        (filterAssignment === "assigned" && hasAssignment) ||
+        (filterAssignment === "unassigned" && !hasAssignment);
 
-      return matchesSearch && matchesStatus && matchesType && matchesDepartment && matchesAssignment;
+      return matchesAssignment;
     });
-  }, [requests, searchQuery, filterStatus, filterType, filterDepartment, filterAssignment, isRTL]);
+  }, [enrichedRequests, filterAssignment]);
 
-  // Statistics
+  // Statistics from API
   const stats = useMemo(() => {
     return {
-      total: requests.length,
-      new: requests.filter((r) => r.statusId === 1).length,
-      underReview: requests.filter((r) => r.statusId === 2).length,
-      closed: requests.filter((r) => r.statusId === 4 || r.statusId === 3).length,
+      total: totalCount,
+      new: enrichedRequests.filter((r) => r.requestStatusId === RequestStatus.RECEIVED).length,
+      underReview: enrichedRequests.filter((r) => r.requestStatusId === RequestStatus.UNDER_REVIEW).length,
+      closed: enrichedRequests.filter((r) => r.requestStatusId === RequestStatus.CLOSED || r.requestStatusId === RequestStatus.REPLIED).length,
     };
-  }, [requests]);
+  }, [enrichedRequests, totalCount]);
 
   // Handlers
   const handleSearchChange = (value: string) => {
@@ -221,23 +188,59 @@ export const useTrackRequests = () => {
 
   const handleDepartmentChange = (value: string) => {
     setFilterDepartment(value);
+    setCurrentPage(1);
+  };
+
+  const handleLeadershipChange = (value: string) => {
+    setFilterLeadership(value);
+    setCurrentPage(1);
   };
 
   const handleAssignmentChange = (value: string) => {
     setFilterAssignment(value);
   };
 
+  const handleStartDateChange = (value: string) => {
+    setStartDate(value);
+    setCurrentPage(1);
+  };
+
+  const handleEndDateChange = (value: string) => {
+    setEndDate(value);
+    setCurrentPage(1);
+  };
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+
   const handleBackToDashboard = () => {
     navigate("/dashboard");
   };
 
-  const handleViewRequest = (requestId: string) => {
+  const handleViewRequest = (requestId: number) => {
     navigate(`/dashboard/request/${requestId}`);
   };
 
-  const handleAssignEmployee = (requestId: string, employeeId: number) => {
-    console.log(`Assigning employee ${employeeId} to request ${requestId}`);
-    // TODO: Implement actual API call
+  const handleAssignDepartment = (requestId: number, departmentId: number) => {
+    assignDepartmentMutation.mutate({ requestId, departmentId });
+  };
+
+  const handleResetFilters = () => {
+    setSearchQuery("");
+    setFilterStatus("all");
+    setFilterType("all");
+    setFilterDepartment("all");
+    setFilterLeadership("all");
+    setFilterAssignment("all");
+    setStartDate("");
+    setEndDate("");
+    setCurrentPage(1);
+  };
+
+  const handleResetDates = () => {
+    setStartDate("");
+    setEndDate("");
   };
 
   // Helper to get request type name
@@ -250,13 +253,13 @@ export const useTrackRequests = () => {
   // Helper to get status color
   const getStatusColor = (statusId: number) => {
     switch (statusId) {
-      case 1: // New
+      case RequestStatus.RECEIVED:
         return "bg-purple-100 text-purple-700";
-      case 2: // Under Review
+      case RequestStatus.UNDER_REVIEW:
         return "bg-orange-100 text-orange-700";
-      case 3: // Replied
+      case RequestStatus.REPLIED:
         return "bg-blue-100 text-blue-700";
-      case 4: // Closed
+      case RequestStatus.CLOSED:
         return "bg-green-100 text-green-700";
       default:
         return "bg-gray-100 text-gray-700";
@@ -264,19 +267,8 @@ export const useTrackRequests = () => {
   };
 
   // Helper to get status name
-  const getStatusName = (statusId: number) => {
-    switch (statusId) {
-      case 1:
-        return t("requests.track.new");
-      case 2:
-        return t("requests.track.underReview");
-      case 3:
-        return t("requests.statuses.replied");
-      case 4:
-        return t("requests.track.closed");
-      default:
-        return "Unknown";
-    }
+  const getStatusNameHelper = (statusId: number) => {
+    return getRequestStatusName(statusId, isRTL ? 'ar' : 'en');
   };
 
   return {
@@ -285,11 +277,18 @@ export const useTrackRequests = () => {
     filterStatus,
     filterType,
     filterDepartment,
+    filterLeadership,
     filterAssignment,
+    startDate,
+    endDate,
     filteredRequests,
     stats,
     departments,
-    employees: MOCK_EMPLOYEES,
+    leadership,
+    currentPage,
+    totalPages,
+    totalCount,
+    isLoadingRequests,
     
     // Permissions
     canAssignRequests,
@@ -299,16 +298,22 @@ export const useTrackRequests = () => {
     t,
     getRequestTypeName,
     getStatusColor,
-    getStatusName,
+    getStatusName: getStatusNameHelper,
     
     // Handlers
     handleSearchChange,
     handleStatusChange,
     handleTypeChange,
     handleDepartmentChange,
+    handleLeadershipChange,
     handleAssignmentChange,
+    handleStartDateChange,
+    handleEndDateChange,
+    handlePageChange,
     handleBackToDashboard,
     handleViewRequest,
-    handleAssignEmployee,
+    handleAssignDepartment,
+    handleResetFilters,
+    handleResetDates,
   };
 };
