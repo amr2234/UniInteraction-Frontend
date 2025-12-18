@@ -7,10 +7,11 @@ import { PERMISSIONS } from "@/core/constants/permissions";
 import { RequestStatus, getRequestStatusName } from "@/core/constants/requestStatuses";
 import { RequestType } from "@/core/constants/requestTypes";
 import { VisitStatus } from "@/core/constants/visitStatuses";
-import { useRequestDetails, useRequestAttachments } from "@/features/requests/hooks/useRequests";
+import { useRequestDetails } from "@/features/requests/hooks/useRequests";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { lookupsApi } from "@/features/lookups/api/lookups.api";
 import { requestsApi } from "@/features/requests/api/requests.api";
+import { visitsApi } from "@/features/visits/api/visits.api";
 import {
   UserRequestDetailsDto,
   RequestTimelineItem,
@@ -41,8 +42,8 @@ export const useRequestDetailsLogic = () => {
   // Fetch request details from API
   const { data: request, isLoading: isLoadingRequest, error: requestError } = useRequestDetails(id || '');
   
-  // Fetch request attachments from API
-  const { data: requestAttachmentsData, isLoading: isLoadingAttachments } = useRequestAttachments(id || '');
+  // Use attachments from the request object instead of fetching separately
+  const requestAttachmentsData = request?.attachments || [];
   
   // Fetch departments
   const { data: departmentsData } = useQuery({
@@ -98,17 +99,17 @@ export const useRequestDetailsLogic = () => {
     },
   });
 
-  // Assign visit mutation
-  const assignVisitMutation = useMutation({
-    mutationFn: ({ requestId, payload }: { requestId: string; payload: any }) =>
-      requestsApi.assignVisit(requestId, payload),
+  // Schedule visit mutation (Employee schedules a visit date)
+  const scheduleVisitMutation = useMutation({
+    mutationFn: ({ requestId, visitDate, leadershipId }: { requestId: number; visitDate: string; leadershipId: number }) =>
+      visitsApi.scheduleVisit({ requestId, visitDate, leadershipId }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.requests.detail(id!) });
       queryClient.invalidateQueries({ queryKey: queryKeys.requests.all });
       toast.success(t('requests.visitScheduledSuccessfully'));
       setVisitDateTime("");
       
-      // Update status to "Replied" after assigning visit
+      // Update status to "Replied" after scheduling visit
       if (id) {
         updateStatusMutation.mutate({ requestId: id, newStatusId: RequestStatus.REPLIED });
       }
@@ -161,29 +162,26 @@ export const useRequestDetailsLogic = () => {
     },
   });
 
-  // Accept visit mutation
+  // Accept visit mutation (User accepts the scheduled visit)
   const acceptVisitMutation = useMutation({
-    mutationFn: (requestId: string) => requestsApi.acceptVisit(requestId),
+    mutationFn: ({ visitId }: { visitId: number }) =>
+      visitsApi.updateVisitStatus(visitId, { visitId, status: VisitStatus.ACCEPTED }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.requests.detail(id!) });
       queryClient.invalidateQueries({ queryKey: queryKeys.requests.all });
       // Open rating dialog after accepting
       setIsRatingDialogOpen(true);
-      
-      // Update status to "Closed" after accepting visit
-      if (id) {
-        updateStatusMutation.mutate({ requestId: id, newStatusId: RequestStatus.CLOSED });
-      }
+      toast.success(t('requests.visitAcceptedSuccessfully'));
     },
     onError: () => {
       toast.error(t('requests.visitAcceptanceFailed'));
     },
   });
 
-  // Decline visit mutation - updates visit status to Rescheduled
+  // Decline visit mutation (User requests to reschedule)
   const declineVisitMutation = useMutation({
-    mutationFn: ({ visitId, payload }: { visitId: number; payload: any }) =>
-      requestsApi.updateVisitStatus(visitId, payload),
+    mutationFn: ({ visitId, newVisitDate }: { visitId: number; newVisitDate?: string }) =>
+      visitsApi.updateVisitStatus(visitId, { visitId, status: VisitStatus.RESCHEDULED, newVisitDate }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.requests.detail(id!) });
       queryClient.invalidateQueries({ queryKey: queryKeys.requests.all });
@@ -219,6 +217,48 @@ export const useRequestDetailsLogic = () => {
       toast.error(t('requests.departmentAssignmentFailed'));
     },
   });
+
+  // Delete request mutation (Super Admin only)
+  const deleteRequestMutation = useMutation({
+    mutationFn: (requestId: number) => {
+      return requestsApi.deleteRequest(requestId);
+    },
+    onSuccess: async () => {
+      // Invalidate queries BEFORE navigation to refresh the table
+      await queryClient.invalidateQueries({ queryKey: queryKeys.requests.all });
+      await queryClient.invalidateQueries({ queryKey: queryKeys.requests.list() });
+      
+      toast.success(t('requests.deleteSuccess') || 'Request deleted successfully');
+      // Navigate back to requests list
+      navigate('/dashboard/track');
+    },
+    onError: () => {
+      toast.error(t('requests.deleteFailed') || 'Failed to delete request');
+    },
+  });
+
+  // Assign to me mutation (Employee)
+  const assignToMeMutation = useMutation({
+    mutationFn: (requestId: number) => {
+      return requestsApi.assignToMe(requestId);
+    },
+    onSuccess: async () => {
+      // Invalidate and refetch the request details
+      await queryClient.invalidateQueries({ queryKey: queryKeys.requests.detail(id!) });
+      await queryClient.invalidateQueries({ queryKey: queryKeys.requests.all });
+      
+      toast.success(t('requests.assignedToMeSuccessfully') || 'Request assigned to you successfully');
+    },
+    onError: () => {
+      toast.error(t('requests.assignToMeFailed') || 'Failed to assign request');
+    },
+  });
+
+  // State for assign confirmation dialog
+  const [isAssignDialogOpen, setIsAssignDialogOpen] = useState(false);
+  
+  // State for delete confirmation dialog
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   
   // If no request or still loading, return early state (after all hooks)
   if (!request || isLoadingRequest) {
@@ -268,14 +308,12 @@ export const useRequestDetailsLogic = () => {
           attachments,
         },
       });
-    } else if (request.requestTypeId === RequestType.VISIT && visitDateTime) {
-      // Handle visit scheduling - only date/time needed
-      assignVisitMutation.mutate({
-        requestId: id,
-        payload: {
-          visitStartAt: visitDateTime,
-          universityLeadershipId: selectedLeadershipId || request.universityLeadershipId || 0,
-        },
+    } else if (request.requestTypeId === RequestType.VISIT && visitDateTime && selectedLeadershipId) {
+      // Handle visit scheduling using new visitsApi
+      scheduleVisitMutation.mutate({
+        requestId: parseInt(id, 10),
+        visitDate: visitDateTime,
+        leadershipId: selectedLeadershipId,
       });
     }
   };
@@ -315,20 +353,19 @@ export const useRequestDetailsLogic = () => {
 
   // Handle accept visit - opens rating dialog
   const handleAcceptVisit = () => {
-    if (id) {
-      acceptVisitMutation.mutate(id);
+    if (id && request?.id) {
+      // Use the visit ID (assuming it's stored in request.id for visit requests)
+      acceptVisitMutation.mutate({ visitId: request.id });
     }
   };
 
 
   // Handle decline visit - updates visit status to Rescheduled
   const handleDeclineVisit = () => {
-    if (id && request) {
+    if (id && request?.id) {
       declineVisitMutation.mutate({ 
-        visitId: parseInt(id, 10),
-        payload: { 
-          visitStatus: VisitStatus.RESCHEDULED 
-        } 
+        visitId: request.id,
+        newVisitDate: undefined // User doesn't provide new date, employee will
       });
     }
   };
@@ -347,7 +384,13 @@ export const useRequestDetailsLogic = () => {
   };
 
   const canEditRequest = () => {
-    return (isAdmin && request.requestStatusId === RequestStatus.RECEIVED);
+    // Super Admin can always edit
+    if (isSuperAdmin) return true;
+    
+    // Employee can only edit RECEIVED status requests
+    if (isEmployee && request.requestStatusId === RequestStatus.RECEIVED) return true;
+    
+    return false;
   };
 
   const handleAssignDepartment = (departmentId: number) => {
@@ -378,19 +421,66 @@ export const useRequestDetailsLogic = () => {
     if (!leadership) return '';
     return language === 'ar' ? leadership.nameAr : (leadership.nameEn || leadership.nameAr);
   };
+  
+  const getLeadershipPosition = (leadershipId?: number, language: 'ar' | 'en' = 'ar'): string => {
+    if (!leadershipId) return '';
+    const leadership = leaderships.find(lead => lead.id === leadershipId);
+    if (!leadership) return '';
+    return language === 'ar' ? leadership.positionTitleAr : (leadership.positionTitleEn || leadership.positionTitleAr);
+  };
 
   // Handle "Thank you" action - just close the rating dialog
   const handleThankYou = () => {
     setIsRatingDialogOpen(true);
   };
 
+  // Handle delete request (Super Admin only)
+  const handleDeleteRequest = () => {
+    // Open confirmation dialog
+    setIsDeleteDialogOpen(true);
+  };
+
+  // Confirm delete request action
+  const confirmDeleteRequest = () => {
+    if (id) {
+      deleteRequestMutation.mutate(parseInt(id, 10));
+      setIsDeleteDialogOpen(false);
+    }
+  };
+
+  // Cancel delete request action
+  const cancelDeleteRequest = () => {
+    setIsDeleteDialogOpen(false);
+  };
+
+  // Handle assign to me (Employee)
+  const handleAssignToMe = () => {
+    // Open confirmation dialog
+    setIsAssignDialogOpen(true);
+  };
+
+  // Confirm assign to me action
+  const confirmAssignToMe = () => {
+    if (id) {
+      assignToMeMutation.mutate(parseInt(id, 10));
+      setIsAssignDialogOpen(false);
+    }
+  };
+
+  // Cancel assign to me action
+  const cancelAssignToMe = () => {
+    setIsAssignDialogOpen(false);
+  };
+
   // Handle file download
   const handleDownloadAttachment = async (attachment: RequestAttachment) => {
     try {
-      // If fileUrl is available, use it directly
-      if (attachment.fileUrl) {
+      // Backend returns filePath, need to construct full URL
+      const fileUrl = attachment.fileUrl || (attachment.filePath ? `${window.location.origin}${attachment.filePath}` : null);
+      
+      if (fileUrl) {
         const link = document.createElement('a');
-        link.href = attachment.fileUrl;
+        link.href = fileUrl;
         link.download = attachment.fileName;
         link.target = '_blank';
         document.body.appendChild(link);
@@ -398,7 +488,7 @@ export const useRequestDetailsLogic = () => {
         document.body.removeChild(link);
         toast.success(t('requests.downloadStarted') || 'Download started');
       } else {
-        toast.error(t('requests.downloadFailed') || 'Download failed');
+        toast.error(t('requests.downloadFailed') || 'Download failed - No file path');
       }
     } catch (error) {
       console.error('Download error:', error);
@@ -416,6 +506,8 @@ export const useRequestDetailsLogic = () => {
     rating,
     feedback,
     isRatingDialogOpen,
+    isAssignDialogOpen,
+    isDeleteDialogOpen,
     request,
     requestAttachments: requestAttachmentsData || [],
     selectedDepartmentId,
@@ -444,6 +536,8 @@ export const useRequestDetailsLogic = () => {
     setRating,
     setFeedback,
     setIsRatingDialogOpen,
+    setIsAssignDialogOpen,
+    setIsDeleteDialogOpen,
     setSelectedDepartmentId,
     setSelectedLeadershipId,
     handleStatusChange,
@@ -459,8 +553,15 @@ export const useRequestDetailsLogic = () => {
     handleAssignLeadership,
     handleThankYou,
     handleDownloadAttachment,
+    handleDeleteRequest,
+    confirmDeleteRequest,
+    cancelDeleteRequest,
+    handleAssignToMe,
+    confirmAssignToMe,
+    cancelAssignToMe,
     getDepartmentName,
     getLeadershipName,
+    getLeadershipPosition,
     navigate
   };
 };

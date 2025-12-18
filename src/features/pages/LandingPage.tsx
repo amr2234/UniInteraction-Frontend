@@ -29,7 +29,7 @@ import {
   ChevronLeft,
   MessageCircle,
 } from "lucide-react";
-import logoImage from "@/assets/3ed7ad000b3c6c19b182fbe3a9d4158789dc4548.png";
+import logoImage from "@/assets/Logo-Test.png";
 import { useI18n } from "@/i18n";
 
 export function LandingPage() {

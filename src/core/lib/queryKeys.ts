@@ -14,6 +14,7 @@ export const queryKeys = {
     list: (filters?: Record<string, any>) => ['requests', 'list', filters] as const,
     detail: (id: number | string) => ['requests', 'detail', id] as const,
     attachments: (id: number | string) => ['requests', 'attachments', id] as const,
+    countsByStatus: ['requests', 'counts-by-status'] as const,
   },
 
   // Notifications

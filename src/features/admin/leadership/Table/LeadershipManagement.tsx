@@ -149,19 +149,22 @@ export function LeadershipManagement() {
               <TableHeader>
                 <TableRow className="bg-gray-50">
                   <TableHead className="text-center font-semibold text-gray-700 w-[50px]">#</TableHead>
-                  <TableHead className="text-center font-semibold text-gray-700 w-[250px]">
+                  <TableHead className="text-center font-semibold text-gray-700 w-[200px]">
                     {t("leadership.leaderName")}
                   </TableHead>
-                  <TableHead className="text-center font-semibold text-gray-700 w-[250px]">
+                  <TableHead className="text-center font-semibold text-gray-700 w-[200px]">
                     {t("leadership.leaderPosition")}
                   </TableHead>
-                  <TableHead className="text-center font-semibold text-gray-700 w-[200px]">
+                  <TableHead className="text-center font-semibold text-gray-700 w-[150px]">
                     {t("form.department")}
                   </TableHead>
-                  <TableHead className="text-center font-semibold text-gray-700 w-[150px]">
+                  <TableHead className="text-center font-semibold text-gray-700 w-[180px]">
+                    {t("leadership.assignedUser")}
+                  </TableHead>
+                  <TableHead className="text-center font-semibold text-gray-700 w-[120px]">
                     {t("form.status")}
                   </TableHead>
-                  <TableHead className="text-center font-semibold text-gray-700 w-[150px]">
+                  <TableHead className="text-center font-semibold text-gray-700 w-[120px]">
                     {t("leadership.createdAt")}
                   </TableHead>
                   <TableHead className="text-center font-semibold text-gray-700 w-[120px]">
@@ -173,7 +176,7 @@ export function LeadershipManagement() {
                 {leadership.length === 0 ? (
                   <TableRow>
                     <TableCell
-                      colSpan={7}
+                      colSpan={8}
                       className="text-center py-8 text-gray-500"
                     >
                       {t("common.noData")}
@@ -209,6 +212,17 @@ export function LeadershipManagement() {
                       </TableCell>
                       <TableCell className="text-center overflow-hidden">
                         <p style={{ wordBreak: 'break-all', maxWidth: '12.5rem', marginLeft: 'auto', marginRight: 'auto' }}>{getDepartmentName(leader.departmentId)}</p>
+                      </TableCell>
+                      <TableCell className="text-center overflow-hidden">
+                        {leader.userId ? (
+                          <div style={{ wordBreak: 'break-all', maxWidth: '11.25rem', marginLeft: 'auto', marginRight: 'auto' }}>
+                            <p className="font-medium text-[#2B2B2B]">
+                              {leader.userNameAr || leader.userNameEn || `User #${leader.userId}`}
+                            </p>
+                          </div>
+                        ) : (
+                          <p className="text-xs text-gray-400">{t("leadership.noUserAssigned")}</p>
+                        )}
                       </TableCell>
                       <TableCell className="text-center">
                         <div className="flex items-center justify-center gap-2">

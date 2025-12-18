@@ -150,12 +150,15 @@ export interface UserRequestDto {
   departmentNameAr?: string;
   departmentNameEn?: string;
   departmentName?: string; 
+  assignedToUserId?: number;
+  assignedToNameAr?: string;
+  assignedToNameEn?: string;
   submittedChannel?: string;
   createdAt: string;
   updatedAt?: string;
   resolutionDetailsAr?: string;
   resolutionDetailsEn?: string;
-  Attachments?: RequestAttachment[];
+  attachments?: RequestAttachment[];  // Changed from Attachments to match backend
   resolvedBy?: string;
   resolvedAt?: string;
   relatedRequestId?: number;
@@ -175,6 +178,13 @@ export interface RequestFilters {
   searchTerm?: string;
   departmentId?: number;
   universityLeadershipId?: number;
+}
+
+export interface RequestStatusCount {
+  statusId: number;
+  statusNameAr: string;
+  statusNameEn: string;
+  count: number;
 }
 
 export interface UpdateRequestStatusPayload {
@@ -210,14 +220,38 @@ export interface RequestNewVisitDatePayload {
 
 export interface ScheduleVisitPayload {
   requestId: number;
-  visitDate: string; // Single visit date
-  universityLeadershipId: number;
-  visitStatus: number; // 1=Scheduled, 2=Accepted, 3=Rescheduled, 4=Completed
+  visitDate: string; // ISO-8601 format: "2025-12-20T10:00:00Z"
+  leadershipId: number;
 }
 
 export interface UpdateVisitStatusPayload {
-  visitStatus: number; // 1=Scheduled, 2=Accepted, 3=Rescheduled, 4=Completed
-  visitDate?: string; // Optional new visit date when rescheduling
+  visitId: number;
+  status: number; // VisitStatus enum: 1=Scheduled, 2=Accepted, 3=Rescheduled, 4=Completed
+  newVisitDate?: string; // ISO string, required when status is Rescheduled (3)
+}
+
+/**
+ * Visit DTO - Represents a visit record
+ */
+export interface VisitDto {
+  id: number;
+  requestId: number;
+  requestNumber?: string;
+  visitDate: string;
+  leadershipId: number;
+  leadershipName?: string;
+  leadershipNameAr?: string;
+  leadershipNameEn?: string;
+  status: number; // VisitStatus enum: 1=Scheduled, 2=Accepted, 3=Rescheduled, 4=Completed
+  statusName?: string;
+  userId?: number;
+  userName?: string;
+  userNameAr?: string;
+  userEmail?: string;
+  visitReasonAr?: string;
+  visitReasonEn?: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface CreateRelatedRequestPayload {
@@ -228,8 +262,11 @@ export interface CreateRelatedRequestPayload {
 export interface RequestAttachment {
   id: number;
   fileName: string;
-  fileUrl: string;
-  fileSize: number;
+  filePath: string;  // Backend returns filePath, not fileUrl
+  fileUrl?: string;  // Keep for backward compatibility
+  contentType: string;  // Backend returns contentType
+  fileSizeKb: number;  // Backend returns fileSizeKb, not fileSize
+  fileSize?: number;  // Keep for backward compatibility
   uploadedAt: string;
   attachmentTypeId: number; // 1 = Request Form, 2 = Resolution Response, 3 = Profile Picture
 }
@@ -245,11 +282,25 @@ export interface NotificationDto {
   titleEn?: string;
   messageAr: string;
   messageEn?: string;
+  bodyAr?: string; // Alias for messageAr
+  bodyEn?: string; // Alias for messageEn
   type: string;
   isRead: boolean;
   relatedEntityId?: number;
   relatedEntityType?: string;
+  userRequestId?: number; // For backward compatibility
   createdAt: string;
+  receivedAt?: string; // Client-side timestamp when notification was received
+  // Additional metadata
+  senderName?: string;
+  senderNameAr?: string;
+  senderNameEn?: string;
+  departmentName?: string;
+  departmentNameAr?: string;
+  departmentNameEn?: string;
+  requestNumber?: string;
+  requestTypeNameAr?: string;
+  requestTypeNameEn?: string;
 }
 
 // ============================================
@@ -315,6 +366,11 @@ export interface UniversityLeadershipDto {
   positionTitleAr: string;
   positionTitleEn?: string;
   departmentId?: number;
+  departmentName?: string;
+  departmentNameAr?: string;
+  userId?: number;
+  userNameAr?: string;
+  userNameEn?: string;
   displayOrder?: number;
   isActive: boolean;
   createdAt: string;
@@ -362,6 +418,7 @@ export interface CreateLeadershipPayload {
   positionTitleAr: string;
   positionTitleEn?: string;
   departmentId?: number;
+  userId?: number;
   displayOrder?: number;
 }
 
@@ -380,9 +437,14 @@ export interface UserDto {
   email: string;
   mobile: string;
   role: string;
+  roleId?: number;
+  departmentId?: number | string;
   universityId?: string;
   nationalId?: string;
   isActive: boolean;
+  leadershipId?: number;
+  leadershipPositionAr?: string;
+  leadershipPositionEn?: string;
   createdAt: string;
   lastLogin?: string;
 }
@@ -501,4 +563,22 @@ export interface UserPermissionsDto {
   roles: RoleDto[];
   permissions: PermissionDto[];
   permissionCodes: string[];
+}
+
+// ============================================
+// Notification Types
+// ============================================
+
+export interface NotificationDto {
+  id: number;
+  userId: number;
+  titleAr: string;
+  titleEn?: string;
+  bodyAr: string;
+  bodyEn?: string;
+  type: string;
+  userRequestId?: number;
+  isRead: boolean;
+  createdAt: string;
+  updatedAt?: string;
 }

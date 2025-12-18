@@ -28,7 +28,8 @@ export function TrackRequestsPage() {
     filterType,
     filterDepartment,
     filterLeadership,
-    filterAssignment,
+    filterDepartmentAssignment,
+    filterUserAssignment,
     startDate,
     endDate,
     filteredRequests,
@@ -50,7 +51,8 @@ export function TrackRequestsPage() {
     handleTypeChange,
     handleDepartmentChange,
     handleLeadershipChange,
-    handleAssignmentChange,
+    handleDepartmentAssignmentChange,
+    handleUserAssignmentChange,
     handleStartDateChange,
     handleEndDateChange,
     handlePageChange,
@@ -225,17 +227,33 @@ export function TrackRequestsPage() {
               </Button>
             </div>
 
-            {/* Assignment Filter - Admin Only */}
+            {/* Department Assignment Filter - Admin Only */}
             {canAssignRequests && (
               <div>
-                <Select value={filterAssignment} onValueChange={handleAssignmentChange}>
+                <Select value={filterDepartmentAssignment} onValueChange={handleDepartmentAssignmentChange}>
                   <SelectTrigger>
-                    <SelectValue placeholder={t("requests.track.filterByAssignment")} />
+                    <SelectValue placeholder={t("requests.track.filterByDepartmentAssignment")} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">{t("requests.track.allAssignments")}</SelectItem>
-                    <SelectItem value="assigned">{t("requests.track.assignedOnly")}</SelectItem>
-                    <SelectItem value="unassigned">{t("requests.track.unassignedOnly")}</SelectItem>
+                    <SelectItem value="all">{t("requests.track.allRequests")}</SelectItem>
+                    <SelectItem value="assigned">{t("requests.track.departmentAssigned")}</SelectItem>
+                    <SelectItem value="unassigned">{t("requests.track.departmentUnassigned")}</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
+            {/* User Assignment Filter - Admin Only */}
+            {canAssignRequests && (
+              <div>
+                <Select value={filterUserAssignment} onValueChange={handleUserAssignmentChange}>
+                  <SelectTrigger>
+                    <SelectValue placeholder={t("requests.track.filterByUserAssignment")} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">{t("requests.track.allRequests")}</SelectItem>
+                    <SelectItem value="assigned">{t("requests.track.userAssigned")}</SelectItem>
+                    <SelectItem value="unassigned">{t("requests.track.userUnassigned")}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -345,6 +363,21 @@ export function TrackRequestsPage() {
                               </div>
                             )}
                           </>
+                        )}
+                        
+                        {/* Assigned User - Show for ALL request types */}
+                        {request.assignedToUserId ? (
+                          <div className="flex items-center gap-1">
+                            <span className="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded">
+                              {t("requests.assignedUser")}: {isRTL ? request.assignedToNameAr : (request.assignedToNameEn || request.assignedToNameAr)}
+                            </span>
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-1">
+                            <span className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded">
+                              {t("requests.assignedUser")}: {t("requests.notAssigned")}
+                            </span>
+                          </div>
                         )}
                       </div>
                     </div>

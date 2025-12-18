@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { Controller } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,6 +12,19 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -21,12 +34,12 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { ArrowRight, Save } from "lucide-react";
+import { ArrowRight, Save, Check, ChevronsUpDown, X } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { useLeadershipForm } from "./LeadershipForm.logic";
 import { useI18n } from "@/i18n";
+import { cn } from "@/shared/ui/utils";
 
-// FormField Component
 interface FormFieldProps {
   label: string;
   required?: boolean;
@@ -54,7 +67,6 @@ const FormField: React.FC<FormFieldProps> = ({
   );
 };
 
-// PageHeader Component
 interface PageHeaderProps {
   isEditMode: boolean;
   onBack: () => void;
@@ -69,16 +81,19 @@ const PageHeader: React.FC<PageHeaderProps> = ({ isEditMode, onBack, t }) => {
         {t("leadership.backToList")}
       </Button>
       <h1 className="text-[#2B2B2B] mb-2">
-        {isEditMode ? t("leadership.editLeaderTitle") : t("leadership.addLeaderTitle")}
+        {isEditMode
+          ? t("leadership.editLeaderTitle")
+          : t("leadership.addLeaderTitle")}
       </h1>
       <p className="text-[#6F6F6F]">
-        {isEditMode ? t("leadership.editLeaderDesc") : t("leadership.addLeaderDesc")}
+        {isEditMode
+          ? t("leadership.editLeaderDesc")
+          : t("leadership.addLeaderDesc")}
       </p>
     </div>
   );
 };
 
-// ConfirmDialog Component
 interface ConfirmDialogProps {
   open: boolean;
   isEditMode: boolean;
@@ -101,7 +116,9 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>
-            {isEditMode ? t("leadership.confirmUpdate") : t("leadership.confirmAddLeader")}
+            {isEditMode
+              ? t("leadership.confirmUpdate")
+              : t("leadership.confirmAddLeader")}
           </AlertDialogTitle>
           <AlertDialogDescription>
             {isEditMode ? (
@@ -138,6 +155,7 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
 
 export function LeadershipForm() {
   const { t, language } = useI18n();
+  const [userComboboxOpen, setUserComboboxOpen] = useState(false);
   const {
     control,
     handleSubmit,
@@ -151,6 +169,12 @@ export function LeadershipForm() {
     setIsConfirmDialogOpen,
     currentFormData,
     departments,
+    users,
+    isLoadingUsers,
+    userSearchTerm,
+    setUserSearchTerm,
+    watch,
+    setValue,
   } = useLeadershipForm();
 
   const { errors, isSubmitting } = formState;
@@ -170,52 +194,7 @@ export function LeadershipForm() {
 
         <Card className="p-6 rounded-xl border-0 shadow-soft bg-white">
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Name Fields */}
-            <div className="grid md:grid-cols-2 gap-4">
-              <Controller
-                name="nameAr"
-                control={control}
-                render={({ field }) => (
-                  <FormField
-                    label={t("leadership.nameArLabel")}
-                    required
-                    error={errors.nameAr?.message}
-                  >
-                    <Input
-                      {...field}
-                      id="nameAr"
-                      className={`rounded-xl mt-2 ${
-                        errors.nameAr ? "border-red-500" : ""
-                      }`}
-                      placeholder={t("leadership.nameArPlaceholder")}
-                    />
-                  </FormField>
-                )}
-              />
-
-              <Controller
-                name="nameEn"
-                control={control}
-                render={({ field }) => (
-                  <FormField
-                    label={t("leadership.nameEnLabel")}
-                    error={errors.nameEn?.message}
-                  >
-                    <Input
-                      {...field}
-                      id="nameEn"
-                      className={`rounded-xl mt-2 ${
-                        errors.nameEn ? "border-red-500" : ""
-                      }`}
-                      dir="ltr"
-                      placeholder={t("leadership.nameEnPlaceholder")}
-                    />
-                  </FormField>
-                )}
-              />
-            </div>
-
-            {/* Position Fields */}
+            {}
             <div className="grid md:grid-cols-2 gap-4">
               <Controller
                 name="positionTitleAr"
@@ -260,7 +239,205 @@ export function LeadershipForm() {
               />
             </div>
 
-            {/* Department Dropdown */}
+            {}
+            <Controller
+              name="userId"
+              control={control}
+              render={({ field }) => {
+                const selectedUser = users.find(
+                  (user) => user.id === field.value
+                );
+                return (
+                  <FormField
+                    label={t("leadership.assignedUserLabel")}
+                    error={errors.userId?.message}
+                    hint={t("leadership.selectUser")}
+                  >
+                    <Popover
+                      open={userComboboxOpen}
+                      onOpenChange={setUserComboboxOpen}
+                    >
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          role="combobox"
+                          aria-expanded={userComboboxOpen}
+                          className="w-full justify-between rounded-xl mt-2"
+                        >
+                          {selectedUser ? (
+                            <span className="truncate">
+                              {language === "ar"
+                                ? selectedUser.nameAr
+                                : selectedUser.nameEn || selectedUser.nameAr}
+                              {selectedUser.email && (
+                                <span className="text-xs text-gray-500 ml-2">
+                                  ({selectedUser.email})
+                                </span>
+                              )}
+                              {selectedUser.leadershipPositionAr && (
+                                <span className="text-xs text-blue-600 ml-2">
+                                  -{" "}
+                                  {language === "ar"
+                                    ? selectedUser.leadershipPositionAr
+                                    : selectedUser.leadershipPositionEn ||
+                                      selectedUser.leadershipPositionAr}
+                                </span>
+                              )}
+                            </span>
+                          ) : (
+                            t("leadership.selectUser")
+                          )}
+                          <div className="flex items-center gap-1">
+                            {selectedUser && (
+                              <X
+                                className="h-4 w-4 shrink-0 opacity-50 hover:opacity-100"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  field.onChange(undefined);
+
+                                  setValue("nameAr", "");
+                                  setValue("nameEn", "");
+                                  setValue("departmentId", undefined);
+                                }}
+                              />
+                            )}
+                            <ChevronsUpDown className="h-4 w-4 shrink-0 opacity-50" />
+                          </div>
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-full p-0" align="start">
+                        <Command shouldFilter={false}>
+                          <CommandInput
+                            placeholder={t("leadership.searchUserPlaceholder")}
+                            value={userSearchTerm}
+                            onValueChange={setUserSearchTerm}
+                          />
+                          <CommandList>
+                            <CommandEmpty>
+                              {isLoadingUsers
+                                ? t("common.loading")
+                                : t("leadership.noUserFound")}
+                            </CommandEmpty>
+                            <CommandGroup>
+                              {users.map((user) => (
+                                <CommandItem
+                                  key={user.id}
+                                  value={user.id.toString()}
+                                  onSelect={() => {
+                                    field.onChange(user.id);
+
+                                    setValue("nameAr", user.nameAr, {
+                                      shouldDirty: true,
+                                    });
+                                    setValue("nameEn", user.nameEn || "", {
+                                      shouldDirty: true,
+                                    });
+
+                                    if (user.departmentId) {
+                                      setValue(
+                                        "departmentId",
+                                        typeof user.departmentId === "string"
+                                          ? parseInt(user.departmentId)
+                                          : user.departmentId,
+                                        { shouldDirty: true }
+                                      );
+                                    }
+                                    setUserComboboxOpen(false);
+                                  }}
+                                >
+                                  <Check
+                                    className={cn(
+                                      "mr-2 h-4 w-4",
+                                      field.value === user.id
+                                        ? "opacity-100"
+                                        : "opacity-0"
+                                    )}
+                                  />
+                                  <div className="flex flex-col flex-1">
+                                    <div className="flex items-center gap-2">
+                                      <span>
+                                        {language === "ar"
+                                          ? user.nameAr
+                                          : user.nameEn || user.nameAr}
+                                      </span>
+                                      {user.leadershipPositionAr && (
+                                        <span className="text-xs text-blue-600 bg-blue-50 px-2 py-0.5 rounded">
+                                          {language === "ar"
+                                            ? user.leadershipPositionAr
+                                            : user.leadershipPositionEn ||
+                                              user.leadershipPositionAr}
+                                        </span>
+                                      )}
+                                    </div>
+                                    {user.email && (
+                                      <span className="text-xs text-gray-500">
+                                        {user.email}
+                                      </span>
+                                    )}
+                                  </div>
+                                </CommandItem>
+                              ))}
+                            </CommandGroup>
+                          </CommandList>
+                        </Command>
+                      </PopoverContent>
+                    </Popover>
+                  </FormField>
+                );
+              }}
+            />
+
+            {}
+            <div className="grid md:grid-cols-2 gap-4">
+              <Controller
+                name="nameAr"
+                control={control}
+                render={({ field }) => (
+                  <FormField
+                    label={t("leadership.nameArLabel")}
+                    required
+                    error={errors.nameAr?.message}
+                    hint={watch("userId") ? "" : t("leadership.selectUser")}
+                  >
+                    <Input
+                      {...field}
+                      id="nameAr"
+                      readOnly
+                      disabled={!watch("userId")}
+                      className={`rounded-xl mt-2 bg-gray-50 ${
+                        errors.nameAr ? "border-red-500" : ""
+                      }`}
+                      placeholder={t("leadership.nameArPlaceholder")}
+                    />
+                  </FormField>
+                )}
+              />
+
+              <Controller
+                name="nameEn"
+                control={control}
+                render={({ field }) => (
+                  <FormField
+                    label={t("leadership.nameEnLabel")}
+                    error={errors.nameEn?.message}
+                  >
+                    <Input
+                      {...field}
+                      id="nameEn"
+                      readOnly
+                      disabled={!watch("userId")}
+                      className={`rounded-xl mt-2 bg-gray-50 ${
+                        errors.nameEn ? "border-red-500" : ""
+                      }`}
+                      dir="ltr"
+                      placeholder={t("leadership.nameEnPlaceholder")}
+                    />
+                  </FormField>
+                )}
+              />
+            </div>
+
+            {}
             <Controller
               name="departmentId"
               control={control}
@@ -268,18 +445,30 @@ export function LeadershipForm() {
                 <FormField
                   label={t("leadership.departmentLabel")}
                   error={errors.departmentId?.message}
+                  hint={watch("userId") ? "" : t("leadership.selectUser")}
                 >
                   <Select
                     value={field.value?.toString()}
-                    onValueChange={(value: string) => field.onChange(parseInt(value))}
+                    onValueChange={(value: string) =>
+                      field.onChange(parseInt(value))
+                    }
+                    disabled={!watch("userId")}
                   >
-                    <SelectTrigger className="rounded-xl mt-2">
-                      <SelectValue placeholder={t("leadership.selectDepartment")} />
+                    <SelectTrigger
+                      className={`rounded-xl mt-2 ${
+                        !watch("userId") ? "bg-gray-50" : ""
+                      }`}
+                    >
+                      <SelectValue
+                        placeholder={t("leadership.selectDepartment")}
+                      />
                     </SelectTrigger>
                     <SelectContent>
                       {departments.map((dept) => (
                         <SelectItem key={dept.id} value={dept.id.toString()}>
-                          {language === "ar" ? dept.nameAr : (dept.nameEn || dept.nameAr)}
+                          {language === "ar"
+                            ? dept.nameAr
+                            : dept.nameEn || dept.nameAr}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -288,7 +477,7 @@ export function LeadershipForm() {
               )}
             />
 
-            {/* Active Status (only for edit mode) */}
+            {}
             {isEditMode && (
               <Controller
                 name="isActive"
@@ -311,7 +500,7 @@ export function LeadershipForm() {
               />
             )}
 
-            {/* Form Actions */}
+            {}
             <div className="flex gap-3 justify-end pt-4">
               <Button
                 type="button"
@@ -334,7 +523,7 @@ export function LeadershipForm() {
         </Card>
       </div>
 
-      {/* Confirmation Dialog */}
+      {}
       <ConfirmDialog
         open={isConfirmDialogOpen}
         isEditMode={isEditMode}

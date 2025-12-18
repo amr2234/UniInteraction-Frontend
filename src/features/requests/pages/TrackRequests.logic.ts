@@ -56,7 +56,8 @@ export const useTrackRequests = () => {
   const [filterType, setFilterType] = useState<string>("all");
   const [filterDepartment, setFilterDepartment] = useState<string>("all");
   const [filterLeadership, setFilterLeadership] = useState<string>("all");
-  const [filterAssignment, setFilterAssignment] = useState<string>("all");
+  const [filterDepartmentAssignment, setFilterDepartmentAssignment] = useState<string>("all");
+  const [filterUserAssignment, setFilterUserAssignment] = useState<string>("all");
   const [startDate, setStartDate] = useState<string>("");
   const [endDate, setEndDate] = useState<string>("");
   const [currentPage, setCurrentPage] = useState(1);
@@ -148,20 +149,26 @@ export const useTrackRequests = () => {
     },
   });
 
-  // Filter requests locally for department assignment filter
+  // Filter requests locally for department and user assignment filters
   const filteredRequests = useMemo(() => {
     return enrichedRequests.filter((req) => {
-      // Assignment filter (admin only) - based on whether request has assigned department or leadership
-      const hasAssignment = (req.mainCategoryId !== undefined && req.mainCategoryId !== null) || 
-                           (req.universityLeadershipId !== undefined && req.universityLeadershipId !== null);
-      const matchesAssignment =
-        filterAssignment === "all" ||
-        (filterAssignment === "assigned" && hasAssignment) ||
-        (filterAssignment === "unassigned" && !hasAssignment);
+      // Department assignment filter
+      const hasDepartmentAssignment = req.assignedDepartmentId !== undefined && req.assignedDepartmentId !== null;
+      const matchesDepartmentAssignment =
+        filterDepartmentAssignment === "all" ||
+        (filterDepartmentAssignment === "assigned" && hasDepartmentAssignment) ||
+        (filterDepartmentAssignment === "unassigned" && !hasDepartmentAssignment);
 
-      return matchesAssignment;
+      // User assignment filter
+      const hasUserAssignment = req.assignedToUserId !== undefined && req.assignedToUserId !== null;
+      const matchesUserAssignment =
+        filterUserAssignment === "all" ||
+        (filterUserAssignment === "assigned" && hasUserAssignment) ||
+        (filterUserAssignment === "unassigned" && !hasUserAssignment);
+
+      return matchesDepartmentAssignment && matchesUserAssignment;
     });
-  }, [enrichedRequests, filterAssignment]);
+  }, [enrichedRequests, filterDepartmentAssignment, filterUserAssignment]);
 
   // Statistics from API
   const stats = useMemo(() => {
@@ -196,8 +203,12 @@ export const useTrackRequests = () => {
     setCurrentPage(1);
   };
 
-  const handleAssignmentChange = (value: string) => {
-    setFilterAssignment(value);
+  const handleDepartmentAssignmentChange = (value: string) => {
+    setFilterDepartmentAssignment(value);
+  };
+
+  const handleUserAssignmentChange = (value: string) => {
+    setFilterUserAssignment(value);
   };
 
   const handleStartDateChange = (value: string) => {
@@ -232,7 +243,8 @@ export const useTrackRequests = () => {
     setFilterType("all");
     setFilterDepartment("all");
     setFilterLeadership("all");
-    setFilterAssignment("all");
+    setFilterDepartmentAssignment("all");
+    setFilterUserAssignment("all");
     setStartDate("");
     setEndDate("");
     setCurrentPage(1);
@@ -278,7 +290,8 @@ export const useTrackRequests = () => {
     filterType,
     filterDepartment,
     filterLeadership,
-    filterAssignment,
+    filterDepartmentAssignment,
+    filterUserAssignment,
     startDate,
     endDate,
     filteredRequests,
@@ -306,7 +319,8 @@ export const useTrackRequests = () => {
     handleTypeChange,
     handleDepartmentChange,
     handleLeadershipChange,
-    handleAssignmentChange,
+    handleDepartmentAssignmentChange,
+    handleUserAssignmentChange,
     handleStartDateChange,
     handleEndDateChange,
     handlePageChange,

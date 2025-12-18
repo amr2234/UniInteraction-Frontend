@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -6,7 +5,9 @@ import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
+  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
@@ -19,335 +20,610 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { useI18n } from "@/i18n";
-import { Search, Download, Trash2, Filter, FileText, FileSpreadsheet } from "lucide-react";
-import { toast } from "sonner";
 import {
   AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
   AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
+  AlertDialogDescription,
 } from "@/components/ui/alert-dialog";
-
-interface Log {
-  id: number;
-  timestamp: string;
-  level: "info" | "warning" | "error" | "critical";
-  category: string;
-  user: string;
-  action: string;
-  message: string;
-}
-
-// Mock data
-const mockLogs: Log[] = [
-  {
-    id: 1,
-    timestamp: "2025-11-30 14:30:25",
-    level: "info",
-    category: "authentication",
-    user: "admin@university.edu",
-    action: "LOGIN",
-    message: "User logged in successfully",
-  },
-  {
-    id: 2,
-    timestamp: "2025-11-30 14:28:15",
-    level: "warning",
-    category: "requests",
-    user: "user@university.edu",
-    action: "UPDATE_REQUEST",
-    message: "Request status changed to pending",
-  },
-  {
-    id: 3,
-    timestamp: "2025-11-30 14:25:10",
-    level: "error",
-    category: "system",
-    user: "system",
-    action: "EMAIL_SEND_FAILED",
-    message: "Failed to send notification email",
-  },
-  {
-    id: 4,
-    timestamp: "2025-11-30 14:20:05",
-    level: "info",
-    category: "users",
-    user: "admin@university.edu",
-    action: "CREATE_USER",
-    message: "New user created: john.doe@university.edu",
-  },
-  {
-    id: 5,
-    timestamp: "2025-11-30 14:15:00",
-    level: "critical",
-    category: "system",
-    user: "system",
-    action: "DATABASE_ERROR",
-    message: "Database connection timeout",
-  },
-];
+import {
+  Search,
+  Download,
+  Filter,
+  FileText,
+  FileSpreadsheet,
+  Eye,
+  ChevronLeft,
+  ChevronRight,
+  X,
+  RefreshCw,
+  AlertCircle,
+  CheckCircle2,
+  Info,
+} from "lucide-react";
+import { useLogsPage } from "./LogsPage.logic";
+import { LogLevel } from "./types/logs.types";
 
 export function LogsPage() {
-  const { t } = useI18n();
-  const [logs] = useState<Log[]>(mockLogs);
-  const [filteredLogs, setFilteredLogs] = useState<Log[]>(mockLogs);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [selectedLevel, setSelectedLevel] = useState<string>("all");
-  const [selectedCategory, setSelectedCategory] = useState<string>("all");
-  const [isExporting, setIsExporting] = useState(false);
-  const [isClearDialogOpen, setIsClearDialogOpen] = useState(false);
-
-  const handleSearch = (term: string) => {
-    setSearchTerm(term);
-    filterLogs(term, selectedLevel, selectedCategory);
-  };
-
-  const handleLevelFilter = (level: string) => {
-    setSelectedLevel(level);
-    filterLogs(searchTerm, level, selectedCategory);
-  };
-
-  const handleCategoryFilter = (category: string) => {
-    setSelectedCategory(category);
-    filterLogs(searchTerm, selectedLevel, category);
-  };
-
-  const filterLogs = (search: string, level: string, category: string) => {
-    let filtered = logs;
-
-    if (search) {
-      filtered = filtered.filter(
-        (log) =>
-          log.message.toLowerCase().includes(search.toLowerCase()) ||
-          log.user.toLowerCase().includes(search.toLowerCase()) ||
-          log.action.toLowerCase().includes(search.toLowerCase())
-      );
-    }
-
-    if (level !== "all") {
-      filtered = filtered.filter((log) => log.level === level);
-    }
-
-    if (category !== "all") {
-      filtered = filtered.filter((log) => log.category === category);
-    }
-
-    setFilteredLogs(filtered);
-  };
-
-  const handleExport = async (format: "csv" | "pdf" | "excel") => {
-    setIsExporting(true);
-    try {
-      // Simulate export
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      toast.success(t("logs.exportSuccess") + ` (${format.toUpperCase()})`);
-    } catch (error) {
-      toast.error(t("common.error"));
-    } finally {
-      setIsExporting(false);
-    }
-  };
-
-  const handleClearLogs = async () => {
-    try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      setFilteredLogs([]);
-      toast.success(t("logs.logsCleared"));
-    } catch (error) {
-      toast.error(t("common.error"));
-    }
-  };
-
-  const getLevelBadge = (level: string) => {
-    const variants: Record<string, { variant: "default" | "secondary" | "destructive" | "outline"; className: string }> = {
-      info: { variant: "default", className: "bg-blue-100 text-blue-800 hover:bg-blue-100" },
-      warning: { variant: "secondary", className: "bg-yellow-100 text-yellow-800 hover:bg-yellow-100" },
-      error: { variant: "destructive", className: "bg-red-100 text-red-800 hover:bg-red-100" },
-      critical: { variant: "destructive", className: "bg-red-600 text-white hover:bg-red-600" },
-    };
-
-    const config = variants[level] || variants.info;
-    return (
-      <Badge variant={config.variant} className={config.className}>
-        {t(`logs.${level}`)}
-      </Badge>
-    );
-  };
+  const {
+    // State
+    logs,
+    isLoading,
+    totalCount,
+    selectedLog,
+    isDetailsDialogOpen,
+    
+    // Filters
+    searchTerm,
+    selectedLevel,
+    selectedCategory,
+    fromDate,
+    toDate,
+    userId,
+    entityType,
+    entityId,
+    showAdvancedFilters,
+    filters,
+    
+    // Setters
+    setSearchTerm,
+    setSelectedLevel,
+    setSelectedCategory,
+    setFromDate,
+    setToDate,
+    setUserId,
+    setEntityType,
+    setEntityId,
+    setShowAdvancedFilters,
+    
+    // Actions
+    applyFilters,
+    clearFilters,
+    handlePageChange,
+    handlePageSizeChange,
+    handleExport,
+    handleViewDetails,
+    handleCloseDetails,
+    fetchLogs,
+    
+    // Helpers
+    getLevelBadgeConfig,
+    getCategoryName,
+    formatDate,
+    
+    // Data
+    statistics,
+    logLevels,
+    categoryGroups,
+    
+    // Internationalization
+    t,
+    language,
+  } = useLogsPage();
 
   return (
     <div className="container mx-auto p-6 max-w-7xl">
+      {/* Header */}
       <div className="mb-6">
         <h1 className="text-3xl font-bold text-[#2B2B2B]">{t("logs.title")}</h1>
         <p className="text-[#6F6F6F] mt-2">{t("logs.subtitle")}</p>
       </div>
 
+      {/* Statistics */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        <Card className="p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-[#6F6F6F]">{t("logs.totalLogs")}</p>
+              <p className="text-2xl font-bold text-[#2B2B2B]">{statistics.total}</p>
+            </div>
+            <Info className="w-8 h-8 text-blue-500" />
+          </div>
+        </Card>
+
+        <Card className="p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-[#6F6F6F]">{t("logs.levels.information")}</p>
+              <p className="text-2xl font-bold text-green-600">{statistics.byLevel.information}</p>
+            </div>
+            <CheckCircle2 className="w-8 h-8 text-green-500" />
+          </div>
+        </Card>
+
+        <Card className="p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-[#6F6F6F]">{t("logs.levels.warning")}</p>
+              <p className="text-2xl font-bold text-yellow-600">{statistics.byLevel.warning}</p>
+            </div>
+            <AlertCircle className="w-8 h-8 text-yellow-500" />
+          </div>
+        </Card>
+
+        <Card className="p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-[#6F6F6F]">{t("logs.levels.error")}</p>
+              <p className="text-2xl font-bold text-red-600">
+                {statistics.byLevel.error + statistics.byLevel.critical}
+              </p>
+            </div>
+            <AlertCircle className="w-8 h-8 text-red-500" />
+          </div>
+        </Card>
+      </div>
+
       <Card className="p-6">
-        {/* Filters */}
+        {/* Filters Section */}
         <div className="space-y-4 mb-6">
+          {/* Main Filters */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            {/* Search */}
             <div className="md:col-span-2">
               <Label htmlFor="search">{t("common.search")}</Label>
               <div className="relative mt-2">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[#6F6F6F] w-4 h-4" />
                 <Input
                   id="search"
-                  placeholder={t("logs.searchLogs")}
+                  placeholder={t("logs.searchPlaceholder")}
                   value={searchTerm}
-                  onChange={(e) => handleSearch(e.target.value)}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && applyFilters()}
                   className="pl-10"
                 />
               </div>
             </div>
 
+            {/* Log Level Filter */}
             <div>
               <Label htmlFor="level">{t("logs.logLevel")}</Label>
-              <Select value={selectedLevel} onValueChange={handleLevelFilter}>
+              <Select value={selectedLevel} onValueChange={setSelectedLevel}>
                 <SelectTrigger className="mt-2">
                   <SelectValue placeholder={t("logs.allLevels")} />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">{t("logs.allLevels")}</SelectItem>
-                  <SelectItem value="info">{t("logs.info")}</SelectItem>
-                  <SelectItem value="warning">{t("logs.warning")}</SelectItem>
-                  <SelectItem value="error">{t("logs.error")}</SelectItem>
-                  <SelectItem value="critical">{t("logs.critical")}</SelectItem>
+                  {logLevels.map((level) => (
+                    <SelectItem key={level} value={level}>
+                      {t(`logs.levels.${level.toLowerCase()}`)}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
 
+            {/* Category Filter */}
             <div>
-              <Label htmlFor="category">{t("common.filter")}</Label>
-              <Select value={selectedCategory} onValueChange={handleCategoryFilter}>
+              <Label htmlFor="category">{t("logs.category")}</Label>
+              <Select value={selectedCategory} onValueChange={setSelectedCategory}>
                 <SelectTrigger className="mt-2">
-                  <SelectValue placeholder={t("logs.categories.all")} />
+                  <SelectValue placeholder={t("logs.allCategories")} />
                 </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">{t("logs.categories.all")}</SelectItem>
-                  <SelectItem value="authentication">{t("logs.categories.authentication")}</SelectItem>
-                  <SelectItem value="requests">{t("logs.categories.requests")}</SelectItem>
-                  <SelectItem value="users">{t("logs.categories.users")}</SelectItem>
-                  <SelectItem value="system">{t("logs.categories.system")}</SelectItem>
-                  <SelectItem value="settings">{t("logs.categories.settings")}</SelectItem>
+                <SelectContent className="max-h-96">
+                  <SelectItem value="all">{t("logs.allCategories")}</SelectItem>
+                  {categoryGroups.map((group) => (
+                    <SelectGroup key={group.label}>
+                      <SelectLabel className="text-xs font-semibold text-[#875E9E]">
+                        {group.label}
+                      </SelectLabel>
+                      {group.categories.map((category) => (
+                        <SelectItem key={category} value={category}>
+                          {getCategoryName(category)}
+                        </SelectItem>
+                      ))}
+                    </SelectGroup>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
           </div>
 
+          {/* Date Range Filters */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="fromDate">{t("logs.fromDate")}</Label>
+              <Input
+                id="fromDate"
+                type="datetime-local"
+                value={fromDate}
+                onChange={(e) => setFromDate(e.target.value)}
+                className="mt-2"
+              />
+            </div>
+            <div>
+              <Label htmlFor="toDate">{t("logs.toDate")}</Label>
+              <Input
+                id="toDate"
+                type="datetime-local"
+                value={toDate}
+                onChange={(e) => setToDate(e.target.value)}
+                className="mt-2"
+              />
+            </div>
+          </div>
+
+          {/* Advanced Filters Toggle */}
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
+            className="flex items-center gap-2"
+          >
+            <Filter className="w-4 h-4" />
+            {showAdvancedFilters ? t("logs.hideAdvancedFilters") : t("logs.showAdvancedFilters")}
+          </Button>
+
+          {/* Advanced Filters */}
+          {showAdvancedFilters && (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-gray-50 rounded-lg">
+              <div>
+                <Label htmlFor="userId">{t("logs.userId")}</Label>
+                <Input
+                  id="userId"
+                  type="number"
+                  placeholder={t("logs.userIdPlaceholder")}
+                  value={userId}
+                  onChange={(e) => setUserId(e.target.value)}
+                  className="mt-2"
+                />
+              </div>
+              <div>
+                <Label htmlFor="entityType">{t("logs.entityType")}</Label>
+                <Input
+                  id="entityType"
+                  placeholder={t("logs.entityTypePlaceholder")}
+                  value={entityType}
+                  onChange={(e) => setEntityType(e.target.value)}
+                  className="mt-2"
+                />
+              </div>
+              <div>
+                <Label htmlFor="entityId">{t("logs.entityId")}</Label>
+                <Input
+                  id="entityId"
+                  type="number"
+                  placeholder={t("logs.entityIdPlaceholder")}
+                  value={entityId}
+                  onChange={(e) => setEntityId(e.target.value)}
+                  className="mt-2"
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Filter Actions */}
           <div className="flex flex-wrap gap-2">
             <Button
-              onClick={() => handleExport("csv")}
-              disabled={isExporting}
-              variant="outline"
-              size="sm"
-              className="flex items-center gap-2"
+              onClick={applyFilters}
+              className="bg-[#6CAEBD] hover:bg-[#6CAEBD]/90 flex items-center gap-2"
             >
-              <FileText className="w-4 h-4" />
-              {t("logs.exportAs")} CSV
+              <Search className="w-4 h-4" />
+              {t("logs.applyFilters")}
             </Button>
             <Button
-              onClick={() => handleExport("excel")}
-              disabled={isExporting}
+              onClick={clearFilters}
               variant="outline"
-              size="sm"
               className="flex items-center gap-2"
             >
-              <FileSpreadsheet className="w-4 h-4" />
-              {t("logs.exportAs")} Excel
+              <X className="w-4 h-4" />
+              {t("logs.clearFilters")}
             </Button>
             <Button
-              onClick={() => handleExport("pdf")}
-              disabled={isExporting}
+              onClick={fetchLogs}
               variant="outline"
-              size="sm"
               className="flex items-center gap-2"
             >
-              <Download className="w-4 h-4" />
-              {t("logs.exportAs")} PDF
+              <RefreshCw className="w-4 h-4" />
+              {t("logs.refresh")}
             </Button>
 
-            <Button 
-              variant="destructive" 
-              size="sm" 
-              className="flex items-center gap-2 ml-auto"
-              onClick={() => setIsClearDialogOpen(true)}
-            >
-              <Trash2 className="w-4 h-4" />
-              {t("logs.clearLogs")}
-            </Button>
-
-            <AlertDialog open={isClearDialogOpen} onOpenChange={setIsClearDialogOpen}>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>{t("logs.clearLogs")}</AlertDialogTitle>
-                  <AlertDialogDescription>{t("logs.clearConfirm")}</AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel onClick={() => setIsClearDialogOpen(false)}>
-                    {t("common.cancel")}
-                  </AlertDialogCancel>
-                  <AlertDialogAction onClick={() => {
-                    handleClearLogs();
-                    setIsClearDialogOpen(false);
-                  }} className="bg-red-600 hover:bg-red-700">
-                    {t("common.confirm")}
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
-          </div>
-        </div>
-
-        {/* Stats */}
-        <div className="mb-6 p-4 bg-gray-50 rounded-lg">
-          <div className="flex items-center justify-between">
-            <span className="text-sm font-medium text-[#2B2B2B]">{t("logs.totalLogs")}</span>
-            <span className="text-2xl font-bold text-[#875E9E]">{filteredLogs.length}</span>
+            <div className="ml-auto flex gap-2">
+              <Button
+                onClick={() => handleExport("csv")}
+                variant="outline"
+                size="sm"
+                className="flex items-center gap-2"
+              >
+                <FileText className="w-4 h-4" />
+                CSV
+              </Button>
+              <Button
+                onClick={() => handleExport("excel")}
+                variant="outline"
+                size="sm"
+                className="flex items-center gap-2"
+              >
+                <FileSpreadsheet className="w-4 h-4" />
+                Excel
+              </Button>
+              <Button
+                onClick={() => handleExport("pdf")}
+                variant="outline"
+                size="sm"
+                className="flex items-center gap-2"
+              >
+                <Download className="w-4 h-4" />
+                PDF
+              </Button>
+            </div>
           </div>
         </div>
 
         {/* Logs Table */}
         <div className="border rounded-lg overflow-hidden">
-          {filteredLogs.length === 0 ? (
+          {isLoading ? (
+            <div className="p-8 text-center text-[#6F6F6F]">
+              <RefreshCw className="w-8 h-8 animate-spin mx-auto mb-2" />
+              <p>{t("logs.loading")}</p>
+            </div>
+          ) : logs.length === 0 ? (
             <div className="p-8 text-center text-[#6F6F6F]">
               <p>{t("logs.noLogsFound")}</p>
             </div>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>{t("logs.timestamp")}</TableHead>
-                  <TableHead>{t("logs.logLevel")}</TableHead>
-                  <TableHead>{t("common.filter")}</TableHead>
-                  <TableHead>{t("logs.user")}</TableHead>
-                  <TableHead>{t("logs.action")}</TableHead>
-                  <TableHead>{t("logs.message")}</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredLogs.map((log) => (
-                  <TableRow key={log.id}>
-                    <TableCell className="font-mono text-sm">{log.timestamp}</TableCell>
-                    <TableCell>{getLevelBadge(log.level)}</TableCell>
-                    <TableCell>
-                      <Badge variant="outline">{t(`logs.categories.${log.category}`)}</Badge>
-                    </TableCell>
-                    <TableCell className="text-sm">{log.user}</TableCell>
-                    <TableCell className="font-medium text-sm">{log.action}</TableCell>
-                    <TableCell className="text-sm text-[#6F6F6F]">{log.message}</TableCell>
+            <>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-[180px]">{t("logs.timestamp")}</TableHead>
+                    <TableHead className="w-[120px]">{t("logs.logLevel")}</TableHead>
+                    <TableHead>{t("logs.category")}</TableHead>
+                    <TableHead>{t("logs.message")}</TableHead>
+                    <TableHead className="w-[200px]">{t("logs.username")}</TableHead>
+                    <TableHead className="w-[150px]">{t("logs.requestPath")}</TableHead>
+                    <TableHead className="w-[100px] text-center">{t("common.actions")}</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {logs.map((log) => (
+                    <TableRow key={log.id} className="hover:bg-gray-50">
+                      <TableCell className="font-mono text-xs">
+                        {formatDate(log.createdAt)}
+                      </TableCell>
+                      <TableCell>
+                        <Badge className={getLevelBadgeConfig(log.level).className}>
+                          {getLevelBadgeConfig(log.level).label}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="outline" className="text-xs">
+                          {log.categoryName || getCategoryName(log.category)}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="max-w-md">
+                        <p className="text-sm text-[#2B2B2B] line-clamp-2">
+                          {language === "ar" && log.messageAr ? log.messageAr : log.message}
+                        </p>
+                      </TableCell>
+                      <TableCell className="text-sm text-[#6F6F6F]">
+                        {log.username || "-"}
+                      </TableCell>
+                      <TableCell className="text-xs text-[#6F6F6F] font-mono">
+                        {log.requestPath || "-"}
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <Button
+                          onClick={() => handleViewDetails(log)}
+                          variant="ghost"
+                          size="sm"
+                          className="flex items-center gap-1"
+                        >
+                          <Eye className="w-4 h-4" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+
+              {/* Pagination */}
+              <div className="flex items-center justify-between p-4 border-t bg-gray-50">
+                <div className="text-sm text-[#6F6F6F]">
+                  {t("logs.showing")} {(filters.pageNumber! - 1) * filters.pageSize! + 1} - {Math.min(filters.pageNumber! * filters.pageSize!, totalCount)} {t("logs.of")} {totalCount} {t("logs.logs")}
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <Select
+                    value={filters.pageSize?.toString()}
+                    onValueChange={(value: string) => handlePageSizeChange(parseInt(value))}
+                  >
+                    <SelectTrigger className="w-[100px]">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="20">20</SelectItem>
+                      <SelectItem value="50">50</SelectItem>
+                      <SelectItem value="100">100</SelectItem>
+                      <SelectItem value="200">200</SelectItem>
+                    </SelectContent>
+                  </Select>
+
+                  <div className="flex items-center gap-1">
+                    <Button
+                      onClick={() => handlePageChange(filters.pageNumber! - 1)}
+                      disabled={filters.pageNumber === 1}
+                      variant="outline"
+                      size="sm"
+                    >
+                      <ChevronLeft className="w-4 h-4" />
+                    </Button>
+                    <span className="text-sm px-4">
+                      {t("logs.page")} {filters.pageNumber}
+                    </span>
+                    <Button
+                      onClick={() => handlePageChange(filters.pageNumber! + 1)}
+                      disabled={logs.length < filters.pageSize!}
+                      variant="outline"
+                      size="sm"
+                    >
+                      <ChevronRight className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </>
           )}
         </div>
       </Card>
+
+      {/* Log Details Dialog */}
+      <AlertDialog open={isDetailsDialogOpen} onOpenChange={handleCloseDetails}>
+        <AlertDialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+          {/* Close button at the top right */}
+          <button
+            onClick={handleCloseDetails}
+            className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground"
+          >
+            <X className="h-4 w-4" />
+            <span className="sr-only">Close</span>
+          </button>
+
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-lg font-semibold text-[#2B2B2B]">{t("logs.logDetails")}</AlertDialogTitle>
+            <AlertDialogDescription className="text-sm text-[#6F6F6F]">
+              {selectedLog && formatDate(selectedLog.createdAt)}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+
+          {selectedLog && (
+            <div className="space-y-4">
+              {/* Classification */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-xs text-[#6F6F6F]">{t("logs.logLevel")}</Label>
+                  <div className="mt-1">
+                    <Badge className={getLevelBadgeConfig(selectedLog.level).className}>
+                      {getLevelBadgeConfig(selectedLog.level).label}
+                    </Badge>
+                  </div>
+                </div>
+                <div>
+                  <Label className="text-xs text-[#6F6F6F]">{t("logs.category")}</Label>
+                  <div className="mt-1">
+                    <Badge variant="outline">{selectedLog.categoryName || getCategoryName(selectedLog.category)}</Badge>
+                  </div>
+                </div>
+              </div>
+
+              {/* Message */}
+              <div>
+                <Label className="text-xs text-[#6F6F6F]">{t("logs.message")}</Label>
+                <p className="mt-1 text-sm text-[#2B2B2B] p-3 bg-gray-50 rounded">
+                  {language === "ar" && selectedLog.messageAr ? selectedLog.messageAr : selectedLog.message}
+                </p>
+              </div>
+
+              {/* Details */}
+              {selectedLog.details && (
+                <div>
+                  <Label className="text-xs text-[#6F6F6F]">{t("logs.details")}</Label>
+                  <pre className="mt-1 text-xs p-3 bg-gray-50 rounded overflow-x-auto">
+                    {selectedLog.details}
+                  </pre>
+                </div>
+              )}
+
+              {/* Stack Trace */}
+              {selectedLog.stackTrace && (
+                <div>
+                  <Label className="text-xs text-[#6F6F6F]">{t("logs.stackTrace")}</Label>
+                  <pre className="mt-1 text-xs p-3 bg-red-50 rounded overflow-x-auto text-red-800 max-h-64">
+                    {selectedLog.stackTrace}
+                  </pre>
+                </div>
+              )}
+
+              {/* Context */}
+              <div className="grid grid-cols-2 gap-4">
+                {selectedLog.username && (
+                  <div>
+                    <Label className="text-xs text-[#6F6F6F]">{t("logs.username")}</Label>
+                    <p className="mt-1 text-sm">{selectedLog.username}</p>
+                  </div>
+                )}
+                {selectedLog.ipAddress && (
+                  <div>
+                    <Label className="text-xs text-[#6F6F6F]">{t("logs.ipAddress")}</Label>
+                    <p className="mt-1 text-sm font-mono">{selectedLog.ipAddress}</p>
+                  </div>
+                )}
+                {selectedLog.requestPath && (
+                  <div>
+                    <Label className="text-xs text-[#6F6F6F]">{t("logs.requestPath")}</Label>
+                    <p className="mt-1 text-sm font-mono">{selectedLog.requestPath}</p>
+                  </div>
+                )}
+                {selectedLog.httpMethod && (
+                  <div>
+                    <Label className="text-xs text-[#6F6F6F]">{t("logs.httpMethod")}</Label>
+                    <p className="mt-1 text-sm">
+                      <Badge variant="outline">{selectedLog.httpMethod}</Badge>
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              {/* Entity */}
+              {(selectedLog.entityType || selectedLog.action) && (
+                <div className="grid grid-cols-3 gap-4">
+                  {selectedLog.entityType && (
+                    <div>
+                      <Label className="text-xs text-[#6F6F6F]">{t("logs.entityType")}</Label>
+                      <p className="mt-1 text-sm">{selectedLog.entityType}</p>
+                    </div>
+                  )}
+                  {selectedLog.entityId && (
+                    <div>
+                      <Label className="text-xs text-[#6F6F6F]">{t("logs.entityId")}</Label>
+                      <p className="mt-1 text-sm">{selectedLog.entityId}</p>
+                    </div>
+                  )}
+                  {selectedLog.action && (
+                    <div>
+                      <Label className="text-xs text-[#6F6F6F]">{t("logs.action")}</Label>
+                      <p className="mt-1 text-sm">{selectedLog.action}</p>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Additional Info */}
+              <div className="grid grid-cols-3 gap-4">
+                {selectedLog.durationMs != null && (
+                  <div>
+                    <Label className="text-xs text-[#6F6F6F]">{t("logs.duration")}</Label>
+                    <p className="mt-1 text-sm">{selectedLog.durationMs} ms</p>
+                  </div>
+                )}
+                {selectedLog.source && (
+                  <div>
+                    <Label className="text-xs text-[#6F6F6F]">{t("logs.source")}</Label>
+                    <p className="mt-1 text-sm">{selectedLog.source}</p>
+                  </div>
+                )}
+                {selectedLog.correlationId && (
+                  <div>
+                    <Label className="text-xs text-[#6F6F6F]">{t("logs.correlationId")}</Label>
+                    <p className="mt-1 text-sm font-mono text-xs">{selectedLog.correlationId}</p>
+                  </div>
+                )}
+              </div>
+
+              {/* User Agent */}
+              {selectedLog.userAgent && (
+                <div>
+                  <Label className="text-xs text-[#6F6F6F]">{t("logs.userAgent")}</Label>
+                  <p className="mt-1 text-xs text-[#6F6F6F] p-2 bg-gray-50 rounded">
+                    {selectedLog.userAgent}
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

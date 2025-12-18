@@ -1,240 +1,246 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { useI18n } from "@/i18n";
 import { useUserRole } from "@/core/hooks";
-import { RequestStatus, REQUEST_STATUS_NAMES_AR } from "@/core/constants/requestStatuses";
-import { Badge } from "@/components/ui/badge";
-import {
-  UserRequestDetailsDto,
-  RequestType,
-  RequestCategory,
-  MainCategory,
-  SubCategory,
-  Service,
-  UniversityLeadership
-} from "@/features/requests/types";
+import { useRequestDetails } from "@/features/requests/hooks/useRequests";
+import { useMainCategories, useLeadershipLookup } from "@/features/lookups/hooks/useLookups";
+import { RequestStatus } from "@/core/constants/requestStatuses";
+import { RequestType } from "@/core/constants/requestTypes";
+import { queryKeys } from "@/core/lib/queryKeys";
+import { apiRequest } from "@/core/lib/apiClient";
+import type { UserRequestDto } from "@/core/types/api";
+
+// Regex patterns for validation (same as request form)
+const hasArabicRegex = /[\u0600-\u06FF]/;
+const noEnglishRegex = /^[^a-zA-Z]*$/;
+const hasEnglishRegex = /[a-zA-Z]/;
+const noArabicRegex = /^[^\u0600-\u06FF]*$/;
+
+interface EditFormData {
+  titleAr: string;
+  titleEn?: string;
+  subjectAr: string;
+  subjectEn?: string;
+  additionalDetailsAr?: string;
+  additionalDetailsEn?: string;
+  mainCategoryId?: number;
+  subCategoryId?: number;
+  serviceId?: number;
+  visitReasonAr?: string;
+  visitReasonEn?: string;
+  universityLeadershipId?: number;
+}
+
+interface FormErrors {
+  [key: string]: string;
+}
 
 export const useEditRequestLogic = () => {
   const navigate = useNavigate();
-  const { requestNumber } = useParams();
-  const { isAdmin, isEmployee, isUser } = useUserRole();
+  const { id } = useParams<{ id: string }>();
+  const { t, language } = useI18n();
+  const { isSuperAdmin, isEmployee, isUser } = useUserRole();
+  const queryClient = useQueryClient();
 
-  const [isLoading, setIsLoading] = useState(false);
+  // State
+  const [formData, setFormData] = useState<EditFormData>({
+    titleAr: "",
+    subjectAr: "",
+  });
+  const [formErrors, setFormErrors] = useState<FormErrors>({});
   const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false);
-  const [formData, setFormData] = useState<UserRequestDetailsDto | null>(null);
-  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
 
-  // Lookup data
-  const [requestTypes] = useState<RequestType[]>([
-    { id: 1, nameAr: "استفسار" },
-    { id: 2, nameAr: "شكوى" },
-    { id: 3, nameAr: "مقترح" },
-    { id: 4, nameAr: "حجز زيارة" },
-  ]);
+  // Fetch request details
+  const { data: request, isLoading: isLoadingRequest } = useRequestDetails(id || "");
 
-  const [requestCategories] = useState<RequestCategory[]>([
-    { id: 1, nameAr: "أكاديمي" },
-    { id: 2, nameAr: "إداري" },
-    { id: 3, nameAr: "مالي" },
-    { id: 4, nameAr: "تقني" },
-  ]);
+  // Fetch lookups
+  const { data: mainCategories = [] } = useMainCategories();
+  const { data: leadership = [] } = useLeadershipLookup();
 
-  const [mainCategories] = useState<MainCategory[]>([
-    { id: 1, nameAr: "الشؤون الأكاديمية" },
-    { id: 2, nameAr: "شؤون الطلاب" },
-  ]);
+  // Determine request type
+  const isInquiryRequest = request?.requestTypeId === RequestType.INQUIRY;
+  const isComplaintRequest = request?.requestTypeId === RequestType.COMPLAINT;
+  const isVisitRequest = request?.requestTypeId === RequestType.VISIT;
 
-  const [subCategories] = useState<SubCategory[]>([
-    { id: 1, nameAr: "القبول والتسجيل", mainCategoryId: 1 },
-    { id: 2, nameAr: "الامتحانات", mainCategoryId: 1 },
-    { id: 3, nameAr: "الأنشطة الطلابية", mainCategoryId: 2 },
-  ]);
+  // Check if user can edit the request
+  const canEditRequest = useMemo(() => {
+    if (!request) return false;
 
-  const [services] = useState<Service[]>([
-    { id: 1, nameAr: "طلب إفادة تخرج", subCategoryId: 1 },
-    { id: 2, nameAr: "طلب كشف درجات", subCategoryId: 2 },
-  ]);
+    // Super Admin can always edit
+    if (isSuperAdmin) return true;
 
-  const [leadership] = useState<UniversityLeadership[]>([
-    { id: 1, nameAr: "د. عبدالله محمد الغامدي", positionAr: "رئيس الجامعة" },
-    { id: 2, nameAr: "د. فاطمة أحمد العمري", positionAr: "وكيلة الجامعة للشؤون الأكاديمية" },
-  ]);
+    // Employee can only edit RECEIVED status requests
+    if (isEmployee && request.requestStatusId === RequestStatus.RECEIVED) return true;
 
-  const [filteredSubCategories, setFilteredSubCategories] = useState<SubCategory[]>([]);
-  const [filteredServices, setFilteredServices] = useState<Service[]>([]);
+    return false;
+  }, [request, isSuperAdmin, isEmployee]);
 
-  // Mock data
-  const mockRequestData: UserRequestDetailsDto = {
-    id: 1,
-    requestNumber: requestNumber || "SG-2025-001234",
-    nameAr: "أحمد محمد السعيد",
-    nameEn: "Ahmed Mohammed Alsaeed",
-    email: "ahmed.alsaeed@example.com",
-    mobile: "+966501234567",
-    titleAr: "استفسار عن كشف الدرجات",
-    titleEn: "Inquiry about transcript",
-    subjectAr: "أرغب في الحصول على كشف درجات معتمد",
-    subjectEn: "I would like to get an official transcript",
-    additionalDetailsAr: "أحتاج الكشف للتقديم على وظيفة",
-    additionalDetailsEn: "I need it for job application",
-    requestTypeId: 1,
-    statusId: RequestStatus.RECEIVED,
-    requestCategoryId: 1,
-    mainCategoryId: 1,
-    subCategoryId: 2,
-    serviceId: 2,
-    universityLeadershipId: 1,
-    submittedChannel: "البوابة الإلكترونية",
-    createdAt: "2025-01-15T10:30:00",
-  };
-
+  // Initialize form data when request is loaded
   useEffect(() => {
-    fetchRequestData();
-  }, [requestNumber]);
-
-  useEffect(() => {
-    if (formData?.mainCategoryId) {
-      const filtered = subCategories.filter(
-        (sub) => sub.mainCategoryId === formData.mainCategoryId
-      );
-      setFilteredSubCategories(filtered);
-    } else {
-      setFilteredSubCategories([]);
+    if (request) {
+      setFormData({
+        titleAr: request.titleAr || "",
+        titleEn: request.titleEn,
+        subjectAr: request.subjectAr || "",
+        subjectEn: request.subjectEn,
+        additionalDetailsAr: request.additionalDetailsAr,
+        additionalDetailsEn: request.additionalDetailsEn,
+        mainCategoryId: request.mainCategoryId,
+        subCategoryId: request.subCategoryId,
+        serviceId: request.serviceId,
+        visitReasonAr: request.visitReasonAr,
+        visitReasonEn: request.visitReasonEn,
+        universityLeadershipId: request.universityLeadershipId,
+      });
     }
-  }, [formData?.mainCategoryId, subCategories]);
+  }, [request]);
 
-  useEffect(() => {
-    if (formData?.subCategoryId) {
-      const filtered = services.filter(
-        (service) => service.subCategoryId === formData.subCategoryId
-      );
-      setFilteredServices(filtered);
-    } else {
-      setFilteredServices([]);
-    }
-  }, [formData?.subCategoryId, services]);
+  // Update mutation
+  const updateRequestMutation = useMutation({
+    mutationFn: async (data: EditFormData) => {
+      return apiRequest.put<UserRequestDto>(`/requests/${id}`, data);
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: queryKeys.requests.detail(id!) });
+      await queryClient.invalidateQueries({ queryKey: queryKeys.requests.all });
+      toast.success(t("requests.changesSavedSuccessfully"));
+      navigate(`/dashboard/request/${id}`);
+    },
+    onError: (error: any) => {
+      toast.error(t("requests.errorOccurred"), {
+        description: error.message,
+      });
+    },
+  });
 
-  const fetchRequestData = async () => {
-    setIsLoading(true);
-    try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      setFormData(mockRequestData);
-    } catch (error) {
-      toast.error("حدث خطأ أثناء تحميل بيانات الطلب");
-    } finally {
-      setIsLoading(false);
+  // Handle input change
+  const handleInputChange = (field: keyof EditFormData, value: any) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
+
+    // Clear error for this field
+    if (formErrors[field]) {
+      setFormErrors((prev) => {
+        const newErrors = { ...prev };
+        delete newErrors[field];
+        return newErrors;
+      });
     }
   };
 
-  const handleInputChange = (field: keyof UserRequestDetailsDto, value: any) => {
-    if (formData) {
-      setFormData({ ...formData, [field]: value });
-      
-      // Clear error for this field if it exists
-      if (formErrors[field]) {
-        setFormErrors(prev => {
-          const newErrors = { ...prev };
-          delete newErrors[field];
-          return newErrors;
-        });
+  // Validate form
+  const validateForm = (): boolean => {
+    const errors: FormErrors = {};
+
+    // Title Arabic validation
+    if (!formData.titleAr?.trim()) {
+      errors.titleAr = t("validation.titleRequired");
+    } else if (formData.titleAr.length > 100) {
+      errors.titleAr = t("validation.maxLength").replace("{max}", "100");
+    } else if (!hasArabicRegex.test(formData.titleAr)) {
+      errors.titleAr = t("validation.arabicRequired");
+    } else if (!noEnglishRegex.test(formData.titleAr)) {
+      errors.titleAr = t("validation.noEnglishAllowed");
+    }
+
+    // Title English validation (optional but has max length)
+    if (formData.titleEn && formData.titleEn.length > 100) {
+      errors.titleEn = t("validation.maxLength").replace("{max}", "100");
+    }
+
+    // Subject Arabic validation
+    if (!formData.subjectAr?.trim()) {
+      errors.subjectAr = t("validation.subjectRequired");
+    } else if (!hasArabicRegex.test(formData.subjectAr)) {
+      errors.subjectAr = t("validation.arabicRequired");
+    } else if (!noEnglishRegex.test(formData.subjectAr)) {
+      errors.subjectAr = t("validation.noEnglishAllowed");
+    }
+
+    // Additional Details Arabic validation (optional but must be Arabic only if provided)
+    if (formData.additionalDetailsAr && formData.additionalDetailsAr.trim() !== "") {
+      if (!hasArabicRegex.test(formData.additionalDetailsAr)) {
+        errors.additionalDetailsAr = t("validation.arabicRequired");
+      } else if (!noEnglishRegex.test(formData.additionalDetailsAr)) {
+        errors.additionalDetailsAr = t("validation.noEnglishAllowed");
       }
     }
-  };
 
-  const validateForm = (): boolean => {
-    const errors: Record<string, string> = {};
-    
-    if (!formData) return false;
-    
-    if (!formData.titleAr?.trim()) {
-      errors.titleAr = "عنوان الطلب مطلوب";
+    // Visit-specific validations
+    if (isVisitRequest) {
+      if (!formData.universityLeadershipId) {
+        errors.universityLeadershipId = t("validation.leaderRequired");
+      }
+      
+      // Visit Reason Arabic validation
+      if (!formData.visitReasonAr?.trim()) {
+        errors.visitReasonAr = t("validation.visitReasonRequired");
+      } else if (!hasArabicRegex.test(formData.visitReasonAr)) {
+        errors.visitReasonAr = t("validation.arabicRequired");
+      } else if (!noEnglishRegex.test(formData.visitReasonAr)) {
+        errors.visitReasonAr = t("validation.noEnglishAllowed");
+      }
     }
-    
-    if (!formData.subjectAr?.trim()) {
-      errors.subjectAr = "موضوع الطلب مطلوب";
-    }
-    
-    if (!formData.requestTypeId) {
-      errors.requestTypeId = "نوع الطلب مطلوب";
-    }
-    
+
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
   };
 
+  // Handle submit
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!validateForm()) {
+      toast.error(t("validation.pleaseFixErrors"));
       return;
     }
-    
-    setIsLoading(true);
-    try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      // toast.success("تم حفظ التعديلات بنجاح");
-      navigate(`/dashboard/request/${formData?.requestNumber}`);
-    } catch (error) {
-      // toast.error("حدث خطأ. يرجى المحاولة مرة أخرى");
-    } finally {
-      setIsLoading(false);
-    }
+
+    setIsConfirmDialogOpen(true);
   };
 
-  const getStatusBadge = (statusId: number) => {
-    // Map request status IDs to badge styles
-    const statusStyles: Record<number, { className: string }> = {
-      [RequestStatus.RECEIVED]: { className: "bg-blue-500" },
-      [RequestStatus.UNDER_REVIEW]: { className: "bg-yellow-500" },
-      [RequestStatus.REPLIED]: { className: "bg-green-500" },
-      [RequestStatus.CLOSED]: { className: "bg-gray-500" },
-    };
-
-    const style = statusStyles[statusId] || { className: "bg-gray-400" };
-    const label = REQUEST_STATUS_NAMES_AR[statusId as RequestStatus] || "غير معروف";
-    return { className: style.className, label };
+  // Confirm and save changes
+  const confirmSave = async () => {
+    setIsConfirmDialogOpen(false);
+    updateRequestMutation.mutate(formData);
   };
 
-  const isVisitRequest = formData?.requestTypeId === 4;
-
-  // Check if user can edit the request based on role and status
-  const canEditRequest = isAdmin || isEmployee || (isUser && formData?.statusId === RequestStatus.RECEIVED);
+  // Cancel edit
+  const handleCancel = () => {
+    navigate(`/dashboard/request/${id}`);
+  };
 
   return {
     // State
-    isLoading,
-    isConfirmDialogOpen,
+    request,
     formData,
     formErrors,
-    requestTypes,
-    requestCategories,
+    isLoading: isLoadingRequest,
+    isSubmitting: updateRequestMutation.isPending,
+    isConfirmDialogOpen,
+
+    // Lookups
     mainCategories,
-    subCategories,
-    services,
     leadership,
-    filteredSubCategories,
-    filteredServices,
-    
-    // Role checks
-    isAdmin,
-    isEmployee,
-    isUser,
+
+    // Flags
+    isInquiryRequest,
+    isComplaintRequest,
     isVisitRequest,
     canEditRequest,
-    
-    // Utilities
-    toast,
-    
+    isSuperAdmin,
+    isEmployee,
+
     // Handlers
-    setIsLoading,
-    setIsConfirmDialogOpen,
-    setFormData,
-    setFormErrors,
     handleInputChange,
     handleSubmit,
-    getStatusBadge,
-    navigate
+    confirmSave,
+    handleCancel,
+    setIsConfirmDialogOpen,
+
+    // Utils
+    t,
+    language,
+    navigate,
   };
 };

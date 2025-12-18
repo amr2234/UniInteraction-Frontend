@@ -7,6 +7,7 @@ import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Mail, Lock, Shield, IdCard, Eye, EyeOff } from "lucide-react";
 import nafathLogo from "@/assets/Nafaz.png";
+import logoImage from "@/assets/Logo-Test.png";
 import { useLoginPage } from "./LoginPage.logic";
 import { useI18n } from "@/i18n";
 
@@ -43,7 +44,8 @@ export function LoginPage() {
 
       <Card className="w-full max-w-md p-8 relative z-10 rounded-2xl border-0 shadow-soft-lg">
         <div className="text-center mb-6 items-center justify-center">
-          <div className="items-center justify-center mb-6">
+          <div className="flex items-center justify-center mb-6">
+            <img src={logoImage} alt={t("common.appName")} className="h-16" />
           </div>
           <h2 className="text-[#2B2B2B] mb-2 text-center">{t("auth.login")}</h2>
           <p className="text-[#6F6F6F] text-center">{t("common.appName")}</p>

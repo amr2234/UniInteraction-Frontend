@@ -28,13 +28,17 @@ export const createRequestFormSchema = (t: (key: string) => string) => {
     titleAr: z
       .string()
       .min(1, t("validation.required"))
+      .max(100, t("validation.maxLength").replace("{max}", "100"))
       .refine((val) => hasArabicRegex.test(val), {
         message: t("validation.arabicRequired"),
       })
       .refine((val) => noEnglishRegex.test(val), {
         message: t("validation.noEnglishAllowed"),
       }),
-    titleEn: z.string().optional(),
+    titleEn: z
+      .string()
+      .max(100, t("validation.maxLength").replace("{max}", "100"))
+      .optional(),
     subjectAr: z
       .string()
       .min(1, t("validation.required"))

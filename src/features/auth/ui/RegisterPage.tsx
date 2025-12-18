@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { User, Mail, Lock, Phone, IdCard, Eye, EyeOff } from "lucide-react";
+import logoImage from "@/assets/Logo-Test.png";
 import { useRegisterPage } from "./RegisterPage.logic";
 import { useI18n } from "@/i18n";
 
@@ -32,6 +33,9 @@ export function RegisterPage() {
 
       <Card className="w-full max-w-md p-8 relative z-10 rounded-2xl border-0 shadow-soft-lg my-8">
         <div className="text-center mb-8">
+          <div className="flex items-center justify-center mb-6">
+            <img src={logoImage} alt={t("common.appName")} className="h-16" />
+          </div>
           <h2 className="text-[#2B2B2B] mb-2 text-center">{t("auth.register")}</h2>
           <p className="text-[#6F6F6F] text-center">{t("common.appName")}</p>
         </div>

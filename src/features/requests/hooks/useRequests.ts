@@ -8,6 +8,7 @@ import {
   UpdateRequestStatusPayload,
   RequestAttachment,
   ApiError,
+  RequestStatusCount,
 } from '@/core/types/api';
 import { toast } from 'sonner';
 
@@ -167,5 +168,16 @@ export const useDeleteRequestAttachment = () => {
         description: error.message,
       });
     },
+  });
+};
+
+/**
+ * Hook to get request counts by status
+ */
+export const useRequestCountsByStatus = () => {
+  return useQuery<RequestStatusCount[], ApiError>({
+    queryKey: queryKeys.requests.countsByStatus,
+    queryFn: () => requestsApi.getCountsByStatus(),
+    staleTime: 2 * 60 * 1000, // 2 minutes
   });
 };

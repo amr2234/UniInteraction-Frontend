@@ -12,9 +12,12 @@ import {
   useUpdateLeadership,
 } from "@/features/admin/leadership/hooks/useLeadership";
 import { useDepartmentsLookup } from "@/features/lookups/hooks/useLookups";
+import { usersApi } from "@/features/admin/users/api/users.api";
+import { UserRole } from "@/core/constants/roles";
 import type {
   CreateLeadershipPayload,
   UpdateLeadershipPayload,
+  UserDto,
 } from "@/core/types/api";
 
 export const useLeadershipForm = (): UseLeadershipFormReturn => {
@@ -25,6 +28,9 @@ export const useLeadershipForm = (): UseLeadershipFormReturn => {
 
   const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false);
   const [currentFormData, setCurrentFormData] = useState<LeadershipFormData | null>(null);
+  const [users, setUsers] = useState<UserDto[]>([]);
+  const [isLoadingUsers, setIsLoadingUsers] = useState(false);
+  const [userSearchTerm, setUserSearchTerm] = useState("");
 
   // API hooks
   const { data: leadershipData, isLoading: isFetchingLeadership } = useLeadershipById(
@@ -54,11 +60,48 @@ export const useLeadershipForm = (): UseLeadershipFormReturn => {
       positionTitleAr: "",
       positionTitleEn: "",
       departmentId: undefined,
+      userId: undefined,
       isActive: true,
     },
   });
 
   const { isDirty } = formState;
+
+  // Fetch users for dropdown
+  useEffect(() => {
+    const fetchUsers = async () => {
+      setIsLoadingUsers(true);
+      try {
+        const response = await usersApi.getUsers({ 
+          searchTerm: userSearchTerm,
+          pageSize: 50,
+          isActive: true 
+        });
+        // Filter users: 
+        // 1. Exclude visitors (roleId === 4 or UserRole.USER)
+        // 2. Show only those without leadership assignment or with current leadership
+        const availableUsers = (response.items || []).filter(
+          (user: any) => {
+            // Exclude visitors
+            const isNotVisitor = user.roleId !== UserRole.USER;
+            // Check leadership assignment
+            const hasNoLeadership = !user.leadershipId;
+            const hasCurrentLeadership = isEditMode && user.leadershipId === parseInt(id || "0");
+            
+            return isNotVisitor && (hasNoLeadership || hasCurrentLeadership);
+          }
+        );
+        setUsers(availableUsers);
+      } catch (error) {
+        console.error("Failed to fetch users:", error);
+        setUsers([]);
+      } finally {
+        setIsLoadingUsers(false);
+      }
+    };
+
+    fetchUsers();
+  }, [userSearchTerm, isEditMode, id]);
 
   useEffect(() => {
     if (leadershipData && isEditMode) {
@@ -68,6 +111,7 @@ export const useLeadershipForm = (): UseLeadershipFormReturn => {
         positionTitleAr: leadershipData.positionTitleAr,
         positionTitleEn: leadershipData.positionTitleEn || "",
         departmentId: leadershipData.departmentId,
+        userId: leadershipData.userId,
         isActive: leadershipData.isActive,
       });
     }
@@ -91,6 +135,7 @@ export const useLeadershipForm = (): UseLeadershipFormReturn => {
           positionTitleAr: currentFormData.positionTitleAr,
           positionTitleEn: currentFormData.positionTitleEn || undefined,
           departmentId: currentFormData.departmentId,
+          userId: currentFormData.userId,
           isActive: currentFormData.isActive,
         };
         await updateLeadershipMutation.mutateAsync({ id: parseInt(id!), payload });
@@ -102,6 +147,7 @@ export const useLeadershipForm = (): UseLeadershipFormReturn => {
           positionTitleAr: currentFormData.positionTitleAr,
           positionTitleEn: currentFormData.positionTitleEn || undefined,
           departmentId: currentFormData.departmentId,
+          userId: currentFormData.userId,
         };
         await createLeadershipMutation.mutateAsync(payload);
         toast.success(t("leadership.createSuccess"));
@@ -141,5 +187,11 @@ export const useLeadershipForm = (): UseLeadershipFormReturn => {
 
     // Departments for dropdown
     departments,
+
+    // Users for dropdown
+    users,
+    isLoadingUsers,
+    userSearchTerm,
+    setUserSearchTerm,
   };
 };

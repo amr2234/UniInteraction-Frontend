@@ -1,83 +1,46 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Bell, X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-
-interface NotificationDto {
-  id: number;
-  userId: number;
-  titleAr: string;
-  titleEn?: string;
-  messageAr: string;
-  messageEn?: string;
-  notificationType: string;
-  requestId?: number;
-  isRead: boolean;
-  createdAt: string;
-}
+import { useUserNotifications, useMarkNotificationAsRead } from "@/features/notifications/hooks/useNotifications";
+import { useUser } from "@/core/hooks/useUser";
+import { useI18n } from "@/i18n";
+import { NotificationDto } from "@/core/types/api";
 
 export function NotificationBell() {
   const [isOpen, setIsOpen] = useState(false);
-  const [notifications, setNotifications] = useState<NotificationDto[]>([]);
   const dropdownRef = useRef<HTMLDivElement>(null);
-
-  // Mock data
-  const mockNotifications: NotificationDto[] = [
-    {
-      id: 1,
-      userId: 1,
-      titleAr: "تحديث حالة الطلب",
-      titleEn: "Request Status Update",
-      messageAr: "تم تحديث حالة طلبك رقم SG-2025-001234 إلى 'قيد المعالجة'",
-      messageEn: "Your request SG-2025-001234 status updated to 'Processing'",
-      notificationType: "request_update",
-      requestId: 1,
-      isRead: false,
-      createdAt: new Date(Date.now() - 5 * 60000).toISOString(), // 5 minutes ago
-    },
-    {
-      id: 2,
-      userId: 1,
-      titleAr: "رد جديد على طلبك",
-      titleEn: "New Reply on Your Request",
-      messageAr: "تم إضافة رد جديد من فريق الدعم على طلبك",
-      messageEn: "New reply from support team on your request",
-      notificationType: "new_reply",
-      requestId: 2,
-      isRead: false,
-      createdAt: new Date(Date.now() - 2 * 60 * 60000).toISOString(), // 2 hours ago
-    },
-    {
-      id: 3,
-      userId: 1,
-      titleAr: "تم قبول مقترحك",
-      titleEn: "Your Suggestion Accepted",
-      messageAr: "تم قبول مقترحك وسيتم العمل على تنفيذه قريباً",
-      messageEn: "Your suggestion has been accepted and will be implemented soon",
-      notificationType: "suggestion_accepted",
-      requestId: 3,
-      isRead: true,
-      createdAt: new Date(Date.now() - 24 * 60 * 60000).toISOString(), // 1 day ago
-    },
-    {
-      id: 4,
-      userId: 1,
-      titleAr: "إشعار عام",
-      titleEn: "General Notification",
-      messageAr: "تحديثات جديدة على النظام متاحة الآن",
-      messageEn: "New system updates are now available",
-      notificationType: "system",
-      isRead: true,
-      createdAt: new Date(Date.now() - 3 * 24 * 60 * 60000).toISOString(), // 3 days ago
-    },
-  ];
-
+  const navigate = useNavigate();
+  const { t, language } = useI18n();
+  const { userId, isAuthenticated: userIsAuthenticated } = useUser();
+  console.log("🔔 Notification Bell Debug:", { userId, userIsAuthenticated });
+  
+  // Get access token for SignalR (only if user is logged in)
+  const accessToken = localStorage.getItem('authToken') || ''; // Changed from 'accessToken' to 'authToken'
+  const isAuthenticated = userIsAuthenticated && !!accessToken;
+  const userIdNumber = userId ? parseInt(userId, 10) : 0;
+  
+  // Fetch notifications with 30-second polling (fallback if SignalR fails)
+  const { data: notifications = [], isLoading } = useUserNotifications(userIdNumber);
+  const markAsReadMutation = useMarkNotificationAsRead();
+  
+  // Debug logging
   useEffect(() => {
-    // TODO: Fetch notifications from API
-    setNotifications(mockNotifications);
-  }, []);
+    console.log("🔔 Notification System Debug:", {
+      userId,
+      userIdNumber,
+      isAuthenticated,
+      userIsAuthenticated,
+      hasAccessToken: !!accessToken,
+      accessTokenLength: accessToken?.length,
+      notificationsCount: notifications.length,
+      unreadCount: notifications.filter(n => !n.isRead).length,
+      notifications: notifications,
+      isLoading
+    });
+  }, [userId, notifications, isLoading, isAuthenticated, accessToken, userIdNumber, userIsAuthenticated]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -96,7 +59,7 @@ export function NotificationBell() {
   }, [isOpen]);
 
   const unreadCount = notifications.filter((n) => !n.isRead).length;
-  const recentNotifications = notifications.slice(0, 5);
+  const recentNotifications = notifications.slice(0, 4); // Show last 4 notifications
 
   const getTimeAgo = (dateString: string): string => {
     const date = new Date(dateString);
@@ -106,19 +69,44 @@ export function NotificationBell() {
     const diffHours = Math.floor(diffMs / 3600000);
     const diffDays = Math.floor(diffMs / 86400000);
 
-    if (diffMins < 1) return "الآن";
-    if (diffMins < 60) return `منذ ${diffMins} دقيقة`;
-    if (diffHours < 24) return `منذ ${diffHours} ساعة`;
-    return `منذ ${diffDays} يوم`;
+    if (language === 'ar') {
+      if (diffMins < 1) return "الآن";
+      if (diffMins < 60) return `منذ ${diffMins} دقيقة`;
+      if (diffHours < 24) return `منذ ${diffHours} ساعة`;
+      return `منذ ${diffDays} يوم`;
+    } else {
+      if (diffMins < 1) return "Now";
+      if (diffMins < 60) return `${diffMins} min ago`;
+      if (diffHours < 24) return `${diffHours}h ago`;
+      return `${diffDays}d ago`;
+    }
   };
 
   const handleMarkAsRead = async (notificationId: number) => {
-    // TODO: API call to mark as read
-    setNotifications(
-      notifications.map((n) =>
-        n.id === notificationId ? { ...n, isRead: true } : n
-      )
-    );
+    await markAsReadMutation.mutateAsync(notificationId);
+  };
+
+  const handleNotificationClick = async (notification: NotificationDto) => {
+    // Mark as read
+    if (!notification.isRead) {
+      await handleMarkAsRead(notification.id);
+    }
+
+    // Navigate to request details if it's a request-related notification
+    const requestId = notification.relatedEntityId || notification.userRequestId;
+    
+    if (requestId) {
+      setIsOpen(false);
+      navigate(`/dashboard/request/${requestId}`);
+    }
+  };
+
+  const getTitle = (notification: NotificationDto) => {
+    return language === 'ar' ? notification.titleAr : (notification.titleEn || notification.titleAr);
+  };
+
+  const getBody = (notification: NotificationDto) => {
+    return language === 'ar' ? notification.messageAr : (notification.messageEn || notification.messageAr);
   };
 
   return (
@@ -141,7 +129,9 @@ export function NotificationBell() {
         <div className="absolute rtl:right-0 ltr:left-0 mt-2 w-96 max-w-[calc(100vw-2rem)] bg-white rounded-xl shadow-lg border border-gray-200 z-50">
           {/* Header */}
           <div className="flex items-center justify-between p-4 border-b">
-            <h3 className="font-semibold text-[#2B2B2B]">الإشعارات</h3>
+            <div className="flex items-center gap-2">
+              <h3 className="font-semibold text-[#2B2B2B]">{t("notifications.title")}</h3>
+            </div>
             <button
               onClick={() => setIsOpen(false)}
               className="text-gray-400 hover:text-gray-600"
@@ -152,10 +142,14 @@ export function NotificationBell() {
 
           {/* Notifications List */}
           <div className="max-h-96 overflow-y-auto">
-            {recentNotifications.length === 0 ? (
+            {isLoading ? (
+              <div className="p-8 text-center text-gray-500">
+                <p>{t("common.loading")}</p>
+              </div>
+            ) : recentNotifications.length === 0 ? (
               <div className="p-8 text-center text-gray-500">
                 <Bell className="w-12 h-12 mx-auto mb-2 text-gray-300" />
-                <p>لا توجد إشعارات</p>
+                <p>{t("notifications.noNotifications")}</p>
               </div>
             ) : (
               recentNotifications.map((notification) => (
@@ -164,12 +158,7 @@ export function NotificationBell() {
                   className={`p-4 border-b hover:bg-gray-50 transition cursor-pointer ${
                     !notification.isRead ? "bg-blue-50/50" : ""
                   }`}
-                  onClick={() => {
-                    handleMarkAsRead(notification.id);
-                    if (notification.requestId) {
-                      window.location.href = `/dashboard/request/SG-2025-00${notification.requestId.toString().padStart(4, "0")}`;
-                    }
-                  }}
+                  onClick={() => handleNotificationClick(notification)}
                 >
                   <div className="flex items-start gap-3">
                     {!notification.isRead && (
@@ -177,21 +166,21 @@ export function NotificationBell() {
                     )}
                     <div className="flex-1 min-w-0">
                       <p className="font-semibold text-[#2B2B2B] mb-1">
-                        {notification.titleAr}
+                        {getTitle(notification)}
                       </p>
-                      <p className="text-sm text-gray-600 line-clamp-1 mb-2">
-                        {notification.messageAr}
+                      <p className="text-sm text-gray-600 line-clamp-2 mb-2">
+                        {getBody(notification)}
                       </p>
                       <div className="flex items-center gap-2 text-xs text-gray-500">
                         <span>{getTimeAgo(notification.createdAt)}</span>
-                        {notification.requestId && (
+                        {notification.userRequestId && (
                           <>
                             <span>•</span>
                             <Badge
                               variant="outline"
                               className="text-xs border-[#6CAEBD] text-[#6CAEBD]"
                             >
-                              طلب: SG-2025-00{notification.requestId.toString().padStart(4, "0")}
+                              {t("requests.request")} #{notification.userRequestId}
                             </Badge>
                           </>
                         )}
@@ -211,7 +200,7 @@ export function NotificationBell() {
                 onClick={() => setIsOpen(false)}
                 className="block text-center text-[#6CAEBD] hover:text-[#6CAEBD]/80 font-medium text-sm"
               >
-                عرض كل الإشعارات
+                {t("notifications.viewAll")}
               </Link>
             </div>
           )}

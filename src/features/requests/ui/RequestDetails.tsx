@@ -12,6 +12,16 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
   ArrowRight,
   Calendar,
   Clock,
@@ -27,6 +37,8 @@ import {
   FileText,
   Building2,
   Calendar as CalendarIcon,
+  Trash2,
+  UserPlus,
 } from "lucide-react";
 import { useRequestDetailsLogic } from "./RequestDetails.logic";
 import { useI18n } from "@/i18n";
@@ -49,6 +61,8 @@ export function RequestDetailsPage() {
     rating,
     feedback,
     isRatingDialogOpen,
+    isAssignDialogOpen,
+    isDeleteDialogOpen,
     request,
     requestAttachments,
     selectedDepartmentId,
@@ -77,6 +91,8 @@ export function RequestDetailsPage() {
     setRating,
     setFeedback,
     setIsRatingDialogOpen,
+    setIsAssignDialogOpen,
+    setIsDeleteDialogOpen,
     setSelectedDepartmentId,
     setSelectedLeadershipId,
     handleStatusChange,
@@ -92,8 +108,15 @@ export function RequestDetailsPage() {
     handleAssignLeadership,
     handleThankYou,
     handleDownloadAttachment,
+    handleDeleteRequest,
+    confirmDeleteRequest,
+    cancelDeleteRequest,
+    handleAssignToMe,
+    confirmAssignToMe,
+    cancelAssignToMe,
     getDepartmentName,
     getLeadershipName,
+    getLeadershipPosition,
     navigate
   } = useRequestDetailsLogic();
 
@@ -141,7 +164,7 @@ export function RequestDetailsPage() {
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="mb-8">
-          {/* Back Button & Edit Button Row */}
+          {/* Back Button & Action Buttons Row */}
           <div className="flex items-center justify-between mb-6">
             <button
               onClick={() => navigate("/dashboard/track")}
@@ -150,16 +173,44 @@ export function RequestDetailsPage() {
               <ArrowRight className={`w-5 h-5 ${isRTL ? 'rotate-180' : ''}`} />
               <span className="font-medium">{t("requests.backToRequestsList")}</span>
             </button>
-            {canEditRequest() && (
-              <Button
-                variant="outline"
-                className="gap-2 border-[#115740] text-[#115740] hover:bg-[#115740] hover:text-white"
-                onClick={() => navigate(`/dashboard/request/${request.id}/edit`)}
-              >
-                <Edit className="w-4 h-4" />
-                {t("requests.updateRequest")}
-              </Button>
-            )}
+            
+            <div className="flex items-center gap-2">
+              {/* Assign to Me Button - For Employees Only - Only show if not already assigned */}
+              {isEmployee && !request.assignedToUserId && (
+                <Button
+                  variant="outline"
+                  className="gap-2 border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white"
+                  onClick={handleAssignToMe}
+                >
+                  <UserPlus className="w-4 h-4" />
+                  {t("requests.assignToMe")}
+                </Button>
+              )}
+              
+              {/* Edit Button */}
+              {canEditRequest() && (
+                <Button
+                  variant="outline"
+                  className="gap-2 border-[#115740] text-[#115740] hover:bg-[#115740] hover:text-white"
+                  onClick={() => navigate(`/dashboard/request/${request.id}/edit`)}
+                >
+                  <Edit className="w-4 h-4" />
+                  {t("requests.updateRequest")}
+                </Button>
+              )}
+              
+              {/* Delete Button - For Super Admin Only */}
+              {isSuperAdmin && (
+                <Button
+                  variant="outline"
+                  className="gap-2 border-red-600 text-red-600 hover:bg-red-600 hover:text-white"
+                  onClick={handleDeleteRequest}
+                >
+                  <Trash2 className="w-4 h-4" />
+                  {t("requests.deleteRequest")}
+                </Button>
+              )}
+            </div>
           </div>
 
           {/* Title, Status, Type, Request Number, and Status Change Dropdown */}
@@ -193,8 +244,8 @@ export function RequestDetailsPage() {
               {/* Spacer to push controls to the end */}
               <div className="flex-1"></div>
               
-              {/* Admin Department Assignment - For non-visit requests */}
-              {(canAssignRequests || isSuperAdmin) && request.requestTypeId !== RequestType.VISIT && (
+              {/* Admin Department Assignment - For non-visit requests - ADMIN/SUPER ADMIN ONLY */}
+              {(isAdmin || isSuperAdmin) && !isEmployee && request.requestTypeId !== RequestType.VISIT && (
                 <div className="flex items-center gap-2">
                   <span className="text-sm text-gray-600">{t("requests.track.assignDepartment")}:</span>
                   <Select
@@ -227,8 +278,8 @@ export function RequestDetailsPage() {
                 </div>
               )}
               
-              {/* Admin/Employee Status Change Dropdown - At the end of row */}
-              {(isAdmin || isEmployee || isSuperAdmin) && (
+              {/* Admin/Super Admin Status Change Dropdown - ADMIN/SUPER ADMIN ONLY */}
+              {(isAdmin || isSuperAdmin) && !isEmployee && (
                 <div className="flex items-center gap-2">
                   <span className="text-sm text-gray-600">{t("requests.changeRequestStatus")}:</span>
                   <Select
@@ -338,7 +389,7 @@ export function RequestDetailsPage() {
                             </div>
                             <div>
                               <p className="text-sm font-medium text-gray-900">{attachment.fileName}</p>
-                              <p className="text-xs text-gray-500">{attachment.fileSize ? `${(attachment.fileSize / 1024).toFixed(2)} KB` : ''}</p>
+                              <p className="text-xs text-gray-500">{attachment.fileSizeKb ? `${attachment.fileSizeKb} KB` : (attachment.fileSize ? `${(attachment.fileSize / 1024).toFixed(2)} KB` : '')}</p>
                             </div>
                           </div>
                           <Button 
@@ -580,7 +631,7 @@ export function RequestDetailsPage() {
                                       {attachment.fileName}
                                     </p>
                                     <p className="text-xs text-gray-500">
-                                      {attachment.fileSize ? `${(attachment.fileSize / 1024).toFixed(2)} KB` : ''}
+                                      {attachment.fileSizeKb ? `${attachment.fileSizeKb} KB` : (attachment.fileSize ? `${(attachment.fileSize / 1024).toFixed(2)} KB` : '')}
                                     </p>
                                   </div>
                                 </div>
@@ -642,11 +693,16 @@ export function RequestDetailsPage() {
                       <User className="w-4 h-4 text-gray-400" />
                       <div>
                         <p className="text-gray-500">{t("requests.leadershipToVisit")}</p>
-                        <p className="text-gray-900">
+                        <p className="text-gray-900 font-medium">
                           {request.universityLeadershipId
                             ? getLeadershipName(request.universityLeadershipId, isRTL ? 'ar' : 'en') || t("requests.notAssigned")
                             : t("requests.notAssigned")}
                         </p>
+                        {request.universityLeadershipId && getLeadershipPosition(request.universityLeadershipId, isRTL ? 'ar' : 'en') && (
+                          <p className="text-xs text-gray-500 mt-0.5">
+                            {getLeadershipPosition(request.universityLeadershipId, isRTL ? 'ar' : 'en')}
+                          </p>
+                        )}
                       </div>
                     </div>
                     
@@ -672,15 +728,52 @@ export function RequestDetailsPage() {
                   </>
                 )}
                 
-                {/* For Non-Visit Requests (Type 1, 2) - Show Department */}
+                {/* For Non-Visit Requests (Type 1, 2) - Show Department and Main Category */}
+                {(request.requestTypeId === RequestType.INQUIRY || request.requestTypeId === RequestType.COMPLAINT) && (
+                  <>
+                    <div className="flex items-center gap-3 text-sm">
+                      <Building2 className="w-4 h-4 text-gray-400" />
+                      <div>
+                        <p className="text-gray-500">{t("requests.responsibleDepartment")}</p>
+                        <p className="text-gray-900">
+                          {request.assignedDepartmentId 
+                            ? getDepartmentName(request.assignedDepartmentId, isRTL ? 'ar' : 'en') || t("requests.notAssigned")
+                            : t("requests.notAssigned")
+                          }
+                        </p>
+                      </div>
+                    </div>
+                    
+                    {/* Main Category */}
+                    {request.mainCategoryId && (
+                      <div className="flex items-center gap-3 text-sm">
+                        <FileText className="w-4 h-4 text-gray-400" />
+                        <div>
+                          <p className="text-gray-500">{t("form.mainCategory")}</p>
+                          <p className="text-gray-900">
+                            {isRTL 
+                              ? (request.mainCategoryNameAr || t("requests.notAssigned"))
+                              : (request.mainCategoryNameEn || request.mainCategoryNameAr || t("requests.notAssigned"))
+                            }
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                  </>
+                )}
+                
+                {/* Assigned User - Show for Inquiry and Complaint requests only, NOT for Visit requests */}
                 {(request.requestTypeId === RequestType.INQUIRY || request.requestTypeId === RequestType.COMPLAINT) && (
                   <div className="flex items-center gap-3 text-sm">
-                    <User className="w-4 h-4 text-gray-400" />
+                    <UserPlus className="w-4 h-4 text-gray-400" />
                     <div>
-                      <p className="text-gray-500">{t("requests.responsibleDepartment")}</p>
+                      <p className="text-gray-500">{t("requests.assignedUser")}</p>
                       <p className="text-gray-900">
-                        {request.assignedDepartmentId 
-                          ? getDepartmentName(request.assignedDepartmentId, isRTL ? 'ar' : 'en') || t("requests.notAssigned")
+                        {request.assignedToUserId
+                          ? (isRTL 
+                              ? request.assignedToNameAr || t("requests.notAssigned")
+                              : (request.assignedToNameEn || request.assignedToNameAr || t("requests.notAssigned"))
+                            )
                           : t("requests.notAssigned")
                         }
                       </p>
@@ -798,6 +891,52 @@ export function RequestDetailsPage() {
         onOpenChange={setIsRatingDialogOpen}
         onSubmit={handleRatingSubmit}
       />
+      
+      {/* Delete Request Confirmation Dialog */}
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-red-600">{t("requests.deleteRequest")}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t("requests.confirmDelete")}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={cancelDeleteRequest}>
+              {t("common.cancel")}
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDeleteRequest}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              {t("common.delete")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+      
+      {/* Assign to Me Confirmation Dialog */}
+      <AlertDialog open={isAssignDialogOpen} onOpenChange={setIsAssignDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t("requests.confirmAssignTitle")}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t("requests.confirmAssignMessage")}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={cancelAssignToMe}>
+              {t("common.cancel")}
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmAssignToMe}
+              className="bg-blue-600 hover:bg-blue-700"
+            >
+              {t("common.confirm")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

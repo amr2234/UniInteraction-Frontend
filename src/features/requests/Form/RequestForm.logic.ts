@@ -5,7 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import { useI18n } from "@/i18n";
 import { useUser } from "@/core/hooks/useUser";
-  import { RequestStatus } from "@/core/constants/requestStatuses";
+import { RequestStatus } from "@/core/constants/requestStatuses";
 import { createRequestFormSchema } from "./RequestForm.schema";
 import {
   RequestFormData,
@@ -16,17 +16,21 @@ import {
 import { requestsApi } from "../api/requests.api";
 import type { CreateRequestPayload } from "@/core/types/api";
 
-// TODO: Replace with actual API calls when available
-import { useMainCategories, useLeadershipLookup } from "@/features/lookups/hooks/useLookups";
+import {
+  useMainCategories,
+  useLeadershipLookup,
+} from "@/features/lookups/hooks/useLookups";
 import { getCurrentUser } from "@/core/lib/authUtils";
 
-export const useRequestForm = (requestTypeId: RequestTypeId): UseRequestFormReturn => {
+export const useRequestForm = (
+  requestTypeId: RequestTypeId
+): UseRequestFormReturn => {
   const navigate = useNavigate();
   const { t, language } = useI18n();
-  
+
   const userProfile = (() => {
     try {
-      const profile = localStorage.getItem('userProfile');
+      const profile = localStorage.getItem("userProfile");
       return profile ? JSON.parse(profile) : null;
     } catch {
       return null;
@@ -35,25 +39,32 @@ export const useRequestForm = (requestTypeId: RequestTypeId): UseRequestFormRetu
 
   const [files, setFiles] = useState<File[]>([]);
 
-  const { data: mainCategoriesData, isLoading: isLoadingCategories, error: categoriesError } = useMainCategories();
-  const { data: leadershipData, isLoading: isLoadingLeadership, error: leadershipError } = useLeadershipLookup();
+  const {
+    data: mainCategoriesData,
+    isLoading: isLoadingCategories,
+    error: categoriesError,
+  } = useMainCategories();
+  const {
+    data: leadershipData,
+    isLoading: isLoadingLeadership,
+    error: leadershipError,
+  } = useLeadershipLookup();
 
-  // Debug: Log API call status
   useEffect(() => {
-    console.log('📊 Categories API Status:', { 
-      isLoading: isLoadingCategories, 
-      hasData: !!mainCategoriesData, 
+    console.log("📊 Categories API Status:", {
+      isLoading: isLoadingCategories,
+      hasData: !!mainCategoriesData,
       dataLength: mainCategoriesData?.length,
-      error: categoriesError 
+      error: categoriesError,
     });
   }, [isLoadingCategories, mainCategoriesData, categoriesError]);
 
   useEffect(() => {
-    console.log('👥 Leadership API Status:', { 
-      isLoading: isLoadingLeadership, 
-      hasData: !!leadershipData, 
+    console.log("👥 Leadership API Status:", {
+      isLoading: isLoadingLeadership,
+      hasData: !!leadershipData,
       dataLength: leadershipData?.length,
-      error: leadershipError 
+      error: leadershipError,
     });
   }, [isLoadingLeadership, leadershipData, leadershipError]);
 
@@ -96,17 +107,16 @@ export const useRequestForm = (requestTypeId: RequestTypeId): UseRequestFormRetu
   const { errors, isSubmitting, isDirty } = formState;
 
   useEffect(() => {
-    const userName = userProfile?.nameAr ||  "";
-    const userEmail = userProfile?.email ||  "";
+    const userName = userProfile?.nameAr || "";
+    const userEmail = userProfile?.email || "";
     const userMobile = userProfile?.mobile || "";
-    
+
     setValue("nameAr", userName);
     setValue("nameEn", userProfile?.nameEn || "");
     setValue("email", userEmail);
     setValue("mobile", userMobile);
-  }, [ userProfile, setValue]);
+  }, [userProfile, setValue]);
 
-  // Transform categories data
   const mainCategories = useMemo(
     () =>
       Array.isArray(mainCategoriesData)
@@ -119,7 +129,6 @@ export const useRequestForm = (requestTypeId: RequestTypeId): UseRequestFormRetu
     [mainCategoriesData]
   );
 
-  // Transform leadership data
   const leadershipOptions = useMemo(
     () =>
       Array.isArray(leadershipData)
@@ -134,7 +143,6 @@ export const useRequestForm = (requestTypeId: RequestTypeId): UseRequestFormRetu
     [leadershipData]
   );
 
-  // File handling
   const handleFileChange = useCallback((newFiles: FileList | null) => {
     if (newFiles) {
       setFiles((prev) => [...prev, ...Array.from(newFiles)]);
@@ -145,10 +153,11 @@ export const useRequestForm = (requestTypeId: RequestTypeId): UseRequestFormRetu
     setFiles((prev) => prev.filter((_, i) => i !== index));
   }, []);
 
-  // Form submission
   const onSubmit = useCallback(
     async (data: RequestFormData) => {
       try {
+        console.log("📝 Submitting Request Form Data:", data);
+
         const payload: CreateRequestPayload = {
           userId: userProfile?.id,
           nameAr: data.nameAr,
@@ -162,10 +171,9 @@ export const useRequestForm = (requestTypeId: RequestTypeId): UseRequestFormRetu
           additionalDetailsAr: data.additionalDetailsAr,
           additionalDetailsEn: data.additionalDetailsEn,
           requestTypeId: data.requestTypeId,
-          requestStatusId: RequestStatus.RECEIVED, // Set initial status to "Received" (1)
+          requestStatusId: RequestStatus.RECEIVED,
         };
 
-        // Add type-specific fields
         if (requestTypeId === REQUEST_TYPES.VISIT) {
           payload.visitReasonAr = data.visitReasonAr;
           payload.visitReasonEn = data.visitReasonEn;
@@ -175,30 +183,29 @@ export const useRequestForm = (requestTypeId: RequestTypeId): UseRequestFormRetu
             ? parseInt(data.universityLeadershipId)
             : undefined;
         } else {
-          // For Complaint, Inquiry, Suggestion
           payload.mainCategoryId = data.mainCategoryId
             ? parseInt(data.mainCategoryId)
             : undefined;
           payload.subCategoryId = data.subCategoryId
             ? parseInt(data.subCategoryId)
             : undefined;
-          payload.serviceId = data.serviceId ? parseInt(data.serviceId) : undefined;
+          payload.serviceId = data.serviceId
+            ? parseInt(data.serviceId)
+            : undefined;
         }
 
-        // Submit request
-        const createdRequest = await requestsApi.createRequest(payload);
+        console.log("📤 API Payload:", payload);
+        console.log("📎 Attached Files:", files);
 
-        // Upload files if any
-        if (files.length > 0) {
-          await requestsApi.uploadRequestAttachments(createdRequest.id, files);
-        }
+        const createdRequest = await requestsApi.createRequest(payload, files);
 
-        // Show success message
+        console.log("✅ Request Created Successfully:", createdRequest);
+
         toast.success(t("requests.submitSuccess"));
 
-        // Navigate to request details or track requests
-        navigate(`dashboard/requests/${createdRequest.id}`);
+        navigate(`/dashboard/request/${createdRequest.id}`);
       } catch (error: any) {
+        console.error("❌ Request Submission Error:", error);
         const errorMessage =
           error?.response?.data?.message ||
           error?.message ||
@@ -236,11 +243,11 @@ export const useRequestForm = (requestTypeId: RequestTypeId): UseRequestFormRetu
     handleCancel,
 
     mainCategories,
-    subCategories: [], // TODO: Implement sub-categories based on selected main category
-    services: [], // TODO: Implement services based on selected category
+    subCategories: [],
+    services: [],
     leadershipOptions,
 
     isLoadingCategories,
-    isLoadingSubCategories: false, // TODO: Implement when sub-categories API is available
+    isLoadingSubCategories: false,
   };
 };

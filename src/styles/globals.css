@@ -225,3 +225,38 @@ html[dir="ltr"] .flex:not(.flex-col),
 html[dir="ltr"] .inline-flex {
   flex-direction: row;
 }
+
+/* Custom Notification Toast Styles */
+.notification-toast {
+  border-left: 4px solid #6CAEBD !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+  animation: slideInFromRight 0.3s ease-out;
+}
+
+html[dir="rtl"] .notification-toast {
+  border-left: none !important;
+  border-right: 4px solid #6CAEBD !important;
+  animation: slideInFromLeft 0.3s ease-out;
+}
+
+@keyframes slideInFromRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideInFromLeft {
+  from {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}

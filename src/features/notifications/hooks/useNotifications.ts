@@ -27,9 +27,9 @@ export const useUserNotifications = (userId: number) => {
 export const useMarkNotificationAsRead = () => {
   const queryClient = useQueryClient();
 
-  return useMutation<NotificationDto, ApiError, number>({
+  return useMutation<void, ApiError, number>({
     mutationFn: notificationsApi.markNotificationAsRead,
-    onSuccess: (data) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.notifications.all });
     },
   });

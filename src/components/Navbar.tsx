@@ -2,7 +2,7 @@ import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { User, Menu, X, LogOut } from "lucide-react";
 import { useState } from "react";
-import logoImage from "@/assets/802db0b48560c5badd46cac8a1c7bd47bcf8760d.png";
+import logoImage from "@/assets/Logo-Test.png";
 import { NotificationBell } from "./NotificationBell";
 import { LanguageSwitcher } from "./LanguageSwitcher";
 import { useI18n } from "@/i18n";
