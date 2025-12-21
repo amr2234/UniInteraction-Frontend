@@ -2,6 +2,7 @@ import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useI18n } from "@/i18n";
 import { useHasPermission } from "@/core/hooks/usePermissions";
+import { useUserRole } from "@/core/hooks/useUserRole";
 import { PERMISSIONS } from "@/core/constants/permissions";
 import { RequestStatus, getRequestStatusName } from "@/core/constants/requestStatuses";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -9,7 +10,7 @@ import { requestsApi } from "@/features/requests/api/requests.api";
 import { lookupsApi } from "@/features/lookups/api/lookups.api";
 import { apiRequest } from "@/core/lib/apiClient";
 import { toast } from "sonner";
-import type { UserRequestDto } from "@/core/types/api";
+import type { UserRequestDto, PaginatedResponse } from "@/core/types/api";
 
 
 
@@ -47,8 +48,9 @@ export const useTrackRequests = () => {
   const isRTL = language === "ar";
   const queryClient = useQueryClient();
   
-  // Permission check
+  // Role and permission checks
   const canAssignRequests = useHasPermission(PERMISSIONS.REQUESTS_ASSIGN);
+  const { isAdmin, isEmployee, isSuperAdmin, isUser } = useUserRole();
 
   // State
   const [searchQuery, setSearchQuery] = useState("");
@@ -64,10 +66,13 @@ export const useTrackRequests = () => {
   const [pageSize] = useState(10);
 
   // Fetch requests with pagination
-  const { data: requestsData, isLoading: isLoadingRequests } = useQuery({
+  const { data: requestsData, isLoading: isLoadingRequests } = useQuery<PaginatedResponse<UserRequestDto> | UserRequestDto[]>({
     queryKey: ['requests', 'paginated', currentPage, pageSize, searchQuery, filterStatus, filterType, filterDepartment, filterLeadership, startDate, endDate],
     queryFn: async () => {
-      const filters: any = {};
+      const filters: any = {
+        pageNumber: currentPage,
+        pageSize: pageSize,
+      };
       if (searchQuery) filters.searchTerm = searchQuery;
       if (filterStatus !== 'all') {
         const statusMap: Record<string, RequestStatus> = {
@@ -84,7 +89,8 @@ export const useTrackRequests = () => {
       if (startDate) filters.startDate = startDate;
       if (endDate) filters.endDate = endDate;
       
-      return requestsApi.getUserRequestsPaginated(filters, currentPage, pageSize);
+      // Use getUserRequests with enablePagination=true (single unified API)
+      return requestsApi.getUserRequests({ ...filters, enablePagination: true });
     },
   });
 
@@ -100,15 +106,22 @@ export const useTrackRequests = () => {
     queryFn: lookupsApi.getUniversityLeaderships,
   });
 
-  const requests = requestsData?.items || [];
-  const totalPages = requestsData?.totalPages || 1;
-  const totalCount = requestsData?.totalCount || 0;
+  // Handle both paginated and non-paginated responses
+  const requests = Array.isArray(requestsData) 
+    ? requestsData 
+    : requestsData?.items || [];
+  const totalPages = Array.isArray(requestsData) 
+    ? 1 
+    : requestsData?.totalPages || 1;
+  const totalCount = Array.isArray(requestsData) 
+    ? requests.length 
+    : requestsData?.totalCount || 0;
   const departments: Department[] = departmentsData || [];
   const leadership = leadershipData || [];
 
   // Enrich requests with leadership names and department names if missing
   const enrichedRequests = useMemo(() => {
-    return requests.map((request) => {
+    return requests.map((request: any) => {
       let enrichedRequest = { ...request };
       
       // If request has universityLeadershipId but no universityLeadershipName, find it
@@ -116,8 +129,8 @@ export const useTrackRequests = () => {
         const leadershipInfo = leadership.find(l => l.id === request.universityLeadershipId);
         if (leadershipInfo) {
           enrichedRequest.universityLeadershipName = isRTL 
-            ? leadershipInfo.fullNameAr 
-            : (leadershipInfo.fullNameEn || leadershipInfo.fullNameAr);
+            ? leadershipInfo.nameAr 
+            : (leadershipInfo.nameEn || leadershipInfo.nameAr);
         }
       }
       
@@ -151,7 +164,7 @@ export const useTrackRequests = () => {
 
   // Filter requests locally for department and user assignment filters
   const filteredRequests = useMemo(() => {
-    return enrichedRequests.filter((req) => {
+    return enrichedRequests.filter((req: any) => {
       // Department assignment filter
       const hasDepartmentAssignment = req.assignedDepartmentId !== undefined && req.assignedDepartmentId !== null;
       const matchesDepartmentAssignment =
@@ -174,9 +187,9 @@ export const useTrackRequests = () => {
   const stats = useMemo(() => {
     return {
       total: totalCount,
-      new: enrichedRequests.filter((r) => r.requestStatusId === RequestStatus.RECEIVED).length,
-      underReview: enrichedRequests.filter((r) => r.requestStatusId === RequestStatus.UNDER_REVIEW).length,
-      closed: enrichedRequests.filter((r) => r.requestStatusId === RequestStatus.CLOSED || r.requestStatusId === RequestStatus.REPLIED).length,
+      new: enrichedRequests.filter((r: any) => r.requestStatusId === RequestStatus.RECEIVED).length,
+      underReview: enrichedRequests.filter((r: any) => r.requestStatusId === RequestStatus.UNDER_REVIEW).length,
+      closed: enrichedRequests.filter((r: any) => r.requestStatusId === RequestStatus.CLOSED || r.requestStatusId === RequestStatus.REPLIED).length,
     };
   }, [enrichedRequests, totalCount]);
 
@@ -305,6 +318,12 @@ export const useTrackRequests = () => {
     
     // Permissions
     canAssignRequests,
+    
+    // Roles
+    isAdmin,
+    isEmployee,
+    isSuperAdmin,
+    isUser,
     
     // Helpers
     isRTL,

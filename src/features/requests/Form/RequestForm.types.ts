@@ -4,7 +4,7 @@ import type { Control, FieldErrors } from "react-hook-form";
 // Note: Complaint type handles both complaints and suggestions
 export const REQUEST_TYPES = {
   INQUIRY: 1,
-  COMPLAINT: 2,  // Handles both complaints and suggestions
+  COMPLAINT: 2,  
   VISIT: 3,
 } as const;
 
@@ -22,12 +22,10 @@ export interface RequestFormData {
   requestTypeId: number;
 
   // Common Fields
-  titleAr: string;
+  titleAr: string; // عنوان - Request title
   titleEn?: string;
-  subjectAr: string;
+  subjectAr: string; // For all types: Complaint/Inquiry content OR Visit response
   subjectEn?: string;
-  additionalDetailsAr?: string;
-  additionalDetailsEn?: string;
 
   // Category fields (Complaint, Inquiry, Suggestion)
   mainCategoryId?: string;
@@ -35,11 +33,9 @@ export interface RequestFormData {
   serviceId?: string;
 
   // Visit-specific fields
-  visitReasonAr?: string;
-  visitReasonEn?: string;
-  visitStartAt?: string;
-  visitEndAt?: string;
   universityLeadershipId?: string;
+  hasRelatedComplaint?: boolean;
+  relatedRequestId?: string;
 }
 
 // Hook Return Type
@@ -72,6 +68,7 @@ export interface UseRequestFormReturn {
   subCategories: CategoryOption[];
   services: ServiceOption[];
   leadershipOptions: LeadershipOption[];
+  userRequests: any[]; // User's previous requests for linking
   
   // Dynamic category loading
   isLoadingCategories: boolean;

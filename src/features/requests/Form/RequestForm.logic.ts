@@ -15,6 +15,7 @@ import {
 } from "./RequestForm.types";
 import { requestsApi } from "../api/requests.api";
 import type { CreateRequestPayload } from "@/core/types/api";
+import { useUserRequests } from "../hooks/useRequests";
 
 import {
   useMainCategories,
@@ -86,25 +87,45 @@ export const useRequestForm = (
       nameEn: "",
       email: userProfile?.email || "",
       mobile: "",
-      requestTypeId,
+      requestTypeId: requestTypeId,
       titleAr: "",
       titleEn: "",
       subjectAr: "",
       subjectEn: "",
-      additionalDetailsAr: "",
-      additionalDetailsEn: "",
       mainCategoryId: "",
       subCategoryId: "",
       serviceId: "",
-      visitReasonAr: "",
-      visitReasonEn: "",
-      visitStartAt: "",
-      visitEndAt: "",
       universityLeadershipId: "",
+      hasRelatedComplaint: undefined,
+      relatedRequestId: "",
     },
   });
 
   const { errors, isSubmitting, isDirty } = formState;
+
+  // Watch hasRelatedComplaint to conditionally fetch requests (AFTER useForm)
+  const hasRelatedComplaint = watch("hasRelatedComplaint");
+
+  // Fetch user's previous complaint/inquiry requests (for linking visits)
+  // Only fetch when user clicks "Yes" (hasRelatedComplaint === true)
+  const isVisitForm = requestTypeId === REQUEST_TYPES.VISIT;
+  
+  const { data: userRequestsResponse, isLoading: isLoadingUserRequests, error: userRequestsError } = useUserRequests(
+    isVisitForm && userProfile?.id && hasRelatedComplaint === true
+      ? {
+          userId: userProfile.id,
+          requestTypeId: REQUEST_TYPES.COMPLAINT, // Type 2 = Complaint/Inquiry
+        }
+      : undefined,
+    false // enablePagination=false to get all user's complaints without pagination
+  );
+  
+  // Extract items from paginated response
+  const userRequests = useMemo(() => {
+    if (!userRequestsResponse) return [];
+    // Backend returns paginated format {items: [], pageNumber, totalCount, ...}
+    return (userRequestsResponse as any).items || [];
+  }, [userRequestsResponse]);
 
   useEffect(() => {
     const userName = userProfile?.nameAr || "";
@@ -158,46 +179,47 @@ export const useRequestForm = (
       try {
         console.log("📝 Submitting Request Form Data:", data);
 
+        // Build base payload
         const payload: CreateRequestPayload = {
           userId: userProfile?.id,
-          nameAr: data.nameAr,
-          nameEn: data.nameEn,
           email: data.email,
           mobile: data.mobile,
           titleAr: data.titleAr,
-          titleEn: data.titleEn,
+          titleEn: data.titleEn || undefined,
           subjectAr: data.subjectAr,
-          subjectEn: data.subjectEn,
-          additionalDetailsAr: data.additionalDetailsAr,
-          additionalDetailsEn: data.additionalDetailsEn,
-          requestTypeId: data.requestTypeId,
-          requestStatusId: RequestStatus.RECEIVED,
+          subjectEn: data.subjectEn || undefined,
+          requestTypeId: Number(requestTypeId),
+          isVisitRelatedToPreviousRequest: false,
+          needDateReschedule: false,
         };
-
+        
         if (requestTypeId === REQUEST_TYPES.VISIT) {
-          payload.visitReasonAr = data.visitReasonAr;
-          payload.visitReasonEn = data.visitReasonEn;
-          payload.visitStartAt = data.visitStartAt;
-          payload.visitEndAt = data.visitEndAt;
-          payload.universityLeadershipId = data.universityLeadershipId
-            ? parseInt(data.universityLeadershipId)
-            : undefined;
+          if (data.universityLeadershipId) {
+            payload.universityLeadershipId = parseInt(data.universityLeadershipId);
+          }
+          
+          if (data.hasRelatedComplaint === true && data.relatedRequestId) {
+            payload.relatedRequestId = parseInt(data.relatedRequestId);
+            payload.isVisitRelatedToPreviousRequest = true;
+          }
         } else {
-          payload.mainCategoryId = data.mainCategoryId
-            ? parseInt(data.mainCategoryId)
-            : undefined;
-          payload.subCategoryId = data.subCategoryId
-            ? parseInt(data.subCategoryId)
-            : undefined;
-          payload.serviceId = data.serviceId
-            ? parseInt(data.serviceId)
-            : undefined;
+          if (data.mainCategoryId) {
+            payload.mainCategoryId = parseInt(data.mainCategoryId);
+          }
+          if (data.subCategoryId) {
+            payload.subCategoryId = parseInt(data.subCategoryId);
+          }
         }
 
-        console.log("📤 API Payload:", payload);
+        // Remove undefined fields to prevent null values in backend
+        const cleanPayload = Object.fromEntries(
+          Object.entries(payload).filter(([_, value]) => value !== undefined)
+        ) as CreateRequestPayload;
+
+        console.log("🧹 Cleaned API Payload:", cleanPayload);
         console.log("📎 Attached Files:", files);
 
-        const createdRequest = await requestsApi.createRequest(payload, files);
+        const createdRequest = await requestsApi.createRequest(cleanPayload, files);
 
         console.log("✅ Request Created Successfully:", createdRequest);
 
@@ -246,6 +268,7 @@ export const useRequestForm = (
     subCategories: [],
     services: [],
     leadershipOptions,
+    userRequests,
 
     isLoadingCategories,
     isLoadingSubCategories: false,

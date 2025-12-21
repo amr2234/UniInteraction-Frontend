@@ -87,32 +87,26 @@ export interface UserInfo {
 // ============================================
 
 export interface CreateRequestPayload {
-  userId: number;
-  nameAr: string;
-  nameEn?: string;
+  userId?: number;
   email: string;
   mobile: string;
   titleAr: string;
   titleEn?: string;
   subjectAr: string;
   subjectEn?: string;
-  additionalDetailsAr?: string;
-  additionalDetailsEn?: string;
   requestTypeId: number;
-  requestCategoryId?: number;
   mainCategoryId?: number;
   subCategoryId?: number;
-  serviceId?: number;
-  visitReasonAr?: string;
-  visitReasonEn?: string;
-  visitStartAt?: string;
-  visitEndAt?: string;
-  requestStatusId?: number;
+  isVisitRelatedToPreviousRequest: boolean;
+  relatedRequestId?: number;
   universityLeadershipId?: number;
+  needDateReschedule: boolean;
+  redirectToNewRequest?: boolean;
 }
 
 export interface UserRequestDto {
   id: number;
+  userId: number;
   requestNumber: string;
   nameAr: string;
   nameEn?: string;
@@ -133,15 +127,16 @@ export interface UserRequestDto {
   requestCategoryId?: number;
   requestCategoryName?: string;
   mainCategoryId?: number;
-  mainCategoryName?: string;
+  mainCategoryNameAr?: string;
+  mainCategoryNameEn?: string;  
   subCategoryId?: number;
   subCategoryName?: string;
   serviceId?: number;
   serviceName?: string;
   visitReasonAr?: string;
   visitReasonEn?: string;
-  visitStartAt?: string;
-  visitEndAt?: string;
+  visitDate?: string; // ISO-8601 format for visit date
+  visitId?: number; // Visit ID for updating visit
   visitStatus?: number; // 1=Scheduled, 2=Accepted, 3=Rescheduled, 4=Completed
   universityLeadershipId?: number;
   universityLeadershipName?: string;
@@ -168,9 +163,12 @@ export interface UserRequestDto {
   feedbackEn?: string;
   ratedAt?: string;
   needDateReschedule?: boolean;
+  redirectToNewRequest?: boolean;
+  isVisitRelatedToPreviousRequest?: boolean;
 }
 
 export interface RequestFilters {
+  userId?: number;
   requestStatusId?: number;
   requestTypeId?: number;
   startDate?: string;
@@ -178,6 +176,9 @@ export interface RequestFilters {
   searchTerm?: string;
   departmentId?: number;
   universityLeadershipId?: number;
+  pageNumber?: number;
+  pageSize?: number;
+  enablePagination?: boolean;
 }
 
 export interface RequestStatusCount {
@@ -189,10 +190,13 @@ export interface RequestStatusCount {
 
 export interface UpdateRequestStatusPayload {
   requestId: number;
-  newStatusId: number;
+  newStatus: number;
   changeNoteAr?: string;
   changeNoteEn?: string;
   changedByUserId?: number;
+  redirectToNewRequest?: boolean;
+  relatedRequestId?: number;
+  visitId?: number; // Visit ID for updating visit status
 }
 
 export interface SubmitResolutionPayload {
@@ -222,11 +226,12 @@ export interface ScheduleVisitPayload {
   requestId: number;
   visitDate: string; // ISO-8601 format: "2025-12-20T10:00:00Z"
   leadershipId: number;
+  visitId?: number; // Optional: Visit ID for updating existing visit
 }
 
 export interface UpdateVisitStatusPayload {
   visitId: number;
-  status: number; // VisitStatus enum: 1=Scheduled, 2=Accepted, 3=Rescheduled, 4=Completed
+  newStatus: number; // VisitStatus enum: 1=Scheduled, 2=Accepted, 3=Rescheduled, 4=Completed
   newVisitDate?: string; // ISO string, required when status is Rescheduled (3)
 }
 
@@ -282,7 +287,7 @@ export interface NotificationDto {
   titleEn?: string;
   messageAr: string;
   messageEn?: string;
-  bodyAr?: string; // Alias for messageAr
+  bodyAr: string; // Alias for messageAr
   bodyEn?: string; // Alias for messageEn
   type: string;
   isRead: boolean;

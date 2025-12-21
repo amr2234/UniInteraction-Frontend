@@ -41,10 +41,11 @@ export const useCreateRequest = () => {
 /**
  * Hook to get user requests with optional filters
  */
-export const useUserRequests = (filters?: RequestFilters) => {
+export const useUserRequests = (filters?: RequestFilters, enablePagination: boolean = true) => {
   return useQuery<UserRequestDto[], ApiError>({
     queryKey: queryKeys.requests.list(filters),
-    queryFn: () => requestsApi.getUserRequests(filters),
+    queryFn: () => requestsApi.getUserRequests(filters, enablePagination),
+    enabled: !!filters, // Only fetch when filters are provided
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 };

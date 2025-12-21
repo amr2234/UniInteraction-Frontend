@@ -16,84 +16,64 @@ import {
   RequestStatusCount,
 } from "@/core/types/api";
 
+// Generic helper function to build query parameters from any object
+const buildQueryParams = (params: Record<string, any>): URLSearchParams => {
+  const urlParams = new URLSearchParams();
+
+  Object.entries(params).forEach(([key, value]) => {
+    // Skip null, undefined, or empty string values
+    if (value !== null && value !== undefined && value !== '') {
+      urlParams.append(key, value.toString());
+    }
+  });
+
+  return urlParams;
+};
+
+// Helper function to build request query parameters from filters
+const buildRequestQueryParams = (
+  filters?: RequestFilters,
+  enablePagination: boolean = true
+): URLSearchParams => {
+  const params: Record<string, any> = {
+    enablePagination,
+  };
+
+  if (filters) {
+    Object.assign(params, filters);
+  }
+
+  return buildQueryParams(params);
+};
+
 export const requestsApi = {
   createRequest: async (
     payload: CreateRequestPayload,
     files?: File[]
   ): Promise<UserRequestDto> => {
+    const formData = new FormData();
+
+    Object.entries(payload).forEach(([key, value]) => {
+      if (value !== undefined && value !== null) {
+        formData.append(key, value.toString());
+      }
+    });
+
+    // Add files if present
     if (files && files.length > 0) {
-      const formData = new FormData();
-
-      Object.keys(payload).forEach((key) => {
-        const value = payload[key as keyof CreateRequestPayload];
-        if (value !== undefined && value !== null) {
-          formData.append(key, value.toString());
-        }
-      });
-
       files.forEach((file) => {
         formData.append("files", file);
       });
-
-      return apiRequest.uploadFile<UserRequestDto>("/requests", formData);
     }
-    return apiRequest.post<UserRequestDto>("/requests", payload);
+
+    return apiRequest.uploadFile<UserRequestDto>("/requests", formData);
   },
 
   getUserRequests: async (
-    filters?: RequestFilters
-  ): Promise<UserRequestDto[]> => {
-    const params = new URLSearchParams();
-
-    if (filters?.requestStatusId)
-      params.append("requestStatusId", filters.requestStatusId.toString());
-    if (filters?.requestTypeId)
-      params.append("requestTypeId", filters.requestTypeId.toString());
-    if (filters?.startDate) params.append("startDate", filters.startDate);
-    if (filters?.endDate) params.append("endDate", filters.endDate);
-    if (filters?.searchTerm) params.append("searchTerm", filters.searchTerm);
-    if (filters?.departmentId)
-      params.append("departmentId", filters.departmentId.toString());
-    if (filters?.universityLeadershipId)
-      params.append(
-        "universityLeadershipId",
-        filters.universityLeadershipId.toString()
-      );
-
-    const queryString = params.toString();
-    const url = queryString ? `/requests?${queryString}` : "/requests";
-
-    return apiRequest.get<UserRequestDto[]>(url);
-  },
-
-  getUserRequestsPaginated: async (
     filters?: RequestFilters,
-    pageNumber = 1,
-    pageSize = 10
-  ): Promise<PaginatedResponse<UserRequestDto>> => {
-    const params = new URLSearchParams({
-      pageNumber: pageNumber.toString(),
-      pageSize: pageSize.toString(),
-    });
-
-    if (filters?.requestStatusId)
-      params.append("requestStatusId", filters.requestStatusId.toString());
-    if (filters?.requestTypeId)
-      params.append("requestTypeId", filters.requestTypeId.toString());
-    if (filters?.startDate) params.append("startDate", filters.startDate);
-    if (filters?.endDate) params.append("endDate", filters.endDate);
-    if (filters?.searchTerm) params.append("searchTerm", filters.searchTerm);
-    if (filters?.departmentId)
-      params.append("departmentId", filters.departmentId.toString());
-    if (filters?.universityLeadershipId)
-      params.append(
-        "universityLeadershipId",
-        filters.universityLeadershipId.toString()
-      );
-
-    return apiRequest.get<PaginatedResponse<UserRequestDto>>(
-      `/requests?${params.toString()}`
-    );
+  ): Promise<UserRequestDto[] | PaginatedResponse<UserRequestDto>> => {
+    const params = buildRequestQueryParams(filters, filters?.enablePagination);
+    return apiRequest.get<UserRequestDto[] | PaginatedResponse<UserRequestDto>>(`/requests?${params.toString()}`);
   },
 
   getRequestById: async (id: number | string): Promise<UserRequestDto> => {
@@ -281,5 +261,16 @@ export const requestsApi = {
   // Get request counts by status
   getCountsByStatus: async (): Promise<RequestStatusCount[]> => {
     return apiRequest.get<RequestStatusCount[]>("/requests/counts-by-status");
+  },
+
+  // Assign related request (link visit to complaint)
+  assignRelatedRequest: async (
+    requestId: number | string,
+    relatedRequestId: number | null
+  ): Promise<UserRequestDto> => {
+    return apiRequest.put<UserRequestDto>(
+      `/requests/${requestId}/assign-related-request`,
+      { relatedRequestId }
+    );
   },
 };

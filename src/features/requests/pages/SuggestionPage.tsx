@@ -6,7 +6,7 @@ import { PageLayout } from "@/shared/layouts/PageLayout";
 export function SuggestionPage() {
   return (
     <PageLayout>
-      <RequestForm requestTypeId={REQUEST_TYPES.SUGGESTION} />
+      <RequestForm requestTypeId={REQUEST_TYPES.COMPLAINT} />
     </PageLayout>
   );
 }

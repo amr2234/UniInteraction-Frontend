@@ -14,7 +14,7 @@ interface StatusStepperProps {
 export function StatusStepper({ steps }: StatusStepperProps) {
   return (
     <div className="bg-white rounded-2xl shadow-soft p-8 my-6">
-      <div className="flex items-center" dir="rtl">
+      <div className="flex items-center" >
         {steps.map((step, index) => (
           <Fragment key={index}>
             {/* Step Content */}

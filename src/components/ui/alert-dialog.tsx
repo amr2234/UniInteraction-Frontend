@@ -90,30 +90,29 @@ function AlertDialogTrigger({ children }: { children?: React.ReactNode }) {
   return <>{children}</>;
 }
 
-function AlertDialogContent({ children }: { children: React.ReactNode }) {
-  return <>{children}</>;
+function AlertDialogContent({ children, className, ...props }: { children: React.ReactNode; className?: string } & React.HTMLAttributes<HTMLDivElement>) {
+  return <div className={className} {...props}>{children}</div>;
+}
+function AlertDialogHeader({ children, className, ...props }: { children: React.ReactNode; className?: string } & React.HTMLAttributes<HTMLDivElement>) {
+  return <div className={className} {...props}>{children}</div>;
 }
 
-function AlertDialogHeader({ children }: { children: React.ReactNode }) {
-  return <>{children}</>;
+function AlertDialogTitle({ children, className, ...props }: { children: React.ReactNode; className?: string } & React.HTMLAttributes<HTMLElement>) {
+  return <StyledDialogTitle id="alert-dialog-title" className={className} {...props}>{children}</StyledDialogTitle>;
 }
 
-function AlertDialogTitle({ children }: { children: React.ReactNode }) {
-  return <StyledDialogTitle id="alert-dialog-title">{children}</StyledDialogTitle>;
-}
-
-function AlertDialogDescription({ children }: { children: React.ReactNode }) {
+function AlertDialogDescription({ children, className, ...props }: { children: React.ReactNode; className?: string } & React.HTMLAttributes<HTMLDivElement>) {
   return (
     <StyledDialogContent>
-      <StyledDialogContentText id="alert-dialog-description">
+      <StyledDialogContentText id="alert-dialog-description" className={className} {...props}>
         {children}
       </StyledDialogContentText>
     </StyledDialogContent>
   );
 }
 
-function AlertDialogFooter({ children }: { children: React.ReactNode }) {
-  return <StyledDialogActions>{children}</StyledDialogActions>;
+function AlertDialogFooter({ children, className, ...props }: { children: React.ReactNode; className?: string } & React.HTMLAttributes<HTMLDivElement>) {
+  return <StyledDialogActions className={className} {...props}>{children}</StyledDialogActions>;
 }
 
 function AlertDialogCancel({ children, onClick, ...props }: React.ComponentProps<typeof Button> & { onClick?: () => void }) {

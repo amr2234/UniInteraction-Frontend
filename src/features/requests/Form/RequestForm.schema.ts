@@ -66,48 +66,23 @@ export const createRequestFormSchema = (t: (key: string) => string) => {
     serviceId: z.string().optional(),
 
     // Visit-specific fields - Optional, will be validated conditionally
-    visitReasonAr: z.string().optional(),
-    visitReasonEn: z.string().optional(),
-    visitStartAt: z.string().optional(),
-    visitEndAt: z.string().optional(),
+
     universityLeadershipId: z.string().optional(),
+    hasRelatedComplaint: z.boolean().optional(),
+    relatedRequestId: z.string().optional(),
   }).superRefine((data, ctx) => {
     // Visit-specific validation
     if (data.requestTypeId === REQUEST_TYPES.VISIT) {
-      // Validate visitReasonAr - required and Arabic only
-      if (!data.visitReasonAr || data.visitReasonAr.trim() === "") {
+      // Validate related request selection
+      if (data.hasRelatedComplaint === true && (!data.relatedRequestId || data.relatedRequestId.trim() === "")) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
-          message: t("validation.required"),
-          path: ["visitReasonAr"],
-        });
-      } else if (!hasArabicRegex.test(data.visitReasonAr)) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: t("validation.arabicRequired"),
-          path: ["visitReasonAr"],
-        });
-      } else if (!noEnglishRegex.test(data.visitReasonAr)) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: t("validation.noEnglishAllowed"),
-          path: ["visitReasonAr"],
+          message: t("validation.relatedRequestRequired"),
+          path: ["relatedRequestId"],
         });
       }
 
-      // visitStartAt and visitEndAt are now OPTIONAL - employees will add them later
-      // Only validate end time if both are provided
-      if (data.visitStartAt && data.visitEndAt) {
-        const startDate = new Date(data.visitStartAt);
-        const endDate = new Date(data.visitEndAt);
-        if (endDate <= startDate) {
-          ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            message: t("validation.endTimeAfterStartTime"),
-            path: ["visitEndAt"],
-          });
-        }
-      }
+
 
       // University leadership is required
       if (!data.universityLeadershipId) {

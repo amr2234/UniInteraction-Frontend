@@ -20,8 +20,6 @@ export interface UserRequestDetailsDto {
   serviceId?: number;
   visitReasonAr?: string;
   visitReasonEn?: string;
-  visitStartAt?: string;
-  visitEndAt?: string;
   universityLeadershipId?: number;
   submittedChannel?: string;
   createdAt: string;

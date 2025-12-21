@@ -118,6 +118,7 @@ export function RequestForm({ requestTypeId }: RequestFormProps) {
     handleCancel,
     mainCategories,
     leadershipOptions,
+    userRequests,
     trigger,
   } = useRequestForm(requestTypeId);
 
@@ -133,6 +134,7 @@ export function RequestForm({ requestTypeId }: RequestFormProps) {
   // State for searchable dropdowns
   const [categoryOpen, setCategoryOpen] = useState(false);
   const [leadershipOpen, setLeadershipOpen] = useState(false);
+  const [requestOpen, setRequestOpen] = useState(false);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
 
   // Handle form submission with confirmation
@@ -295,7 +297,7 @@ export function RequestForm({ requestTypeId }: RequestFormProps) {
                   control={control}
                   render={({ field }) => (
                     <FormField
-                      label={t("requests.titleAr")}
+                      label={t(isVisit ? "requests.visitTitleAr" : requestType === 1 ? "requests.inquiryTitleAr" : "requests.complaintTitleAr")}
                       required
                       error={errors.titleAr?.message}
                     >
@@ -314,7 +316,7 @@ export function RequestForm({ requestTypeId }: RequestFormProps) {
                   name="titleEn"
                   control={control}
                   render={({ field }) => (
-                    <FormField label={t("requests.titleEn")}>
+                    <FormField label={t(isVisit ? "requests.visitTitleEn" : requestType === 1 ? "requests.inquiryTitleEn" : "requests.complaintTitleEn")}>
                       <Input
                         {...field}
                         placeholder={t("requests.enterTitleEn")}
@@ -331,7 +333,7 @@ export function RequestForm({ requestTypeId }: RequestFormProps) {
                 control={control}
                 render={({ field }) => (
                   <FormField
-                    label={t("requests.subjectAr")}
+                    label={t(isVisit ? "requests.visitReasonAr" : requestType === 1 ? "requests.inquirySubjectAr" : "requests.complaintSubjectAr")}
                     required
                     error={errors.subjectAr?.message}
                   >
@@ -351,7 +353,7 @@ export function RequestForm({ requestTypeId }: RequestFormProps) {
                 name="subjectEn"
                 control={control}
                 render={({ field }) => (
-                  <FormField label={t("requests.subjectEn")}>
+                  <FormField label={t(isVisit ? "requests.visitReasonEn" : requestType === 1 ? "requests.inquirySubjectEn" : "requests.complaintSubjectEn")}>
                     <Textarea
                       {...field}
                       rows={4}
@@ -423,45 +425,155 @@ export function RequestForm({ requestTypeId }: RequestFormProps) {
               {/* Visit-specific fields */}
               {isVisit && (
                 <>
-                  <div className="grid md:grid-cols-2 gap-4">
+                  {/* Previous Complaint Link Section */}
+                  <Card className="p-4 bg-blue-50 border-blue-200">
+                    <h4 className="text-sm font-semibold text-[#115740] mb-3 flex items-center gap-2">
+                      <Info className="w-4 h-4" />
+                      {t("requests.relatedToPrevious")}
+                    </h4>
+                    
                     <Controller
-                      name="visitReasonAr"
+                      name="hasRelatedComplaint"
                       control={control}
                       render={({ field }) => (
-                        <FormField
-                          label={t("requests.visitReasonAr")}
-                          required
-                          error={errors.visitReasonAr?.message}
-                        >
-                          <Textarea
-                            {...field}
-                            rows={3}
-                            placeholder={t("requests.enterVisitReason")}
-                            className={`rounded-xl mt-2 resize-none ${
-                              errors.visitReasonAr ? "border-red-500" : ""
-                            }`}
-                          />
-                        </FormField>
+                        <div className="space-y-3">
+                          <Label className="text-sm text-gray-700">
+                            {t("requests.isRelatedToPreviousQuestion")}
+                          </Label>
+                          <div className="flex gap-4">
+                            <button
+                              type="button"
+                              onClick={() => field.onChange(true)}
+                              className={`flex-1 px-4 py-3 rounded-xl border-2 transition-all ${
+                                field.value === true
+                                  ? 'border-[#6CAEBD] bg-[#6CAEBD] text-white'
+                                  : 'border-gray-300 bg-white text-gray-700 hover:border-[#6CAEBD]'
+                              }`}
+                            >
+                              {t("requests.yes")}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => field.onChange(false)}
+                              className={`flex-1 px-4 py-3 rounded-xl border-2 transition-all ${
+                                field.value === false
+                                  ? 'border-[#6CAEBD] bg-[#6CAEBD] text-white'
+                                  : 'border-gray-300 bg-white text-gray-700 hover:border-[#6CAEBD]'
+                              }`}
+                            >
+                              {t("requests.no")}
+                            </button>
+                          </div>
+                        </div>
                       )}
                     />
-
+                    
+                    {/* Warning when NO is selected */}
                     <Controller
-                      name="visitReasonEn"
+                      name="hasRelatedComplaint"
                       control={control}
                       render={({ field }) => (
-                        <FormField label={t("requests.visitReasonEn")}>
-                          <Textarea
-                            {...field}
-                            rows={3}
-                            placeholder={t("requests.enterVisitReasonEn")}
-                            className="rounded-xl mt-2 resize-none"
-                            dir="ltr"
-                          />
-                        </FormField>
+                        field.value === false && (
+                          <div className="mt-3 p-3 bg-orange-50 border border-orange-200 rounded-lg">
+                            <div className="flex items-start gap-2">
+                              <AlertTriangle  className="w-5 h-5 text-orange-600 mt-0.5 flex-shrink-0" />
+                              <p className="text-sm text-orange-800">
+                                {t("requests.visitWithoutComplaintWarning")}
+                              </p>
+                            </div>
+                          </div>
+                        )
                       )}
                     />
-                  </div>
-
+                    
+                    {/* Previous Request Dropdown - Show when YES */}
+                    <Controller
+                      name="hasRelatedComplaint"
+                      control={control}
+                      render={({ field: hasComplaintField }) => (
+                        hasComplaintField.value === true && (
+                          <Controller
+                            name="relatedRequestId"
+                            control={control}
+                            render={({ field: requestField }) => (
+                              <div className="mt-3">
+                                <Label className="text-sm text-gray-700 mb-2 block">
+                                  {t("requests.selectPreviousRequest")}
+                                  <span className="text-red-500"> *</span>
+                                </Label>
+                                <Popover open={requestOpen} onOpenChange={setRequestOpen}>
+                                  <PopoverTrigger asChild>
+                                    <Button
+                                      variant="outline"
+                                      role="combobox"
+                                      aria-expanded={requestOpen}
+                                      className={`w-full rounded-xl justify-between ${
+                                        errors.relatedRequestId ? "border-red-500" : ""
+                                      }`}
+                                    >
+                                      {requestField.value
+                                        ? userRequests.find((req) => req.id.toString() === requestField.value)?.titleAr || 
+                                          userRequests.find((req) => req.id.toString() === requestField.value)?.requestNumber
+                                        : t("requests.selectPreviousRequestPlaceholder")}
+                                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                    </Button>
+                                  </PopoverTrigger>
+                                  <PopoverContent className="w-full p-0">
+                                    <Command>
+                                      <CommandInput placeholder={t("common.search")} />
+                                      <CommandEmpty>
+                                        {userRequests.length === 0 
+                                          ? t("common.noData") + " - No previous complaints found"
+                                          : t("common.noData")}
+                                      </CommandEmpty>
+                                      <CommandGroup className="max-h-[200px] overflow-auto">
+                                        {userRequests && userRequests.length > 0 ? (
+                                          userRequests.map((request) => (
+                                            <CommandItem
+                                              key={request.id}
+                                              value={`${request.requestNumber} ${request.titleAr}`}
+                                              onSelect={() => {
+                                                requestField.onChange(request.id.toString());
+                                                setRequestOpen(false);
+                                              }}
+                                            >
+                                              <Check
+                                                className={cn(
+                                                  "mr-2 h-4 w-4",
+                                                  requestField.value === request.id.toString()
+                                                    ? "opacity-100"
+                                                    : "opacity-0"
+                                                )}
+                                              />
+                                              <div className="flex-1">
+                                                <p className="font-medium">{language === "ar" ? request.titleAr : (request.titleEn || request.titleAr)}</p>
+                                                <p className="text-xs text-gray-500">{request.requestNumber}</p>
+                                              </div>
+                                            </CommandItem>
+                                          ))
+                                        ) : (
+                                          <div className="p-4 text-sm text-gray-500 text-center">
+                                            No previous complaints found
+                                          </div>
+                                        )}
+                                      </CommandGroup>
+                                    </Command>
+                                  </PopoverContent>
+                                </Popover>
+                                {errors.relatedRequestId && (
+                                  <p className="text-red-500 text-sm mt-1 flex items-center gap-1">
+                                    <AlertTriangle className="w-3 h-3" />
+                                    {errors.relatedRequestId.message}
+                                  </p>
+                                )}
+                              </div>
+                            )}
+                          />
+                        )
+                      )}
+                    />
+                  </Card>
+                  
                   {/* Searchable Leadership Dropdown */}
                   <Controller
                     name="universityLeadershipId"

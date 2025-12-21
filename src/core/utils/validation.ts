@@ -128,6 +128,13 @@ export const minLengthRule = <T>(
   message: string
 ) => createRule(field, value, (val) => minLength(val, length), message);
 
+export const maxLengthRule = <T>(
+  field: keyof T,
+  value: string,
+  length: number,
+  message: string
+) => createRule(field, value, (val) => maxLength(val, length), message);
+
 export const phoneRule = <T>(field: keyof T, value: string, message: string) =>
   createRule(field, value, isPhone, message);
 
@@ -174,3 +181,8 @@ export const englishOnlyRule = <T>(
   value: string,
   message: string
 ) => createRule(field, value, isEnglishOnly, message);
+
+// Regex patterns for validation
+export const hasArabicRegex = /[\u0600-\u06FF]/;
+export const noEnglishRegex = /^[^a-zA-Z]*$/;
+export const noArabicRegex = /^[^\u0600-\u06FF]*$/;

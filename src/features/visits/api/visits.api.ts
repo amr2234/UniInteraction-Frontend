@@ -69,4 +69,15 @@ export const visitsApi = {
   getVisitsByRequest: async (requestId: number): Promise<VisitDto[]> => {
     return apiRequest.get<VisitDto[]>(`/visits/request/${requestId}`);
   },
+
+
+  /**
+   * Update visit details
+   * PUT /api/Visits/{visitId}
+   */
+  updateVisit: async (payload: ScheduleVisitPayload): Promise<VisitDto> => {
+    return apiRequest.put<VisitDto>(`/visits/${payload.visitId}`, payload);
+  }
+
+
 };

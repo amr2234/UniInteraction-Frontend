@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import {
   FileSearch,
   Search,
@@ -11,6 +12,7 @@ import {
   ChevronLeft,
   ChevronRight,
   RotateCcw,
+  ArrowRightLeft,
 } from "lucide-react";
 import {
   Select,
@@ -41,6 +43,10 @@ export function TrackRequestsPage() {
     totalCount,
     isLoadingRequests,
     canAssignRequests,
+    isAdmin,
+    isEmployee,
+    isSuperAdmin,
+    isUser,
     isRTL,
     t,
     getRequestTypeName,
@@ -283,7 +289,7 @@ export function TrackRequestsPage() {
           </Card>
         ) : (
           <div className="space-y-4">
-            {filteredRequests.map((request) => {
+            {filteredRequests.map((request: any) => {
               const isVisitRequest = request.requestTypeId === REQUEST_TYPES.VISIT;
 
               return (
@@ -297,6 +303,32 @@ export function TrackRequestsPage() {
                         <span className="text-sm text-gray-500">{getRequestTypeName(request.requestTypeId)}</span>
                         <span className="text-sm text-gray-400">•</span>
                         <span className="text-sm text-gray-500">{request.requestNumber}</span>
+                        
+                        {/* Redirected to Complaint Badge - Clickable to navigate to related request */}
+                        {isVisitRequest && request.redirectToNewRequest && request.relatedRequestId && (
+                          <Link to={`/dashboard/request/${request.relatedRequestId}`}>
+                            <Badge 
+                              variant="outline" 
+                              className="bg-orange-50 text-orange-700 border-orange-300 gap-1.5 cursor-pointer hover:bg-orange-100 transition-colors"
+                            >
+                              <ArrowRightLeft className="w-3 h-3" />
+                              {t("requests.convertedToComplaint")}
+                            </Badge>
+                          </Link>
+                        )}
+                        
+                        {/* Reactivated Request Badge - Show when request is linked to another (not visit redirect) */}
+                        {request.relatedRequestId && !(isVisitRequest && request.redirectToNewRequest) && (
+                          <Link to={`/dashboard/request/${request.relatedRequestId}`}>
+                            <Badge 
+                              variant="outline" 
+                              className="bg-blue-50 text-blue-700 border-blue-300 gap-1.5 cursor-pointer hover:bg-blue-100 transition-colors"
+                            >
+                              <ArrowRightLeft className="w-3 h-3" />
+                              {isRTL ? "طلب معاد تفعيله" : "Reactivated Request"}
+                            </Badge>
+                          </Link>
+                        )}
                       </div>
                       <h4 className="text-gray-900 mb-2">
                         {isRTL ? request.titleAr : (request.titleEn || request.titleAr)}
@@ -339,7 +371,7 @@ export function TrackRequestsPage() {
                           </>
                         )}
                         
-                        {/* Other Request Types - Show Category and Department */}
+                        {/* Other Request Types - Show Category and Department - Department only for staff */}
                         {!isVisitRequest && (
                           <>
                             {request.mainCategoryName && (
@@ -349,35 +381,40 @@ export function TrackRequestsPage() {
                                 </span>
                               </div>
                             )}
-                            {request.departmentName ? (
-                              <div className="flex items-center gap-1">
-                                <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded">
-                                  {t("requests.track.assignedToDept")}: {request.departmentName}
-                                </span>
-                              </div>
-                            ) : (
-                              <div className="flex items-center gap-1">
-                                <span className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded">
-                                  {t("requests.track.notAssignedToDept")}
-                                </span>
-                              </div>
+                            {/* Only show department assignment to Admin/Employee/SuperAdmin */}
+                            {(isAdmin || isEmployee || isSuperAdmin) && (
+                              request.departmentName ? (
+                                <div className="flex items-center gap-1">
+                                  <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded">
+                                    {t("requests.track.assignedToDept")}: {request.departmentName}
+                                  </span>
+                                </div>
+                              ) : (
+                                <div className="flex items-center gap-1">
+                                  <span className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded">
+                                    {t("requests.track.notAssignedToDept")}
+                                  </span>
+                                </div>
+                              )
                             )}
                           </>
                         )}
                         
-                        {/* Assigned User - Show for ALL request types */}
-                        {request.assignedToUserId ? (
-                          <div className="flex items-center gap-1">
-                            <span className="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded">
-                              {t("requests.assignedUser")}: {isRTL ? request.assignedToNameAr : (request.assignedToNameEn || request.assignedToNameAr)}
-                            </span>
-                          </div>
-                        ) : (
-                          <div className="flex items-center gap-1">
-                            <span className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded">
-                              {t("requests.assignedUser")}: {t("requests.notAssigned")}
-                            </span>
-                          </div>
+                        {/* Assigned User - Show ONLY for Admin/Employee/SuperAdmin for Inquiry and Complaint requests, NOT for Visit */}
+                        {!isVisitRequest && (isAdmin || isEmployee || isSuperAdmin) && (
+                          request.assignedToUserId ? (
+                            <div className="flex items-center gap-1">
+                              <span className="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded">
+                                {t("requests.assignedUser")}: {isRTL ? request.assignedToNameAr : (request.assignedToNameEn || request.assignedToNameAr)}
+                              </span>
+                            </div>
+                          ) : (
+                            <div className="flex items-center gap-1">
+                              <span className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded">
+                                {t("requests.assignedUser")}: {t("requests.notAssigned")}
+                              </span>
+                            </div>
+                          )
                         )}
                       </div>
                     </div>
