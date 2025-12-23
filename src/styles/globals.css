@@ -139,6 +139,36 @@
   margin-right: auto;
 }
 
+/* Padding utilities for dashboard */
+.px-20 {
+  padding-left: 5rem;
+  padding-right: 5rem;
+}
+
+.py-16 {
+  padding-top: 4rem;
+  padding-bottom: 4rem;
+}
+
+@media (min-width: 640px) {
+  .sm\:px-6 {
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+  }
+  
+  .sm\:py-12 {
+    padding-top: 3rem;
+    padding-bottom: 3rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .lg\:px-20 {
+    padding-left: 5rem;
+    padding-right: 5rem;
+  }
+}
+
 /* Dynamic RTL/LTR Direction Overrides - Must be after base layer */
 /* These override the compiled CSS in index.css */
 

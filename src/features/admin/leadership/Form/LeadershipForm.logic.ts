@@ -12,12 +12,11 @@ import {
   useUpdateLeadership,
 } from "@/features/admin/leadership/hooks/useLeadership";
 import { useDepartmentsLookup } from "@/features/lookups/hooks/useLookups";
-import { usersApi } from "@/features/admin/users/api/users.api";
+import { usersApi, UserManagementDto } from "@/features/admin/users/api/users.api";
 import { UserRole } from "@/core/constants/roles";
 import type {
   CreateLeadershipPayload,
   UpdateLeadershipPayload,
-  UserDto,
 } from "@/core/types/api";
 
 export const useLeadershipForm = (): UseLeadershipFormReturn => {
@@ -28,7 +27,7 @@ export const useLeadershipForm = (): UseLeadershipFormReturn => {
 
   const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false);
   const [currentFormData, setCurrentFormData] = useState<LeadershipFormData | null>(null);
-  const [users, setUsers] = useState<UserDto[]>([]);
+  const [users, setUsers] = useState<UserManagementDto[]>([]);
   const [isLoadingUsers, setIsLoadingUsers] = useState(false);
   const [userSearchTerm, setUserSearchTerm] = useState("");
 
@@ -93,7 +92,6 @@ export const useLeadershipForm = (): UseLeadershipFormReturn => {
         );
         setUsers(availableUsers);
       } catch (error) {
-        console.error("Failed to fetch users:", error);
         setUsers([]);
       } finally {
         setIsLoadingUsers(false);

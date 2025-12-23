@@ -76,6 +76,7 @@ export function RequestDetailsPage() {
     isConvertToComplaintDialogOpen,
     isLinkComplaintDialogOpen,
     isReactivateDialogOpen,
+    isSubmitConfirmDialogOpen,
     convertDepartmentId,
     selectedComplaintId,
     wantsToRemoveLink,
@@ -121,6 +122,7 @@ export function RequestDetailsPage() {
     setIsConvertToComplaintDialogOpen,
     setIsLinkComplaintDialogOpen,
     setIsReactivateDialogOpen,
+    setIsSubmitConfirmDialogOpen,
     setConvertDepartmentId,
     setSelectedComplaintId,
     setWantsToRemoveLink,
@@ -133,6 +135,7 @@ export function RequestDetailsPage() {
     setSelectedLeadershipId,
     handleStatusChange,
     handleSubmitResponse,
+    confirmSubmitResponse,
     handleSubmitFeedback,
     handleOpenRatingDialog,
     handleRatingSubmit,
@@ -165,7 +168,6 @@ export function RequestDetailsPage() {
 
   // Debug: Track selectedDepartmentId changes
   useEffect(() => {
-    console.log('🟢 selectedDepartmentId changed to:', selectedDepartmentId);
   }, [selectedDepartmentId]);
 
   // If still loading or no request, show loading state
@@ -384,17 +386,8 @@ export function RequestDetailsPage() {
                           : ""
                       }
                       onValueChange={(value: string) => {
-                        console.log('🔍 Department Selection:', {
-                          rawValue: value,
-                          parsedValue: value ? parseInt(value, 10) : null,
-                          currentSelectedDepartmentId: selectedDepartmentId,
-                          setterType: typeof setSelectedDepartmentId,
-                          setterIsFunction: typeof setSelectedDepartmentId === 'function'
-                        });
                         const newDeptId = value ? parseInt(value, 10) : null;
-                        console.log('💡 About to call setSelectedDepartmentId with:', newDeptId);
                         setSelectedDepartmentId?.(newDeptId);
-                        console.log('✅ After setState call - new value should be:', newDeptId);
                       }}
                     >
                       <SelectTrigger className="w-[180px] h-9">
@@ -993,22 +986,145 @@ export function RequestDetailsPage() {
                 </Card>
               )}
 
-            {isUser &&
+            {/* Admin/Super Admin Edit Resolution Section - Show when status is REPLIED only */}
+            {(isAdmin || isSuperAdmin) &&
+              !isEmployee &&
+              request.resolutionDetailsAr &&
+              request.requestStatusId === RequestStatus.REPLIED && (
+                <Card className="p-6 bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-200 shadow-sm">
+                  <h3 className="text-xl font-semibold text-[#115740] mb-4 flex items-center gap-2">
+                    <Edit className="w-6 h-6 text-blue-600" />
+                    {t("requests.editResponse")}
+                  </h3>
+            
+                  <div className="space-y-4">
+                    <div>
+                      <Label
+                        htmlFor="editResponseText"
+                        className="text-sm font-medium text-gray-700 mb-2 block"
+                      >
+                        {t("requests.responseText")}
+                      </Label>
+                      <Textarea
+                        id="editResponseText"
+                        placeholder={t("requests.writeResponseHere")}
+                        value={responseText || request.resolutionDetailsAr}
+                        onChange={(e) => setResponseText(e.target.value)}
+                        rows={6}
+                        className="w-full"
+                      />
+                    </div>
+
+                    <div>
+                      <Label
+                        htmlFor="editAttachments"
+                        className="text-sm font-medium text-gray-700 mb-2 block"
+                      >
+                        {t("requests.attachments")}
+                      </Label>
+                      <Input
+                        id="editAttachments"
+                        type="file"
+                        multiple
+                        onChange={handleFileChange}
+                        className="w-full"
+                      />
+                      {attachments.length > 0 && (
+                        <div className="mt-2 text-sm text-gray-600 bg-gray-50 p-2 rounded">
+                          {attachments.length} {t("requests.fileAttached")}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Existing Attachments */}
+                    {resolutionAttachments &&
+                      resolutionAttachments.length > 0 && (
+                        <div>
+                          <p className="text-sm font-medium text-gray-700 mb-3">
+                            {t("requests.currentAttachments")}
+                          </p>
+                          <div className="space-y-2">
+                            {resolutionAttachments.map((attachment) => (
+                              <div
+                                key={attachment.id}
+                                className="flex items-center justify-between p-3 bg-white rounded-xl border border-gray-200"
+                              >
+                                <div className="flex items-center gap-3">
+                                  <div className="w-10 h-10 bg-[#115740] rounded-lg flex items-center justify-center">
+                                    <Download className="w-5 h-5 text-white" />
+                                  </div>
+                                  <div>
+                                    <p className="text-sm font-medium text-gray-900">
+                                      {attachment.fileName}
+                                    </p>
+                                    <p className="text-xs text-gray-500">
+                                      {attachment.fileSizeKb
+                                        ? `${attachment.fileSizeKb} KB`
+                                        : attachment.fileSize
+                                        ? `${(
+                                            attachment.fileSize / 1024
+                                          ).toFixed(2)} KB`
+                                        : ""}
+                                    </p>
+                                  </div>
+                                </div>
+          
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="hover:bg-[#115740] hover:text-white"
+                                  onClick={() =>
+                                    handleDownloadAttachment(attachment)
+                                  }
+                                >
+                                  <Download className="w-4 h-4 mr-1" />
+                                  {t("requests.download")}
+                                </Button>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                    {/* Save Button */}
+                    <Button
+                      onClick={handleSubmitResponse}
+                      className="w-full bg-[#115740] hover:bg-[#0d4230] text-white shadow-md"
+                      disabled={!responseText.trim()}
+                    >
+                      <Save className="w-4 h-4 mr-2" />
+                      {t("requests.saveChanges")}
+                    </Button>
+
+                    {request.resolvedBy && (
+                      <div className="border-t pt-4 mt-4">
+                        <p className="text-xs text-gray-500">
+                          {t("requests.respondedBy")}: {request.resolvedBy}
+                        </p>
+                        {request.resolvedAt && (
+                          <p className="text-xs text-gray-500">
+                            {new Date(request.resolvedAt).toLocaleString(
+                              isRTL ? "ar-SA" : "en-US"
+                            )}
+                          </p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </Card>
+              )}
+
+            {/* Employee/Read-Only Response Section - Show in REPLIED or CLOSED status for employees */}
+            {isEmployee &&
+              request.resolutionDetailsAr &&
               (request.requestStatusId === RequestStatus.REPLIED ||
-                request.requestStatusId === RequestStatus.CLOSED) &&
-              !(
-                request.requestTypeId === RequestType.VISIT &&
-                request.redirectToNewRequest
-              ) &&
-              (request.requestTypeId === RequestType.INQUIRY ||
-                request.requestTypeId === RequestType.COMPLAINT) &&
-              request.resolutionDetailsAr && (
-                <Card className="p-6 bg-gradient-to-br from-green-50 to-emerald-50 border-green-200 shadow-sm">
+                request.requestStatusId === RequestStatus.CLOSED) && (
+                <Card className="p-6 bg-gradient-to-br from-green-50 to-emerald-50 border-green-200 shadow-sm" style={{ backgroundColor: "#f0f4f8" }}>
                   <h3 className="text-xl font-semibold text-[#115740] mb-4 flex items-center gap-2">
                     <CheckCircle className="w-6 h-6 text-green-600" />
                     {t("requests.responseToRequest")}
                   </h3>
-
+            
                   <div className="space-y-4">
                     <div className="bg-white p-6 rounded-xl border-2 border-green-200 shadow-md">
                       <div className="flex items-start gap-3 mb-4">
@@ -1024,7 +1140,7 @@ export function RequestDetailsPage() {
                           </p>
                         </div>
                       </div>
-
+            
                       <div className="bg-gray-50 p-4 rounded-lg mb-4">
                         <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">
                           {isRTL
@@ -1065,7 +1181,7 @@ export function RequestDetailsPage() {
                                       </p>
                                     </div>
                                   </div>
-
+            
                                   <Button
                                     variant="ghost"
                                     size="sm"
@@ -1082,7 +1198,213 @@ export function RequestDetailsPage() {
                             </div>
                           </div>
                         )}
+            
+                      {request.resolvedBy && (
+                        <div className="border-t pt-4 mt-4">
+                          <p className="text-xs text-gray-500">
+                            {t("requests.respondedBy")}: {request.resolvedBy}
+                          </p>
+                          {request.resolvedAt && (
+                            <p className="text-xs text-gray-500">
+                              {new Date(request.resolvedAt).toLocaleString(
+                                isRTL ? "ar-SA" : "en-US"
+                              )}
+                            </p>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </Card>
+              )}
+            
+            {/* Admin/Super Admin Read-Only Response Section - Show in CLOSED status */}
+            {(isAdmin || isSuperAdmin) &&
+              !isEmployee &&
+              request.resolutionDetailsAr &&
+              request.requestStatusId === RequestStatus.CLOSED && (
+                <Card className="p-6 bg-gradient-to-br from-green-50 to-emerald-50 border-green-200 shadow-sm" style={{ backgroundColor: "#f0f4f8" }}>
+                  <h3 className="text-xl font-semibold text-[#115740] mb-4 flex items-center gap-2">
+                    <CheckCircle className="w-6 h-6 text-green-600" />
+                    {t("requests.responseToRequest")}
+                  </h3>
+            
+                  <div className="space-y-4">
+                    <div className="bg-white p-6 rounded-xl border-2 border-green-200 shadow-md">
+                      <div className="flex items-start gap-3 mb-4">
+                        <div className="w-12 h-12 bg-gradient-to-br from-[#115740] to-green-700 rounded-xl flex items-center justify-center">
+                          <MessageSquare className="w-6 h-6 text-white" />
+                        </div>
+                        <div>
+                          <p className="text-lg font-semibold text-gray-900">
+                            {t("requests.employeeResponse")}
+                          </p>
+                          <p className="text-sm text-gray-600">
+                            {t("requests.responseFromDepartment")}
+                          </p>
+                        </div>
+                      </div>
+            
+                      <div className="bg-gray-50 p-4 rounded-lg mb-4">
+                        <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">
+                          {isRTL
+                            ? request.resolutionDetailsAr
+                            : request.resolutionDetailsEn ||
+                              request.resolutionDetailsAr}
+                        </p>
+                      </div>
 
+                      {resolutionAttachments &&
+                        resolutionAttachments.length > 0 && (
+                          <div className="border-t pt-4">
+                            <p className="text-sm font-medium text-gray-700 mb-3">
+                              {t("requests.responseAttachments")}
+                            </p>
+                            <div className="space-y-2">
+                              {resolutionAttachments.map((attachment) => (
+                                <div
+                                  key={attachment.id}
+                                  className="flex items-center justify-between p-3 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors border border-gray-200"
+                                >
+                                  <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 bg-[#115740] rounded-lg flex items-center justify-center">
+                                      <Download className="w-5 h-5 text-white" />
+                                    </div>
+                                    <div>
+                                      <p className="text-sm font-medium text-gray-900">
+                                        {attachment.fileName}
+                                      </p>
+                                      <p className="text-xs text-gray-500">
+                                        {attachment.fileSizeKb
+                                          ? `${attachment.fileSizeKb} KB`
+                                          : attachment.fileSize
+                                          ? `${(
+                                              attachment.fileSize / 1024
+                                            ).toFixed(2)} KB`
+                                          : ""}
+                                      </p>
+                                    </div>
+                                  </div>
+            
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="hover:bg-[#115740] hover:text-white"
+                                    onClick={() =>
+                                      handleDownloadAttachment(attachment)
+                                    }
+                                  >
+                                    <Download className="w-4 h-4 mr-1" />
+                                    {t("requests.download")}
+                                  </Button>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+            
+                      {request.resolvedBy && (
+                        <div className="border-t pt-4 mt-4">
+                          <p className="text-xs text-gray-500">
+                            {t("requests.respondedBy")}: {request.resolvedBy}
+                          </p>
+                          {request.resolvedAt && (
+                            <p className="text-xs text-gray-500">
+                              {new Date(request.resolvedAt).toLocaleString(
+                                isRTL ? "ar-SA" : "en-US"
+                              )}
+                            </p>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </Card>
+              )}
+            
+            {/* User Response Section - Show for users when resolution exists */}
+            {isUser &&
+              (request.resolutionDetailsAr || request.resolutionDetailsEn) && request.requestTypeId !== RequestType.VISIT && (
+                <Card className="p-6 bg-gradient-to-br from-green-50 to-emerald-50 border-green-200 shadow-sm" style={{ backgroundColor: "#ffffff" }}>
+                  <h3 className="text-xl font-semibold text-[#115740] mb-4 flex items-center gap-2">
+                    <CheckCircle className="w-6 h-6 text-green-600" />
+                    {t("requests.responseToRequest")}
+                  </h3>
+            
+                  <div className="space-y-4">
+                    <div className="bg-white p-6 rounded-xl border-2 border-green-200 shadow-md">
+                      <div className="flex items-start gap-3 mb-4">
+                        <div className="w-12 h-12 bg-gradient-to-br from-[#115740] to-green-700 rounded-xl flex items-center justify-center">
+                          <MessageSquare className="w-6 h-6 text-white" />
+                        </div>
+                        <div>
+                          <p className="text-lg font-semibold text-gray-900">
+                            {t("requests.employeeResponse")}
+                          </p>
+                          <p className="text-sm text-gray-600">
+                            {t("requests.responseFromDepartment")}
+                          </p>
+                        </div>
+                      </div>
+            
+                      <div className="bg-gray-50 p-4 rounded-lg mb-4">
+                        <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">
+                          {isRTL
+                            ? request.resolutionDetailsAr
+                            : request.resolutionDetailsEn ||
+                              request.resolutionDetailsAr}
+                        </p>
+                      </div>
+            
+                      {resolutionAttachments &&
+                        resolutionAttachments.length > 0 && (
+                          <div className="border-t pt-4">
+                            <p className="text-sm font-medium text-gray-700 mb-3">
+                              {t("requests.responseAttachments")}
+                            </p>
+                            <div className="space-y-2">
+                              {resolutionAttachments.map((attachment) => (
+                                <div
+                                  key={attachment.id}
+                                  className="flex items-center justify-between p-3 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors border border-gray-200"
+                                >
+                                  <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 bg-[#115740] rounded-lg flex items-center justify-center">
+                                      <Download className="w-5 h-5 text-white" />
+                                    </div>
+                                    <div>
+                                      <p className="text-sm font-medium text-gray-900">
+                                        {attachment.fileName}
+                                      </p>
+                                      <p className="text-xs text-gray-500">
+                                        {attachment.fileSizeKb
+                                          ? `${attachment.fileSizeKb} KB`
+                                          : attachment.fileSize
+                                          ? `${(
+                                              attachment.fileSize / 1024
+                                            ).toFixed(2)} KB`
+                                          : ""}
+                                      </p>
+                                    </div>
+                                  </div>
+            
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="hover:bg-[#115740] hover:text-white"
+                                    onClick={() =>
+                                      handleDownloadAttachment(attachment)
+                                    }
+                                  >
+                                    <Download className="w-4 h-4 mr-1" />
+                                    {t("requests.download")}
+                                  </Button>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+            
                       {request.resolvedBy && (
                         <div className="border-t pt-4 mt-4">
                           <p className="text-xs text-gray-500">
@@ -1332,65 +1654,6 @@ export function RequestDetailsPage() {
                         {t("requests.thankYou")}
                       </Button>
                     </div>
-                  </div>
-                </Card>
-              )}
-
-            {/* User Feedback Section - Show when status is CLOSED - Hidden if visit was redirected to complaint */}
-            {isUser &&
-              request.requestStatusId === RequestStatus.CLOSED &&
-              !(
-                request.requestTypeId === RequestType.VISIT &&
-                request.redirectToNewRequest
-              ) && (
-                <Card className="p-6">
-                  <h4 className="text-[#115740] font-semibold mb-4">
-                    {t("requests.requestEvaluation")}
-                  </h4>
-                  <div className="space-y-4">
-                    <div>
-                      <Label className="text-sm text-gray-700 mb-2 block">
-                        {t("requests.rating")}
-                      </Label>
-                      <div className="flex gap-1">
-                        {[1, 2, 3, 4, 5].map((star) => (
-                          <Star
-                            key={star}
-                            className={`w-6 h-6 cursor-pointer ${
-                              star <= rating
-                                ? "text-yellow-500 fill-current"
-                                : "text-gray-300"
-                            }`}
-                            onClick={() => setRating(star)}
-                          />
-                        ))}
-                      </div>
-                    </div>
-
-                    <div>
-                      <Label
-                        htmlFor="feedback"
-                        className="text-sm text-gray-700 mb-2 block"
-                      >
-                        {t("requests.comment")}
-                      </Label>
-                      <Textarea
-                        id="feedback"
-                        placeholder={t("requests.shareYourExperience")}
-                        value={feedback}
-                        onChange={(e) => setFeedback(e.target.value)}
-                        rows={3}
-                        className="resize-none"
-                      />
-                    </div>
-
-                    <Button
-                      onClick={handleSubmitFeedback}
-                      className="w-full bg-[#115740] hover:bg-[#0d4230] text-white"
-                      disabled={rating === 0}
-                    >
-                      {t("requests.submitRating")}
-                    </Button>
                   </div>
                 </Card>
               )}
@@ -1934,6 +2197,106 @@ export function RequestDetailsPage() {
               className="bg-orange-600 hover:bg-orange-700"
             >
               {t("requests.createRequest")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Submit Response Confirmation Dialog - For Employees */}
+      <AlertDialog
+        open={isSubmitConfirmDialogOpen}
+        onOpenChange={setIsSubmitConfirmDialogOpen}
+      >
+        <AlertDialogContent className="max-w-2xl">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2 text-orange-600">
+              <Send className="w-6 h-6" />
+              {t("requests.confirmSubmitResolution")}
+            </AlertDialogTitle>
+          </AlertDialogHeader>
+
+          <div className="space-y-4 px-6 pb-4 max-h-[500px] overflow-y-auto">
+            {/* Warning Message */}
+            <div className="bg-orange-50 border-l-4 border-orange-400 p-4 rounded">
+              <p className="text-sm text-orange-800 font-medium">
+                {t("requests.submitResolutionWarning")}
+              </p>
+              <p className="text-xs text-orange-700 mt-2">
+                {t("requests.submitResolutionNote")}
+              </p>
+            </div>
+
+            {/* Response Text Preview */}
+            {responseText && (
+              <div className="space-y-2">
+                <Label className="text-sm font-medium text-gray-700">
+                  {t("requests.responseText")}
+                </Label>
+                <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                  <p className="text-gray-700 text-sm leading-relaxed whitespace-pre-wrap">
+                    {responseText}
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* Visit Date Preview */}
+            {visitDateTime && request.requestTypeId === RequestType.VISIT && (
+              <div className="space-y-2">
+                <Label className="text-sm font-medium text-gray-700">
+                  {t("requests.visitDateTime")}
+                </Label>
+                <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                  <p className="text-gray-700 text-sm font-medium">
+                    {new Date(visitDateTime).toLocaleString(
+                      isRTL ? "ar-SA" : "en-US",
+                      {
+                        dateStyle: "full",
+                        timeStyle: "short",
+                      }
+                    )}
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* Attachments Preview */}
+            {attachments && attachments.length > 0 && (
+              <div className="space-y-2">
+                <Label className="text-sm font-medium text-gray-700">
+                  {t("requests.attachments")} ({attachments.length})
+                </Label>
+                <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                  <div className="space-y-2">
+                    {attachments.map((file, index) => (
+                      <div
+                        key={index}
+                        className="flex items-center gap-2 text-sm text-gray-700"
+                      >
+                        <FileText className="w-4 h-4 text-gray-500" />
+                        <span className="font-medium">{file.name}</span>
+                        <span className="text-xs text-gray-500">
+                          ({(file.size / 1024).toFixed(2)} KB)
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
+          <AlertDialogFooter>
+            <AlertDialogCancel
+              onClick={() => setIsSubmitConfirmDialogOpen(false)}
+            >
+              {t("common.cancel")}
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmSubmitResponse}
+              className="bg-[#115740] hover:bg-[#0d4230]"
+            >
+              {t("requests.confirmSubmit")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

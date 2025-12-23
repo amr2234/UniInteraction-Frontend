@@ -30,11 +30,14 @@ export const useDashboardPage = () => {
   // Fetch request counts by status from API
   const { data: statusCounts = [] } = useRequestCountsByStatus();
 
-  // Fetch all requests for recent activity (only for employees)
-  const { data: allRequests = [] } = useUserRequests({});
+  // Fetch all requests for recent activity
+  const { data: allRequests = [] } = useUserRequests({}, false);
 
   // Ensure allRequests is always an array
-  const requestsArray = Array.isArray(allRequests) ? allRequests : [];
+  // Handle both paginated response {items: []} and direct array []
+  const requestsArray = Array.isArray(allRequests) 
+    ? allRequests 
+    : (allRequests as any)?.items || [];
 
   // Calculate request counts from API response
   const requestCounts = useMemo(
@@ -46,9 +49,6 @@ export const useDashboardPage = () => {
         closed: statusCounts.find((s) => s.statusId === RequestStatus.CLOSED)?.count || 0,
         total: statusCounts.reduce((sum, s) => sum + s.count, 0),
       };
-      
-      console.log('📊 Dashboard - Request Counts (from API):', counts);
-      console.log('📊 Dashboard - Status Counts Response:', statusCounts);
       
       return counts;
     },

@@ -51,6 +51,95 @@ export interface TranslationKeys {
     categories: string;
     services: string;
   };
+  landing: {
+    hero: {
+      badge: string;
+      title: string;
+      description: string;
+      loginButton: string;
+      dashboardButton: string;
+      trackButton: string;
+    };
+    stats: {
+      students: string;
+      staff: string;
+      completedRequests: string;
+      satisfaction: string;
+    };
+    services: {
+      title: string;
+      subtitle: string;
+      inquiry: string;
+      inquiryDesc: string;
+      complaintSuggestion: string;
+      complaintSuggestionDesc: string;
+      bookAppointment: string;
+      bookAppointmentDesc: string;
+      getStarted: string;
+      trackPrevious: string;
+    };
+    features: {
+      title: string;
+      subtitle: string;
+      security: string;
+      securityDesc: string;
+      fastResponse: string;
+      fastResponseDesc: string;
+      support: string;
+      supportDesc: string;
+    };
+    userTypes: {
+      title: string;
+      subtitle: string;
+      students: string;
+      studentsDesc: string;
+      staff: string;
+      staffDesc: string;
+      visitors: string;
+      visitorsDesc: string;
+    };
+    faq: {
+      title: string;
+      subtitle: string;
+      q1: string;
+      a1: string;
+      q2: string;
+      a2: string;
+      q3: string;
+      a3: string;
+      q4: string;
+      a4: string;
+      q5: string;
+      a5: string;
+    };
+    cta: {
+      badge: string;
+      title: string;
+      description: string;
+      loginButton: string;
+      trackButton: string;
+      secure: string;
+      easyToUse: string;
+      available247: string;
+    };
+    footer: {
+      description: string;
+      quickLinks: string;
+      login: string;
+      trackRequests: string;
+      services: string;
+      servicesTitle: string;
+      submitInquiry: string;
+      submitComplaint: string;
+      submitSuggestion: string;
+      bookAppointment: string;
+      contactUs: string;
+      location: string;
+      copyright: string;
+      privacyPolicy: string;
+      terms: string;
+    };
+  };
   dashboard: {
     title: string;
     welcomeMessage: string;

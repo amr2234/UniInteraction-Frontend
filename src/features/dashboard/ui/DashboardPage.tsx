@@ -45,6 +45,53 @@ export function DashboardPage() {
     t,
   } = useDashboardPage();
 
+  // Helper function to get request type name
+  const getRequestTypeName = (typeId: number) => {
+    switch (typeId) {
+      case RequestType.COMPLAINT:
+        return t("requests.types.complaint");
+      case RequestType.INQUIRY:
+        return t("requests.types.inquiry");
+      case RequestType.VISIT:
+        return t("requests.types.visit");
+      default:
+        return t("requests.types.other");
+    }
+  };
+
+  // Helper function to get status name
+  const getStatusName = (statusId: number) => {
+    switch (statusId) {
+      case RequestStatus.RECEIVED:
+        return t("requests.statuses.pending");
+      case RequestStatus.UNDER_REVIEW:
+        return t("requests.statuses.inProgress");
+      case RequestStatus.REPLIED:
+        return t("requests.statuses.replied");
+      case RequestStatus.CLOSED:
+        return t("requests.statuses.closed");
+      default:
+        return t("requests.statuses.unknown");
+    }
+  };
+
+  // Helper function to format time ago
+  const getTimeAgo = (date: string) => {
+    const now = new Date();
+    const past = new Date(date);
+    const diffInDays = Math.floor((now.getTime() - past.getTime()) / (1000 * 60 * 60 * 24));
+    
+    if (diffInDays === 0) return t("requests.timeAgo.today");
+    if (diffInDays === 1) return t("requests.timeAgo.yesterday");
+    if (diffInDays < 7) return t("requests.timeAgo.daysAgo").replace("{count}", String(diffInDays));
+    if (diffInDays < 30) {
+      const weeks = Math.floor(diffInDays / 7);
+      return weeks === 1 ? t("requests.timeAgo.weekAgo") : t("requests.timeAgo.weeksAgo").replace("{count}", String(weeks));
+    }
+    const months = Math.floor(diffInDays / 30);
+    return months === 1 ? t("requests.timeAgo.monthAgo") : t("requests.timeAgo.monthsAgo").replace("{count}", String(months));
+  };
+
   return (
     <div className="min-h-screen bg-[#F4F4F4]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -157,7 +204,7 @@ export function DashboardPage() {
                 </Card>
               ) : (
                 <div className="space-y-3">
-                  {recentRequestsNeedingAction.map((request, index) => (
+                  {recentRequestsNeedingAction.map((request: any, index: any) => (
                     <Card 
                       key={request.id} 
                       className="p-4 rounded-xl border-0 shadow-soft bg-white hover:shadow-soft-lg transition-all hover:-translate-y-1"
@@ -381,42 +428,6 @@ export function DashboardPage() {
               </ResponsiveContainer>
             </Card>
           </div>
-        )}
-
-        {/* Recent Activities - Show for Regular Users only */}
-        {isUser && (
-        <Card className="p-6 rounded-xl border-0 shadow-soft bg-white">
-          <h3 className="text-[#6CAEBD] mb-4">{t("dashboard.recentActivities")}</h3>
-          <div className="space-y-4">
-            {[
-              { type: t("requests.types.inquiry"), title: t("requests.types.inquiry") + " عن مواعيد التسجيل", status: t("requests.statuses.replied"), date: t("requests.timeAgo.daysAgo").replace("{count}", "3"), color: "bg-[#875E9E]/10 text-[#875E9E]" },
-              { type: t("requests.types.complaint"), title: t("requests.types.complaint") + " في نظام البوابة الإلكترونية", status: t("requests.statuses.processing"), date: t("requests.timeAgo.daysAgo").replace("{count}", "5"), color: "bg-[#EABB4E]/10 text-[#EABB4E]" },
-              { type: t("requests.types.visit"), title: "موعد مع عميد شؤون الطلاب", status: t("requests.statuses.confirmed"), date: t("requests.timeAgo.weekAgo"), color: "bg-[#6CAEBD]/10 text-[#6CAEBD]" },
-            ].map((activity, index) => (
-              <div key={index} className="flex items-center justify-between p-4 bg-[#F4F4F4] rounded-xl hover:bg-gray-100 transition-colors">
-                <div className="flex items-center gap-4 flex-1">
-                  <div className="w-2 h-2 bg-[#6CAEBD] rounded-full"></div>
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="text-sm text-[#6F6F6F]">{activity.type}</span>
-                      <span className="text-gray-300">•</span>
-                      <span className="text-sm text-[#6F6F6F]">{activity.date}</span>
-                    </div>
-                    <p className="text-[#2B2B2B]">{activity.title}</p>
-                  </div>
-                </div>
-                <span className={`px-3 py-1 rounded-xl text-xs ${activity.color}`}>
-                  {activity.status}
-                </span>
-              </div>
-            ))}
-          </div>
-          <Link to="/dashboard/track">
-            <button className="w-full mt-4 text-[#6CAEBD] hover:text-[#875E9E] text-sm transition">
-              {t("dashboard.viewAllRequests")}
-            </button>
-          </Link>
-        </Card>
         )}
       </div>
     </div>

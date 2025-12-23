@@ -15,7 +15,6 @@ export function NotificationBell() {
   const navigate = useNavigate();
   const { t, language } = useI18n();
   const { userId, isAuthenticated: userIsAuthenticated } = useUser();
-  console.log("🔔 Notification Bell Debug:", { userId, userIsAuthenticated });
   
   // Get access token for SignalR (only if user is logged in)
   const accessToken = localStorage.getItem('authToken') || ''; // Changed from 'accessToken' to 'authToken'
@@ -27,21 +26,7 @@ export function NotificationBell() {
   const markAsReadMutation = useMarkNotificationAsRead();
   
   // Debug logging
-  useEffect(() => {
-    console.log("🔔 Notification System Debug:", {
-      userId,
-      userIdNumber,
-      isAuthenticated,
-      userIsAuthenticated,
-      hasAccessToken: !!accessToken,
-      accessTokenLength: accessToken?.length,
-      notificationsCount: notifications.length,
-      unreadCount: notifications.filter(n => !n.isRead).length,
-      notifications: notifications,
-      isLoading
-    });
-  }, [userId, notifications, isLoading, isAuthenticated, accessToken, userIdNumber, userIsAuthenticated]);
-
+ 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {

@@ -51,23 +51,9 @@ export const useRequestForm = (
     error: leadershipError,
   } = useLeadershipLookup();
 
-  useEffect(() => {
-    console.log("📊 Categories API Status:", {
-      isLoading: isLoadingCategories,
-      hasData: !!mainCategoriesData,
-      dataLength: mainCategoriesData?.length,
-      error: categoriesError,
-    });
-  }, [isLoadingCategories, mainCategoriesData, categoriesError]);
 
-  useEffect(() => {
-    console.log("👥 Leadership API Status:", {
-      isLoading: isLoadingLeadership,
-      hasData: !!leadershipData,
-      dataLength: leadershipData?.length,
-      error: leadershipError,
-    });
-  }, [isLoadingLeadership, leadershipData, leadershipError]);
+
+
 
   const validationSchema = useMemo(() => createRequestFormSchema(t), [t]);
 
@@ -177,7 +163,6 @@ export const useRequestForm = (
   const onSubmit = useCallback(
     async (data: RequestFormData) => {
       try {
-        console.log("📝 Submitting Request Form Data:", data);
 
         // Build base payload
         const payload: CreateRequestPayload = {
@@ -216,18 +201,15 @@ export const useRequestForm = (
           Object.entries(payload).filter(([_, value]) => value !== undefined)
         ) as CreateRequestPayload;
 
-        console.log("🧹 Cleaned API Payload:", cleanPayload);
-        console.log("📎 Attached Files:", files);
+
 
         const createdRequest = await requestsApi.createRequest(cleanPayload, files);
 
-        console.log("✅ Request Created Successfully:", createdRequest);
 
         toast.success(t("requests.submitSuccess"));
 
         navigate(`/dashboard/request/${createdRequest.id}`);
       } catch (error: any) {
-        console.error("❌ Request Submission Error:", error);
         const errorMessage =
           error?.response?.data?.message ||
           error?.message ||

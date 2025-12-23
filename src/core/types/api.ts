@@ -79,7 +79,8 @@ export interface UserInfo {
   permissions?: string[]; // Permission codes from JWT
   isActive?: boolean;
   isInternal?: boolean;
-  profilePicture?: string;
+  profilePicture?: string; // For backward compatibility - file path/URL
+  profilePictureId?: number; // ID of the profile picture attachment
 }
 
 // ============================================

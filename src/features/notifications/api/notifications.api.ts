@@ -12,11 +12,9 @@ export const notificationsApi = {
    * @param unreadOnly - Optional flag to get only unread notifications
    */
   getUserNotifications: async (userId: number, unreadOnly = false): Promise<NotificationDto[]> => {
-    console.log("📡 Fetching notifications for user:", userId, "unreadOnly:", unreadOnly);
     const result = await apiRequest.get<NotificationDto[]>(
       `/Notifications/user/${userId}?unreadOnly=${unreadOnly}`
     );
-    console.log("✅ Notifications fetched:", result);
     return result;
   },
 

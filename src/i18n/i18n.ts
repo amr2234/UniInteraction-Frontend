@@ -2,6 +2,7 @@ import { Language, TranslationKeys } from "./types";
 import en from "./locales/en.json";
 import ar from "./locales/ar.json";
 
+// Force reload of translations
 const translations: Record<Language, TranslationKeys> = {
   en: en as TranslationKeys,
   ar: ar as TranslationKeys,

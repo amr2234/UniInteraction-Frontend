@@ -98,7 +98,6 @@ export function FAQPage() {
       await new Promise((resolve) => setTimeout(resolve, 500));
       setFaqs(mockFaqs);
     } catch (error) {
-      console.error("Failed to load FAQs");
     } finally {
       setIsLoading(false);
     }

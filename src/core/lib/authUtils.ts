@@ -23,7 +23,6 @@ export const decodeToken = (token: string): DecodedToken | null => {
   try {
     return jwtDecode<DecodedToken>(token);
   } catch (error) {
-    console.error('Failed to decode token:', error);
     return null;
   }
 };
@@ -38,7 +37,6 @@ export const getUserPermissions = (): string[] => {
       const parsed = JSON.parse(userInfo);
       return parsed.permissions || [];
     } catch (error) {
-      console.error('Failed to parse userInfo:', error);
     }
   }
   
@@ -60,7 +58,6 @@ export const getUserRoleIds = (): number[] => {
       const parsed = JSON.parse(userInfo);
       return parsed.roleIds || [];
     } catch (error) {
-      console.error('Failed to parse userInfo:', error);
     }
   }
   

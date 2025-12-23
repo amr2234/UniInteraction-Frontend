@@ -3,7 +3,7 @@ import { LandingPage } from "@/features/pages/LandingPage";
 import { NotFoundPage } from "@/features/pages/NotFoundPage";
 import { LoginPage } from "@/features/auth/ui/LoginPage";
 import { RegisterPage } from "@/features/auth/ui/RegisterPage";
-import { DashboardPage } from "@/features/dashboard/ui/DashboardPage";
+import { Dashboard } from "@/features/dashboard/ui/Dashboard";
 import { ComplaintPage } from "@/features/requests/pages/ComplaintPage";
 import { InquiryPage } from "@/features/requests/pages/InquiryPage";
 import { VisitPage } from "@/features/requests/pages/VisitPage";
@@ -55,7 +55,7 @@ export function AppRouter() {
         path="/dashboard"
         element={
           <AuthenticatedRoute>
-            <DashboardPage />
+            <Dashboard />
           </AuthenticatedRoute>
         }
       />

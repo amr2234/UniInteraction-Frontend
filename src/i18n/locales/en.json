@@ -30,6 +30,7 @@
     "strong": "Note:",
     "thankYou": "Thank you for your contribution!",
     "activate": "Activate",
+    "retry": "Retry",
     "unsavedChanges": "Unsaved Changes",
     "unsavedChangesWarning": "You have unsaved changes. Are you sure you want to leave?",
     "unsavedChangesMessage": "You have unsaved changes. Leaving this page will discard all changes.",
@@ -100,6 +101,95 @@
     "goToDashboard": "Go to Dashboard",
     "goToHome": "Go to Home"
   },
+  "landing": {
+    "hero": {
+      "badge": "Unified Platform for All Services",
+      "title": "Sulaiman AlRajhi University Interactive Platform",
+      "description": "Your unified gateway to access all electronic services easily and securely. We serve students, staff, and visitors with high efficiency and professionalism",
+      "loginButton": "Login",
+      "dashboardButton": "Dashboard",
+      "trackButton": "Track Requests"
+    },
+    "stats": {
+      "students": "Students",
+      "staff": "Staff",
+      "completedRequests": "Completed Requests",
+      "satisfaction": "User Satisfaction"
+    },
+    "services": {
+      "title": "Electronic Services",
+      "subtitle": "Choose the service that suits you and get started easily",
+      "inquiry": "Inquiry",
+      "inquiryDesc": "Get answers to all your questions",
+      "complaintSuggestion": "Complaint or Suggestion",
+      "complaintSuggestionDesc": "Share your feedback and ideas with us",
+      "bookAppointment": "Book Appointment",
+      "bookAppointmentDesc": "Schedule a visit with leadership",
+      "getStarted": "Get Started",
+      "trackPrevious": "Track Your Previous Requests"
+    },
+    "features": {
+      "title": "Why Our Platform?",
+      "subtitle": "We provide you with a distinguished and comfortable experience with the highest security and quality standards",
+      "security": "High Security",
+      "securityDesc": "Advanced data protection with secure Nafath login",
+      "fastResponse": "Fast Response",
+      "fastResponseDesc": "Instant processing of your requests with real-time notifications",
+      "support": "Expert Support",
+      "supportDesc": "Professional support team ready to assist you"
+    },
+    "userTypes": {
+      "title": "Who We Serve",
+      "subtitle": "A comprehensive platform serving all members of the university community",
+      "students": "Students",
+      "studentsDesc": "Comprehensive academic and administrative services",
+      "staff": "Staff",
+      "staffDesc": "Human resources and administrative services",
+      "visitors": "Visitors",
+      "visitorsDesc": "Communication and visit services"
+    },
+    "faq": {
+      "title": "Frequently Asked Questions",
+      "subtitle": "Find answers to common questions about our platform",
+      "q1": "How do I submit an inquiry?",
+      "a1": "Simply log in through Nafath, navigate to the Inquiry section, fill out the form with your question details, and submit. You'll receive a response within 24-48 hours.",
+      "q2": "Can I track my submitted requests?",
+      "a2": "Yes! After logging in, go to 'Track Requests' to view all your submissions, their current status, and any responses from our team.",
+      "q3": "How do I book an appointment with university leadership?",
+      "a3": "Navigate to 'Book Appointment', select the leadership member you wish to meet, choose an available time slot, and confirm your booking.",
+      "q4": "Is my information secure?",
+      "a4": "Absolutely. We use Nafath authentication and implement advanced security measures to protect all your personal data and communications.",
+      "q5": "What if I need urgent assistance?",
+      "a5": "For urgent matters, you can submit a high-priority inquiry or contact our support team directly through the provided contact information."
+    },
+    "cta": {
+      "badge": "Get Started",
+      "title": "Ready to Use Our Services?",
+      "description": "Log in via National Nafath and start using all electronic services securely and easily",
+      "loginButton": "Login",
+      "trackButton": "Track Your Requests",
+      "secure": "Secure & Encrypted",
+      "easyToUse": "Easy to Use",
+      "available247": "Available in 5 Working Days"
+    },
+    "footer": {
+      "description": "Sulaiman AlRajhi University Interactive Platform - Your unified gateway for all electronic services",
+      "quickLinks": "Quick Links",
+      "login": "Login",
+      "trackRequests": "Track Requests",
+      "services": "Services",
+      "servicesTitle": "Services",
+      "submitInquiry": "Submit Inquiry",
+      "submitComplaint": "Submit Complaint",
+      "submitSuggestion": "Submit Suggestion",
+      "bookAppointment": "Book Appointment",
+      "contactUs": "Contact Us",
+      "location": "Riyadh, Saudi Arabia",
+      "copyright": "All Rights Reserved © 2025 - Sulaiman AlRajhi University",
+      "privacyPolicy": "Privacy Policy",
+      "terms": "Terms & Conditions"
+    }
+  },
   "dashboard": {
     "title": "Dashboard",
     "welcomeMessage": "Welcome back",
@@ -129,6 +219,7 @@
     "viewAll": "View All",
     "requestOverview": "Request Overview",
     "recentActivities": "Recent Activities",
+    "noRecentActivities": "No recent activities",
     "visitCalendar": "Visit Schedule",
     "visitCalendarDesc": "View scheduled visit appointments",
     "noVisitsOnThisDay": "No visits scheduled on this day",
@@ -157,6 +248,54 @@
       "requests": "Requests",
       "completed": "Completed",
       "underReview": "Under Review"
+    },
+    "activity": "activity",
+    "activities": "activities",
+    "user": {
+      "welcome": "Welcome",
+      "welcomeBack": "Welcome back,",
+      "howCanWeHelp": "We are here to serve you. How can we help you today?",
+      "quickStats": {
+        "youHave": "You have",
+        "activeRequests": "active requests",
+        "completed": "Completed",
+        "requestsThisMonth": "requests this month"
+      },
+      "services": {
+        "howCanWeHelp": "How can we help you?",
+        "inquiry": {
+          "title": "Inquiry",
+          "description": "Ask any question you need answered"
+        },
+        "complaint": {
+          "title": "Complaint",
+          "description": "Share your feedback with complete privacy"
+        },
+        "suggestion": {
+          "title": "Suggestion",
+          "description": "Contribute to university development with your ideas"
+        },
+        "bookVisit": {
+          "title": "Book Appointment",
+          "description": "Book a visit with leadership"
+        },
+        "startNow": "Start Now"
+      },
+      "updates": {
+        "title": "Latest Updates",
+        "viewAll": "View All",
+        "noUpdates": "No updates currently",
+        "noUpdatesDesc": "When you submit a new request, updates will appear here"
+      },
+      "quickLinks": {
+        "title": "Quick Links",
+        "trackRequests": "Track My Requests",
+        "profile": "My Profile"
+      },
+      "tip": {
+        "title": "Tip",
+        "trackRequestsHint": "You can track all your requests from the \"Track Requests\" page"
+      }
     },
     "admin": {
       "userManagement": "User Management",
@@ -403,12 +542,19 @@
       "completed": "Completed",
       "rejected": "Rejected",
       "replied": "Replied",
+      "closed": "Closed",
       "processing": "Processing",
-      "confirmed": "Confirmed"
+      "confirmed": "Confirmed",
+      "unknown": "Unknown"
     },
     "timeAgo": {
+      "today": "Today",
+      "yesterday": "Yesterday",
       "daysAgo": "{count} days ago",
-      "weekAgo": "a week ago"
+      "weekAgo": "a week ago",
+      "weeksAgo": "{count} weeks ago",
+      "monthAgo": "a month ago",
+      "monthsAgo": "{count} months ago"
     },
     "track": {
       "title": "Track Requests",
@@ -571,7 +717,13 @@
     "currentRequestNumber": "Current Request Number",
     "createRequest": "Create Request",
     "requestReactivatedSuccess": "Request reactivated successfully",
-    "requestReactivateFailed": "Failed to reactivate request"
+    "requestReactivateFailed": "Failed to reactivate request",
+    "confirmSubmitResolution": "Confirm Submit Response",
+    "submitResolutionWarning": "After submitting the response, you will not be able to edit it. Admin approval will be required for any changes.",
+    "submitResolutionNote": "Please review all information carefully before submitting.",
+    "confirmSubmit": "Confirm Submit",
+    "editResponse": "Edit Response",
+    "currentAttachments": "Current Attachments"
   },
   "form": {
     "personalInfo": "Personal Information",
@@ -663,6 +815,7 @@
     "nationalIdFormat": "National ID must be 10 digits",
     "nationalIdLength": "National ID must be exactly 10 digits",
     "nationalIdRequired": "National ID is required",
+    "nationalIdNumeric": "National ID must contain only numbers",
     "studentIdRequired": "Student ID is required",
     "studentIdNotAllowed": "Student ID is only for students",
     "departmentRequired": "Department is required",
@@ -717,7 +870,18 @@
     "connected": "Connected",
     "active": "Active",
     "notConnected": "Not Connected",
-    "inactive": "Inactive"
+    "inactive": "Inactive",
+    "activateNafath": "Activate Nafath",
+    "nafathActivatedSuccess": "Nafath Activated Successfully",
+    "nafathActivatedSuccessDesc": "Your Nafath account has been successfully linked to your profile.",
+    "nafathActivationError": "Failed to activate Nafath. Please try again.",
+    "nafathTimeout": "Nafath verification timed out. Please try again.",
+    "uploading": "Uploading...",
+    "imageRequirements": "JPG, PNG, WEBP (Max 5MB)",
+    "pictureUploadSuccess": "Profile picture updated successfully",
+    "pictureUploadError": "Failed to upload profile picture",
+    "invalidImageType": "Invalid file type. Please upload JPG, PNG, or WEBP image.",
+    "imageTooLarge": "Image size exceeds 5MB. Please choose a smaller file."
   },
   "notifications": {
     "title": "Notifications",
@@ -1285,69 +1449,5 @@
     "notifyOnRequestStatus": "Notify on request status change",
     "notifyOnNewRequest": "Notify on new request",
     "notifyOnRequestAssignment": "Notify on request assignment"
-  },
-  "landing": {
-    "hero": {
-      "title": "Interactive University Platform",
-      "description": "A unified platform for all electronic services for students, employees and visitors. Connect with us easily and securely",
-      "loginButton": "Login",
-      "dashboardButton": "Dashboard",
-      "trackRequests": "Track Requests"
-    },
-    "services": {
-      "title": "Electronic Services",
-      "description": "Take advantage of all our electronic services easily and securely",
-      "startNow": "Start Now"
-    },
-    "aboutUs": {
-      "title": "About Us",
-      "description": "The University's Interactive Platform is your unified gateway to all electronic services. We strive to provide a distinctive and seamless experience for all members of the university community through modern and innovative technologies",
-      "mission": "Mission",
-      "missionDesc": "Providing a distinguished interactive environment that facilitates communication between all members of the university community and enhances their participation in university development",
-      "vision": "Vision",
-      "visionDesc": "To be the leading platform in providing integrated electronic services for universities in the Kingdom",
-      "values": "Values",
-      "valuesDesc": "Transparency, efficiency, excellence, innovation, and commitment to the highest quality standards in service delivery"
-    },
-    "whyUs": {
-      "title": "Why Choose Our Platform?",
-      "reasons": {
-        "1": "Easy-to-use interface compatible with all devices",
-        "2": "High-level security to protect your data",
-        "3": "Quick response to all requests and inquiries",
-        "4": "Direct tracking of all your requests",
-        "5": "24/7 technical support"
-      }
-    },
-    "cta": {
-      "title": "Are you ready to start?",
-      "description": "Login now and enjoy all electronic services"
-    },
-    "userTypes": {
-      "title": "Who We Serve",
-      "description": "We provide comprehensive services for all university beneficiaries",
-      "students": "Students",
-      "studentsDesc": "Student and academic services",
-      "employees": "Employees",
-      "employeesDesc": "Human resources and administrative services",
-      "visitors": "Visitors",
-      "visitorsDesc": "Visitor and external community services"
-    },
-    "stats": {
-      "students": "Students",
-      "employees": "Employees and Faculty",
-      "completedRequests": "Completed Requests",
-      "satisfaction": "Satisfaction Rate"
-    },
-    "footer": {
-      "quickLinks": "Quick Links",
-      "services": "Services",
-      "contact": "Contact Us",
-      "email": "Email",
-      "phone": "Phone",
-      "address": "Address",
-      "location": "Riyadh, Saudi Arabia",
-      "rights": "All rights reserved"
-    }
   }
 }

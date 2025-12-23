@@ -18,12 +18,10 @@ export const useRealtimeNotifications = (userId: number, accessToken: string) =>
   const [isConnected, setIsConnected] = useState(false);
   const hasInitialized = useRef(false);
 
-  console.log('🔄 useRealtimeNotifications hook called with:', { userId, hasToken: !!accessToken, tokenLength: accessToken?.length });
 
   // Handle incoming notification from SignalR
   const handleNotification = useCallback(
     (notification: NotificationDto) => {
-      console.log('🔔 Received notification:', notification);
       
       // Add receivedAt timestamp for new notifications
       const enrichedNotification = {
@@ -48,14 +46,12 @@ export const useRealtimeNotifications = (userId: number, accessToken: string) =>
 
       // Play notification sound
       // Play notification sound
-      console.log('🔊 Playing notification sound');
       notificationSound.playNotificationSound();
 
       // Show toast notification with icon
       const title = language === 'ar' ? notification.titleAr : (notification.titleEn || notification.titleAr);
       const body = language === 'ar' ? notification.messageAr : (notification.messageEn || notification.messageAr);
 
-      console.log('📢 Showing toast:', { title, body });
       toast.success(title, {
         description: body,
         duration: 6000,
@@ -75,23 +71,19 @@ export const useRealtimeNotifications = (userId: number, accessToken: string) =>
   );
 
   useEffect(() => {
-    console.log('📍 SignalR useEffect triggered:', { hasInitialized: hasInitialized.current, userId, hasToken: !!accessToken });
     
     // Prevent double initialization in React StrictMode
     if (hasInitialized.current) {
-      console.log('⏭️ SignalR already initialized, skipping...');
       return;
     }
     
     // Skip if user is not authenticated
     if (!userId || !accessToken) {
-      console.log('SignalR: Skipping connection - user not authenticated', { userId, hasToken: !!accessToken });
       return;
     }
 
     const initializeSignalR = async () => {
       try {
-        console.log('🔌 SignalR: Starting connection...');
         // Start SignalR connection
         await signalRService.start(accessToken);
         setIsConnected(true);
@@ -100,8 +92,6 @@ export const useRealtimeNotifications = (userId: number, accessToken: string) =>
         // Subscribe to notifications
         signalRService.onNotification(handleNotification);
 
-        console.log('✅ Real-time notifications enabled via SignalR');
-        console.log('📡 SignalR Connection State:', signalRService.getConnectionState());
       } catch (error) {
         console.warn('❌ Failed to initialize SignalR, falling back to polling:', error);
         setIsConnected(false);
@@ -140,7 +130,6 @@ export const useSignalRConnection = (accessToken: string | null) => {
     const connect = async () => {
       try {
         await signalRService.start(accessToken);
-        console.log('SignalR connection established');
       } catch (error) {
         console.warn('Failed to connect to SignalR (notifications will use polling):', error);
         // Don't throw - this is not critical, polling will work as fallback

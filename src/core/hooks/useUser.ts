@@ -15,16 +15,7 @@ interface UserInfo {
   isAuthenticated: boolean;
 }
 
-/**
- * Hook to get current user information
- * Returns user details, role IDs, and permissions
- * 
- * @example
- * const user = useUser();
- * console.log(user.roleIds); // [1, 2]
- * console.log(user.permissions); // ['USERS_VIEW', 'CATEGORIES_VIEW']
- * console.log(user.isAuthenticated); // true
- */
+
 export const useUser = (): UserInfo => {
   return useMemo(() => {
     const currentUser = getCurrentUser();

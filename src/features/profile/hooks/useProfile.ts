@@ -35,3 +35,29 @@ export const useUpdateProfile = () => {
     },
   });
 };
+
+/**
+ * Hook to upload profile picture
+ * Accepts image files (jpg, png, webp)
+ * Maximum file size: 5MB
+ * 
+ * @example
+ * const uploadPicture = useUploadProfilePicture();
+ * uploadPicture.mutate(file);
+ */
+export const useUploadProfilePicture = () => {
+  const queryClient = useQueryClient();
+  const { t } = useI18n();
+
+  return useMutation<UserInfo, ApiError, File>({
+    mutationFn: profileApi.uploadProfilePicture,
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['profile'] });
+      
+      toast.success(t('profile.pictureUploadSuccess'));
+    },
+    onError: (error) => {
+      toast.error(error.message || t('profile.pictureUploadError'));
+    },
+  });
+};

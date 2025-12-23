@@ -33,10 +33,9 @@ export const createUserFormSchema = (t: (key: string) => string) => {
 
       nationalId: z
         .string()
-        .optional()
-        .refine((val) => !val || val.length === 0 || val.length === 10, {
-          message: t("validation.nationalIdLength"),
-        }),
+        .min(1, t("validation.nationalIdRequired"))
+        .length(10, t("validation.nationalIdLength"))
+        .regex(/^[0-9]+$/, t("validation.nationalIdNumeric")),
 
       studentId: z.string().optional(),
 

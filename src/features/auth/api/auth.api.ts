@@ -56,12 +56,7 @@ export const authApi = {
           } catch (permError) {
             permissions = decoded.permissions || [];
           }
-          
-          // Print user permissions to console
-          console.log('==================================');
-          console.log('USER PERMISSIONS:', permissions);
-          console.log('Total Permissions:', permissions.length);
-          console.log('==================================');
+
 
           // Fetch full user profile data from /auth/me
           let userProfileData: UserInfo | null = null;

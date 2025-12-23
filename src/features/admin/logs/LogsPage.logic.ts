@@ -54,7 +54,6 @@ export const useLogsPage = () => {
         }
       }
     } catch (error: any) {
-      console.error("Failed to fetch logs:", error);
       toast.error(error?.message || t("logs.fetchError"));
       setLogs([]);
     } finally {
@@ -159,7 +158,6 @@ export const useLogsPage = () => {
       // Download the blob
       toast.success(t("logs.exportSuccess"));
     } catch (error: any) {
-      console.error("Export failed:", error);
       toast.error(error?.message || t("logs.exportError"));
     }
   }, [filters, t]);

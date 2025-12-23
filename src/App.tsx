@@ -22,26 +22,13 @@ function AppContent() {
   const currentUser = getCurrentUser();
   const userIdNumber = currentUser?.userId ? parseInt(currentUser.userId, 10) : 0;
   
-  console.log('🏠 App.tsx Debug:', { 
-    isAuthenticated, 
-    userIdNumber, 
-    hasToken: !!accessToken,
-    tokenLength: accessToken?.length,
-    currentUser
-  });
   
-  // Initialize SignalR real-time notifications (single connection for the app)
-  console.log('🚀 About to call useRealtimeNotifications with:', {
-    userId: isAuthenticated ? userIdNumber : 0,
-    hasToken: isAuthenticated ? !!accessToken : false
-  });
   
   useRealtimeNotifications(
     isAuthenticated ? userIdNumber : 0,
     isAuthenticated ? accessToken : ''
   );
   
-  console.log('✅ useRealtimeNotifications called successfully');
 
   useEffect(() => {
     const dir = i18n.getLanguage() === "ar" ? "rtl" : "ltr";

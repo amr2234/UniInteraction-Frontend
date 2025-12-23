@@ -30,27 +30,7 @@ import { useCalendarLogic } from "../logic/Calendar.logic";
 import { CalendarView } from "../types/Calendar.types";
 import "./calendar-custom.css";
 
-/**
- * Main FullCalendar Component
- * 
- * Usage Example:
- * ```tsx
- * import { FullCalendarComponent } from "@/features/calendar/components/FullCalendarComponent";
- * 
- * function MyPage() {
- *   return <FullCalendarComponent />;
- * }
- * ```
- * 
- * Or with custom props:
- * ```tsx
- * <FullCalendarComponent
- *   events={customEvents}
- *   initialView="timeGridWeek"
- *   onEventClick={(visit) => console.log(visit)}
- * />
- * ```
- */
+
 export function FullCalendarComponent() {
   const calendarRef = useRef<FullCalendar>(null);
   

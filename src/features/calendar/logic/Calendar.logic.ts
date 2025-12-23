@@ -114,7 +114,6 @@ export const useCalendarLogic = () => {
       
       setEvents(calendarEvents);
     } catch (error) {
-      console.error("Error fetching visits:", error);
       toast.error("Failed to load visits");
     } finally {
       setIsLoading(false);

@@ -318,13 +318,16 @@ export function UserForm() {
                 render={({ field }) => (
                   <FormField
                     label={t("users.nationalIdLabel")}
+                    required
                     error={errors.nationalId?.message}
                   >
                     <Input
                       {...field}
                       id="nationalId"
                       type="tel"
-                      className="rounded-xl mt-2"
+                      className={`rounded-xl mt-2 ${
+                        errors.nationalId ? "border-red-500" : ""
+                      }`}
                       dir="ltr"
                       maxLength={10}
                       placeholder="1234567890"

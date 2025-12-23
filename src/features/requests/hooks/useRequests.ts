@@ -45,7 +45,7 @@ export const useUserRequests = (filters?: RequestFilters, enablePagination: bool
   return useQuery<UserRequestDto[], ApiError>({
     queryKey: queryKeys.requests.list(filters),
     queryFn: () => requestsApi.getUserRequests(filters, enablePagination),
-    enabled: !!filters, // Only fetch when filters are provided
+    // enabled: !!filters, 
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 };

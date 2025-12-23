@@ -10,6 +10,7 @@ import {
 } from "@/core/utils/validation";
 import { useForm } from "@/core/utils/formUtils";
 import { i18n } from "@/i18n/i18n";
+import { toast } from "sonner";
 
 interface NafathLoginData {
   nationalId: string;
@@ -80,7 +81,6 @@ export const useLoginPage = () => {
     try {
       return 'pending';
     } catch (error) {
-      console.error('Error checking Nafath status:', error);
       return 'pending';
     }
   };
@@ -139,7 +139,6 @@ export const useLoginPage = () => {
       setNafathStep('waiting');
       startPollingNafathStatus(transactionId);
     } catch (error) {
-      console.error('Nafath request failed:', error);
     } finally {
       setIsLoading(false);
     }
@@ -172,7 +171,7 @@ export const useLoginPage = () => {
     try {
       await login.mutateAsync(formData);
     } catch (error) {
-      console.error('Login failed:', error);
+      toast.error(i18n.t("login.error"));
     }
   };
 

@@ -28,21 +28,7 @@ export const useNotificationsLogic = () => {
     refetch 
   } = useUserNotifications(userId);
 
-  // Debug logging
-  console.log('📋 NotificationsPage Debug:', {
-    userId,
-    notificationsCount: notifications.length,
-    notifications: notifications.map(n => ({
-      id: n.id,
-      title: n.titleAr,
-      createdAt: n.createdAt,
-      createdAtDate: new Date(n.createdAt),
-      now: new Date(),
-      isOldFormat: !n.createdAt.includes('T') // Check if it's missing time
-    })),
-    isLoading,
-    error
-  });
+
 
   // Filtered notifications based on active filter
   const filteredNotifications = useMemo(() => {
@@ -83,7 +69,6 @@ export const useNotificationsLogic = () => {
 
       refetch();
     } catch (error) {
-      console.error('Failed to mark notification as read:', error);
       toast.error(t('notifications.markReadError'));
     }
   }, [userId, queryClient, refetch, t]);
@@ -102,7 +87,6 @@ export const useNotificationsLogic = () => {
       toast.success(t('notifications.markAllReadSuccess'));
       refetch();
     } catch (error) {
-      console.error('Failed to mark all as read:', error);
       toast.error(t('notifications.markAllReadError'));
     }
   }, [userId, queryClient, refetch, t]);

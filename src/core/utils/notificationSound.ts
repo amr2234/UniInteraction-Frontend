@@ -21,7 +21,6 @@ class NotificationSound {
    * Creates a pleasant notification tone programmatically
    */
   async playNotificationSound() {
-    console.log('Playing notification sound...');
     if (!this.isEnabled) return;
 
     try {

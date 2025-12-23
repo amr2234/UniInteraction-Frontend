@@ -15,6 +15,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { lookupsApi } from "@/features/lookups/api/lookups.api";
 import { requestsApi } from "@/features/requests/api/requests.api";
 import { visitsApi } from "@/features/visits/api/visits.api";
+import { authApi } from "@/features/auth/api/auth.api";
 import {
   UserRequestDetailsDto,
   RequestTimelineItem,
@@ -60,6 +61,7 @@ export const useRequestDetailsLogic = () => {
   const [reactivateSubjectAr, setReactivateSubjectAr] = useState("");
   const [reactivateSubjectEn, setReactivateSubjectEn] = useState("");
   const [reactivateErrors, setReactivateErrors] = useState<ReactivateFormErrors>({});
+  const [isSubmitConfirmDialogOpen, setIsSubmitConfirmDialogOpen] = useState(false);
   const {
     isAdmin,
     isEmployee,
@@ -124,6 +126,25 @@ export const useRequestDetailsLogic = () => {
       setSelectedLeadershipId(request.universityLeadershipId);
     }
   }, [request?.universityLeadershipId, selectedLeadershipId]);
+
+  // Initialize responseText for admins/super admins editing in REPLIED status
+  useEffect(() => {
+    if (
+      (isAdmin || isSuperAdmin) &&
+      !isEmployee &&
+      request?.resolutionDetailsAr &&
+      request?.requestStatusId === RequestStatus.REPLIED &&
+      !responseText
+    ) {
+      setResponseText(request.resolutionDetailsAr);
+    }
+  }, [
+    request?.resolutionDetailsAr,
+    request?.requestStatusId,
+    isAdmin,
+    isSuperAdmin,
+    isEmployee,
+  ]);
 
   const updateStatusMutation = useMutation({
     mutationFn: ({
@@ -211,7 +232,6 @@ const scheduleOrUpdateVisitMutation = useMutation({
   },
 
   onError: (error) => {
-    console.log(error);
     toast.error(t("requests.visitSchedulingFailed"));
   },
 });
@@ -243,8 +263,8 @@ const scheduleOrUpdateVisitMutation = useMutation({
   });
 
   const submitRatingMutation = useMutation({
-    mutationFn: ({ requestId, payload }: { requestId: string; payload: any }) =>
-      requestsApi.submitRating(requestId, payload),
+    mutationFn: (payload: { userRequestId: number; rating: number; feedbackAr: string; feedbackEn: string }) =>
+      requestsApi.submitRatingNew(payload),
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: queryKeys.requests.detail(id!),
@@ -409,11 +429,9 @@ const scheduleOrUpdateVisitMutation = useMutation({
     mutationFn: async (payload: { complaintData: any; departmentId: number; visitRequestId: string }) => {
       // First, create the complaint
       const newComplaint = await requestsApi.createRequest(payload.complaintData);
-      console.log("Created complaint:", newComplaint);
       
       // Store the new complaint ID
       const newComplaintId = newComplaint.id;
-      console.log("New complaint ID:", newComplaintId);
       
       // Then assign it to the department
       await requestsApi.assignDepartment(
@@ -430,11 +448,9 @@ const scheduleOrUpdateVisitMutation = useMutation({
         relatedRequestId: newComplaintId,
       });
       
-      console.log("Returning ID:", newComplaintId);
       return { id: newComplaintId };
     },
     onSuccess: async (result) => {
-      console.log("onSuccess result:", result);
       await queryClient.invalidateQueries({ queryKey: queryKeys.requests.all });
       toast.success(
         t("requests.convertedToComplaintSuccess") ||
@@ -442,11 +458,9 @@ const scheduleOrUpdateVisitMutation = useMutation({
       );
       
       // Navigate to the new complaint
-      console.log("Navigating to:", `/dashboard/request/${result.id}`);
       navigate(`/dashboard/request/${result.id}`);
     },
     onError: (error) => {
-      console.error("Failed to convert visit to complaint:", error);
       toast.error(
         t("requests.convertToComplaintFailed") ||
           "Failed to convert visit to complaint"
@@ -483,7 +497,6 @@ const scheduleOrUpdateVisitMutation = useMutation({
       setWantsToRemoveLink(false);
     },
     onError: (error) => {
-      console.error("Failed to link complaint to visit:", error);
       toast.error(
         t("requests.complaintLinkFailed") ||
           "Failed to link complaint to visit"
@@ -515,7 +528,6 @@ const scheduleOrUpdateVisitMutation = useMutation({
       navigate(`/dashboard/request/${result.id}`);
     },
     onError: (error) => {
-      console.error("Failed to reactivate request:", error);
       toast.error(
         t("requests.requestReactivateFailed") ||
           "Failed to reactivate request"
@@ -643,6 +655,17 @@ const scheduleOrUpdateVisitMutation = useMutation({
   };
 
   const handleSubmitResponse = () => {
+    // For employees, show confirmation dialog first
+    if (isEmployee) {
+      setIsSubmitConfirmDialogOpen(true);
+      return;
+    }
+
+    // For admins, submit directly
+    confirmSubmitResponse();
+  };
+
+  const confirmSubmitResponse = () => {
     if (!id) return;
 
     if (
@@ -670,6 +693,9 @@ const scheduleOrUpdateVisitMutation = useMutation({
         newStatus: VisitStatus.SCHEDULED,
       });
     }
+
+    // Close confirmation dialog
+    setIsSubmitConfirmDialogOpen(false);
   };
 
   const handleSubmitFeedback = () => {
@@ -690,14 +716,20 @@ const scheduleOrUpdateVisitMutation = useMutation({
   };
 
   const handleRatingSubmit = (newRating: number, newFeedback: string) => {
-    if (id) {
+    if (id && request) {
+      const userProfile = authApi.getUserProfile();
+      if (!userProfile) {
+        toast.error("User not found");
+        return;
+      }
+      
       submitRatingMutation.mutate({
-        requestId: id,
-        payload: {
-          rating: newRating,
-          feedbackAr: newFeedback,
-          feedbackEn: newFeedback,
-        },
+        userRequestId: parseInt(id, 10),
+        userId: userProfile.id,
+        rating: newRating,
+        feedbackAr: newFeedback,
+        feedbackEn: newFeedback,
+        ratedAt: new Date().toISOString(),
       });
     }
   };
@@ -938,7 +970,6 @@ const scheduleOrUpdateVisitMutation = useMutation({
 
       toast.success(t("requests.downloadStarted") || "Download started");
     } catch (error) {
-      console.error("Download error:", error);
       toast.error(t("requests.downloadFailed") || "Download failed");
     }
   };
@@ -958,6 +989,7 @@ const scheduleOrUpdateVisitMutation = useMutation({
     isConvertToComplaintDialogOpen,
     isLinkComplaintDialogOpen,
     isReactivateDialogOpen,
+    isSubmitConfirmDialogOpen,
     convertDepartmentId,
     selectedComplaintId,
     wantsToRemoveLink,
@@ -1000,6 +1032,7 @@ const scheduleOrUpdateVisitMutation = useMutation({
     setIsConvertToComplaintDialogOpen,
     setIsLinkComplaintDialogOpen,
     setIsReactivateDialogOpen,
+    setIsSubmitConfirmDialogOpen,
     setConvertDepartmentId,
     setSelectedComplaintId,
     setWantsToRemoveLink,
@@ -1012,6 +1045,7 @@ const scheduleOrUpdateVisitMutation = useMutation({
     setSelectedLeadershipId,
     handleStatusChange,
     handleSubmitResponse,
+    confirmSubmitResponse,
     handleSubmitFeedback,
     handleOpenRatingDialog,
     handleRatingSubmit,

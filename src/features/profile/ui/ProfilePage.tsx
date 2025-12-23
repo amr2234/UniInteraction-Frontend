@@ -2,20 +2,31 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
-import { User, Mail, Phone, ArrowRight, Edit, Lock, LogOut, Shield, CheckCircle, XCircle } from "lucide-react";
+import { User, Mail, Phone, ArrowRight, Edit, Lock, LogOut, Shield, CheckCircle, XCircle, Camera, Loader2 } from "lucide-react";
 import { useProfilePageLogic } from "./ProfilePage.logic";
+import { NafathActivationDialog } from "../components/NafathActivationDialog";
 
 export function ProfilePage() {
   const {
     isEditing,
     showChangePassword,
+    showNafathDialog,
+    profilePicture,
     formData,
     formErrors,
+    isUploadingPicture,
+    fileInputRef,
     setIsEditing,
     setShowChangePassword,
+    setShowNafathDialog,
     handleInputChange,
     handleSave,
     handleCancel,
+    handleLogout,
+    handleOpenNafathDialog,
+    handleNafathSuccess,
+    handleChangePhotoClick,
+    handleFileChange,
     navigate,
     t,
   } = useProfilePageLogic();
@@ -88,32 +99,18 @@ export function ProfilePage() {
                   </div>
                 </div>
 
-                {/* Username and National ID */}
-                <div className="grid md:grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="username">{t("profile.username")}</Label>
-                    <Input
-                      id="username"
-                      type="text"
-                      value={formData.username}
-                      onChange={(e) => handleInputChange("username", e.target.value)}
-                      disabled
-                      className="mt-2 bg-gray-50"
-                      dir="ltr"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="nationalId">{t("profile.nationalId")}</Label>
-                    <Input
-                      id="nationalId"
-                      type="text"
-                      value={formData.nationalId}
-                      onChange={(e) => handleInputChange("nationalId", e.target.value)}
-                      disabled
-                      className="mt-2 bg-gray-50"
-                      dir="ltr"
-                    />
-                  </div>
+                {/* National ID */}
+                <div>
+                  <Label htmlFor="nationalId">{t("profile.nationalId")}</Label>
+                  <Input
+                    id="nationalId"
+                    type="text"
+                    value={formData.nationalId}
+                    onChange={(e) => handleInputChange("nationalId", e.target.value)}
+                    disabled
+                    className="mt-2 bg-gray-50"
+                    dir="ltr"
+                  />
                 </div>
 
                 {/* Email and Phone (Editable) */}
@@ -241,12 +238,68 @@ export function ProfilePage() {
             {/* Profile Picture */}
             <Card className="p-6">
               <div className="text-center">
-                <div className="w-32 h-32 bg-gradient-to-br from-[#115740] to-[#1C4E80] rounded-full flex items-center justify-center mx-auto mb-4">
-                  <span className="text-4xl text-white">أ.ع</span>
+                <div className="relative inline-block mb-4">
+                  {/* Profile Picture Display */}
+                  <div className="w-32 h-32 bg-gradient-to-br from-[#115740] to-[#1C4E80] rounded-full flex items-center justify-center overflow-hidden">
+                    {profilePicture ? (
+                      <img 
+                        src={profilePicture} 
+                        alt={formData.nameAr}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <span className="text-4xl text-white">{formData.nameAr?.substring(0, 2) || 'أ.ع'}</span>
+                    )}
+                  </div>
+                  
+                  {/* Upload/Loading Overlay */}
+                  {isUploadingPicture && (
+                    <div className="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center">
+                      <Loader2 className="w-8 h-8 text-white animate-spin" />
+                    </div>
+                  )}
+                  
+                  {/* Camera Button */}
+                  <button
+                    onClick={handleChangePhotoClick}
+                    disabled={isUploadingPicture}
+                    className="absolute bottom-0 right-0 bg-[#115740] hover:bg-[#0d4230] text-white p-2 rounded-full shadow-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    title={t('profile.changePhoto')}
+                  >
+                    <Camera className="w-4 h-4" />
+                  </button>
                 </div>
-                <Button variant="outline" size="sm" className="w-full">
-                  {t("profile.changePhoto")}
+                
+                {/* Hidden File Input */}
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/jpeg,image/jpg,image/png,image/webp"
+                  onChange={handleFileChange}
+                  className="hidden"
+                />
+                
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="w-full"
+                  onClick={handleChangePhotoClick}
+                  disabled={isUploadingPicture}
+                >
+                  {isUploadingPicture ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      {t('profile.uploading')}
+                    </>
+                  ) : (
+                    t('profile.changePhoto')
+                  )}
                 </Button>
+                
+                {/* File Requirements */}
+                <p className="text-xs text-gray-500 mt-2">
+                  {t('profile.imageRequirements')}
+                </p>
               </div>
             </Card>
 
@@ -265,7 +318,7 @@ export function ProfilePage() {
                 <Button
                   variant="outline"
                   className="w-full justify-start gap-2 text-red-600 hover:text-red-700 hover:bg-red-50"
-                  onClick={() => navigate("/")}
+                  onClick={handleLogout}
                 >
                   <LogOut className="w-4 h-4" />
                   <span>{t("auth.logout")}</span>
@@ -277,49 +330,60 @@ export function ProfilePage() {
             <Card className="p-6">
               <h4 className="text-[#115740] mb-4">{t("profile.connectedAccounts")}</h4>
               <div className="space-y-3">
-                {/* Nafath - Active */}
-                <div className="flex items-center justify-between p-3 bg-green-50 rounded-xl">
-                  <div className="flex items-center gap-3">
-                    <Shield className="w-5 h-5 text-green-600" />
-                    <div>
-                      <p className="text-sm font-medium text-gray-900">{t("profile.nafath")}</p>
-                      <p className="text-xs text-gray-500">{t("profile.connected")}</p>
+                {/* Nafath Status - Dynamic based on nationalId */}
+                {formData.nationalId ? (
+                  // Nafath Connected
+                  <div className="flex items-center justify-between p-3 bg-green-50 rounded-xl">
+                    <div className="flex items-center gap-3">
+                      <Shield className="w-5 h-5 text-green-600" />
+                      <div>
+                        <p className="text-sm font-medium text-gray-900">{t("profile.nafath")}</p>
+                        <p className="text-xs text-gray-500">{t("profile.connected")}</p>
+                      </div>
                     </div>
-                  </div>
-                  <span className="text-xs text-green-600 flex items-center gap-1">
-                    <CheckCircle className="w-3 h-3" />
-                    {t("profile.active")}
-                  </span>
-                </div>
-
-                {/* Nafath - Not Active (Example) */}
-                <div className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
-                  <div className="flex items-center gap-3">
-                    <Shield className="w-5 h-5 text-gray-400" />
-                    <div>
-                      <p className="text-sm font-medium text-gray-900">{t("profile.nafath")}</p>
-                      <p className="text-xs text-gray-500">{t("profile.notConnected")}</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs text-gray-400 flex items-center gap-1">
-                      <XCircle className="w-3 h-3" />
-                      {t("profile.inactive")}
+                    <span className="text-xs text-green-600 flex items-center gap-1">
+                      <CheckCircle className="w-3 h-3" />
+                      {t("profile.active")}
                     </span>
-                    <Button 
-                      size="sm" 
-                      variant="outline"
-                      className="h-7 px-3 text-xs bg-green-50 hover:bg-green-100 text-green-700 border-green-200"
-                    >
-                      {t("common.activate")}
-                    </Button>
                   </div>
-                </div>
+                ) : (
+                  // Nafath Not Connected
+                  <div className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
+                    <div className="flex items-center gap-3">
+                      <Shield className="w-5 h-5 text-gray-400" />
+                      <div>
+                        <p className="text-sm font-medium text-gray-900">{t("profile.nafath")}</p>
+                        <p className="text-xs text-gray-500">{t("profile.notConnected")}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-gray-400 flex items-center gap-1">
+                        <XCircle className="w-3 h-3" />
+                        {t("profile.inactive")}
+                      </span>
+                      <Button 
+                        size="sm" 
+                        variant="outline"
+                        onClick={handleOpenNafathDialog}
+                        className="h-7 px-3 text-xs bg-green-50 hover:bg-green-100 text-green-700 border-green-200"
+                      >
+                        {t("common.activate")}
+                      </Button>
+                    </div>
+                  </div>
+                )}
               </div>
             </Card>
           </div>
         </div>
       </div>
+
+      {/* Nafath Activation Dialog */}
+      <NafathActivationDialog
+        open={showNafathDialog}
+        onOpenChange={setShowNafathDialog}
+        onSuccess={handleNafathSuccess}
+      />
     </div>
   );
 }

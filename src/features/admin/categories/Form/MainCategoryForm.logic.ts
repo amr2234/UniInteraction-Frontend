@@ -107,7 +107,6 @@ export const useMainCategoryForm = (): UseMainCategoryFormReturn => {
       navigate("/admin/main-categories");
     } catch (error: any) {
       // Error toast is handled by the mutation hooks
-      console.error("Error submitting form:", error);
     }
   }, [currentFormData, isEditMode, id, navigate, createMutation, updateMutation]);
 
