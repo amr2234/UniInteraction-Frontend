@@ -54,7 +54,32 @@
     },
     build: {
       target: 'esnext',
-      outDir: 'dist',
+      outDir: 'build',
+      rollupOptions: {
+        output: {
+          manualChunks: {
+            // Core React libraries
+            'react-vendor': ['react', 'react-dom', 'react-router-dom'],
+            // UI components library
+            'ui-vendor': [
+              '@radix-ui/react-dialog',
+              '@radix-ui/react-dropdown-menu',
+              '@radix-ui/react-select',
+              '@radix-ui/react-tooltip',
+              '@radix-ui/react-popover',
+            ],
+            // Form and validation libraries
+            'form-vendor': ['react-hook-form', '@hookform/resolvers', 'zod'],
+            // Data fetching and state management
+            'query-vendor': ['@tanstack/react-query'],
+            // Charts and visualization
+            'chart-vendor': ['recharts'],
+            // Other utilities
+            'utils-vendor': ['clsx', 'tailwind-merge', 'date-fns'],
+          },
+        },
+      },
+      chunkSizeWarningLimit: 1000,
     },
     server: {
       port: 3000,
