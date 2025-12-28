@@ -34,3 +34,9 @@ jobs:
           name: build-output
           path: build/
           retention-days: 7
+
+      - name: Trigger Cloudflare Pages Deployment
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          curl -X POST "https://api.cloudflare.com/client/v4/pages/webhooks/deploy_hooks/a93aa1d5-df69-4577-bce6-de2bac125e8d" \
+            -H "Content-Type: application/json"
