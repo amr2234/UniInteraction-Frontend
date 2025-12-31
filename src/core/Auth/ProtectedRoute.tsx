@@ -1,69 +1,11 @@
 import { ReactNode } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useHasPermission, useHasAnyPermission, useHasRoleId } from '@/core/hooks/usePermissions';
-import { PermissionCode } from '@/core/constants/permissions';
 import { authApi } from '@/features/auth/api/auth.api';
 import { useI18n } from '@/i18n';
+import { ProtectedRouteProps } from './ProtectedRouteProps';
 
-// ============================================
-// Protected Route Components
-// ============================================
 
-interface ProtectedRouteProps {
-  children: ReactNode;
-  /**
-   * Single permission required
-   */
-  permission?: PermissionCode;
-  /**
-   * Require ANY of these permissions (OR logic)
-   */
-  anyPermission?: PermissionCode[];
-  /**
-   * Require specific role ID
-   */
-  roleId?: number;
-  /**
-   * Require ANY of these role IDs
-   */
-  anyRoleId?: number[];
-  /**
-   * Redirect path when access is denied
-   */
-  redirectTo?: string;
-  /**
-   * Show "Access Denied" page instead of redirecting
-   */
-  showAccessDenied?: boolean;
-}
-
-/**
- * Protected Route Component - Protects routes based on permissions or roles
- * 
- * @example
- * // Protect by permission
- * <ProtectedRoute permission="USERS_VIEW">
- *   <UserManagement />
- * </ProtectedRoute>
- * 
- * @example
- * // Protect by any permission
- * <ProtectedRoute anyPermission={["USERS_VIEW", "ROLES_VIEW"]}>
- *   <AdminPanel />
- * </ProtectedRoute>
- * 
- * @example
- * // Protect by role ID
- * <ProtectedRoute roleId={1}>
- *   <SuperAdminPanel />
- * </ProtectedRoute>
- * 
- * @example
- * // Protect by any role ID
- * <ProtectedRoute anyRoleId={[1, 2]}>
- *   <AdminPanel />
- * </ProtectedRoute>
- */
 export const ProtectedRoute = ({
   children,
   permission,
@@ -73,26 +15,26 @@ export const ProtectedRoute = ({
   redirectTo = '/dashboard',
   showAccessDenied = false,
 }: ProtectedRouteProps) => {
-  // Check if user is authenticated
-  const isAuthenticated = authApi.isAuthenticated();
   
+  const isAuthenticated = authApi.isAuthenticated();
+
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
   }
 
-  // Check permissions/roles
+  
   const hasSinglePermission = useHasPermission(permission!);
   const hasAny = useHasAnyPermission(anyPermission || []);
   const hasSingleRole = useHasRoleId(roleId!);
+
   
-  // Check if user has any of the specified role IDs
   let hasAnyRole = false;
   if (anyRoleId && anyRoleId.length > 0) {
     const userRoleIds = authApi.getUserInfo()?.roleIds || [];
     hasAnyRole = anyRoleId.some((id) => userRoleIds.includes(id));
   }
 
-  // Determine if user has access
+  
   let hasAccess = false;
 
   if (permission) {
@@ -104,7 +46,7 @@ export const ProtectedRoute = ({
   } else if (anyRoleId && anyRoleId.length > 0) {
     hasAccess = hasAnyRole;
   } else {
-    // No permission/role specified, allow access if authenticated
+    
     hasAccess = true;
   }
 
@@ -118,12 +60,10 @@ export const ProtectedRoute = ({
   return <>{children}</>;
 };
 
-/**
- * Access Denied Page Component
- */
+
 const AccessDeniedPage = () => {
   const { t } = useI18n();
-  
+
   return (
     <div className="min-h-screen bg-[#F4F4F4] flex items-center justify-center">
       <div className="max-w-md w-full mx-auto p-8">
@@ -174,15 +114,13 @@ interface AuthenticatedRouteProps {
   redirectTo?: string;
 }
 
-/**
- * Simple authenticated route - only checks if user is logged in
- */
+
 export const AuthenticatedRoute = ({
   children,
   redirectTo = '/login',
 }: AuthenticatedRouteProps) => {
   const isAuthenticated = authApi.isAuthenticated();
-  
+
   if (!isAuthenticated) {
     return <Navigate to={redirectTo} replace />;
   }

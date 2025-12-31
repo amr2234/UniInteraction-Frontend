@@ -4,22 +4,10 @@ import { toast } from "sonner";
 import { useI18n } from "@/i18n";
 import {
   systemSettingsApi,
-  SystemSettingDto,
   UpdateSystemSettingCommand,
 } from "./api/settings.api";
 
-export interface SettingsFormData {
-  smtpHost: string;
-  smtpPort: number;
-  smtpUsername: string;
-  smtpPassword: string;
-  fromEmail: string;
-  fromName: string;
-  enableSsl: boolean;
-  appBaseUrl: string;
-  enableEmails: boolean;
-  enableNotifications: boolean;
-}
+import { SettingsFormData, SystemSettingDto } from "./types/models";
 
 export const useSettingsPage = () => {
   const { t } = useI18n();
@@ -40,7 +28,7 @@ export const useSettingsPage = () => {
     enableNotifications: true,
   });
 
-  // Fetch system settings
+  
   const {
     data: settings,
     isLoading,
@@ -51,10 +39,10 @@ export const useSettingsPage = () => {
     retry: 2,
   });
 
-  // Load settings into form when data is fetched
+  
   useEffect(() => {
     if (settings && settings.length > 0) {
-      const setting = settings[0]; // Assume single settings record
+      const setting = settings[0]; 
       setSettingId(setting.id || null);
       setFormData({
         smtpHost: setting.smtpHost,
@@ -71,14 +59,14 @@ export const useSettingsPage = () => {
     }
   }, [settings]);
 
-  // Update settings mutation
+  
   const updateMutation = useMutation({
     mutationFn: (data: UpdateSystemSettingCommand) => {
       if (!settingId) {
-        // Create if no settings exist
+        
         return systemSettingsApi.createSetting(data);
       }
-      // Update existing settings
+      
       return systemSettingsApi.updateSetting(settingId, data);
     },
     onSuccess: () => {
@@ -91,7 +79,7 @@ export const useSettingsPage = () => {
     },
   });
 
-  // Handle form field changes
+  
   const handleChange = useCallback((field: keyof SettingsFormData, value: string | number | boolean) => {
     setFormData((prev) => ({
       ...prev,
@@ -99,7 +87,7 @@ export const useSettingsPage = () => {
     }));
   }, []);
 
-  // Handle save settings
+  
   const handleSave = useCallback(async () => {
     const command: UpdateSystemSettingCommand = {
       smtpHost: formData.smtpHost,
@@ -117,11 +105,11 @@ export const useSettingsPage = () => {
     await updateMutation.mutateAsync(command);
   }, [formData, updateMutation]);
 
-  // Handle test connection
+  
   const handleTestConnection = useCallback(async () => {
     setIsTesting(true);
     try {
-      // TODO: Implement actual test connection API endpoint if available
+      
       await new Promise((resolve) => setTimeout(resolve, 1500));
       toast.success(t("settings.testConnectionSuccess"));
     } catch (error) {

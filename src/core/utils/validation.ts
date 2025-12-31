@@ -182,7 +182,6 @@ export const englishOnlyRule = <T>(
   message: string
 ) => createRule(field, value, isEnglishOnly, message);
 
-// Regex patterns for validation
 export const hasArabicRegex = /[\u0600-\u06FF]/;
 export const noEnglishRegex = /^[^a-zA-Z]*$/;
 export const noArabicRegex = /^[^\u0600-\u06FF]*$/;

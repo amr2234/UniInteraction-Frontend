@@ -8,19 +8,7 @@ import { useUpdateProfile, useUploadProfilePicture } from '@/features/profile/ho
 import { authApi } from '@/features/auth/api/auth.api';
 import { profileApi } from '@/features/profile/api/profile.api';
 import { queryClient } from '@/core/lib/QueryProvider';
-
-interface ProfileFormData {
-  nameAr: string;
-  nameEn: string;
-  email: string;
-  mobile: string;
-  nationalId: string;
-}
-
-interface ProfileFormErrors {
-  email?: string;
-  mobile?: string;
-}
+import type { ProfileFormData, ProfileFormErrors } from './ProfilePage.types';
 
 export const useProfilePageLogic = () => {
   const navigate = useNavigate();
@@ -30,18 +18,56 @@ export const useProfilePageLogic = () => {
   const uploadPictureMutation = useUploadProfilePicture();
   const fileInputRef = useRef<HTMLInputElement>(null);
   
-  const [isEditing, setIsEditing] = useState(false);
-  const [showChangePassword, setShowChangePassword] = useState(false);
-  const [showNafathDialog, setShowNafathDialog] = useState(false);
-  const [profilePicture, setProfilePicture] = useState<string | null>(null);
-  const [formData, setFormData] = useState<ProfileFormData>({
-    nameAr: '',
-    nameEn: '',
-    email: '',
-    mobile: '',
-    nationalId: '',
+  // State - Consolidated for better performance
+  const [state, setState] = useState({
+    isEditing: false,
+    showChangePassword: false,
+    showNafathDialog: false,
+    profilePicture: null as string | null,
+    formData: {
+      nameAr: '',
+      nameEn: '',
+      email: '',
+      mobile: '',
+      nationalId: '',
+    } as ProfileFormData,
+    formErrors: {} as ProfileFormErrors,
   });
-  const [formErrors, setFormErrors] = useState<ProfileFormErrors>({});
+
+  // Generic state updater
+  const updateState = (updates: Partial<typeof state>) => {
+    setState((prev) => ({ ...prev, ...updates }));
+  };
+
+  // Individual setters for backward compatibility
+  const setIsEditing = (value: boolean) => updateState({ isEditing: value });
+  const setShowChangePassword = (value: boolean) => updateState({ showChangePassword: value });
+  const setShowNafathDialog = (value: boolean) => updateState({ showNafathDialog: value });
+  const setProfilePicture = (value: string | null) => updateState({ profilePicture: value });
+  const setFormData = (value: ProfileFormData | ((prev: ProfileFormData) => ProfileFormData)) => {
+    if (typeof value === 'function') {
+      setState((prev) => ({ ...prev, formData: value(prev.formData) }));
+    } else {
+      updateState({ formData: value });
+    }
+  };
+  const setFormErrors = (value: ProfileFormErrors | ((prev: ProfileFormErrors) => ProfileFormErrors)) => {
+    if (typeof value === 'function') {
+      setState((prev) => ({ ...prev, formErrors: value(prev.formErrors) }));
+    } else {
+      updateState({ formErrors: value });
+    }
+  };
+
+  // Destructure state for easier access
+  const {
+    isEditing,
+    showChangePassword,
+    showNafathDialog,
+    profilePicture,
+    formData,
+    formErrors,
+  } = state;
 
   // Update form data when profile data is loaded
   useEffect(() => {
@@ -60,8 +86,7 @@ export const useProfilePageLogic = () => {
           .then((filePath) => {
             if (filePath) {
               console.log('Profile picture file path:', filePath);
-              // Construct full URL from backend base URL + file path
-              const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5193/api';
+              const baseUrl = import.meta.env.VITE_API_BASE_URL ;
               const fullUrl = baseUrl.replace('/api', '') + filePath;
               setProfilePicture(fullUrl);
             }
@@ -205,15 +230,13 @@ export const useProfilePageLogic = () => {
       return;
     }
 
-    // Upload the file
     uploadPictureMutation.mutate(file, {
       onSuccess: async (data) => {
-        // Fetch the profile picture using the new ID
         if (data.profilePictureId) {
           try {
             const filePath = await profileApi.getAttachment(data.profilePictureId);
             if (filePath) {
-              const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5193/api';
+              const baseUrl = import.meta.env.VITE_API_BASE_URL ;
               const fullUrl = baseUrl.replace('/api', '') + filePath;
               setProfilePicture(fullUrl);
             }

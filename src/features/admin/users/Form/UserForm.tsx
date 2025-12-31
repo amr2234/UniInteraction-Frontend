@@ -172,7 +172,7 @@ export function UserForm() {
 
         <Card className="p-6 rounded-xl border-0 shadow-soft bg-white">
           <form onSubmit={handleSubmit} className="space-y-6">
-            {}
+            { }
             <div className="grid md:grid-cols-2 gap-4">
               <Controller
                 name="nameAr"
@@ -186,9 +186,8 @@ export function UserForm() {
                     <Input
                       {...field}
                       id="nameAr"
-                      className={`rounded-xl mt-2 ${
-                        errors.nameAr ? "border-red-500" : ""
-                      }`}
+                      className={`rounded-xl mt-2 ${errors.nameAr ? "border-red-500" : ""
+                        }`}
                       placeholder={t("users.nameArPlaceholder")}
                     />
                   </FormField>
@@ -206,9 +205,8 @@ export function UserForm() {
                     <Input
                       {...field}
                       id="nameEn"
-                      className={`rounded-xl mt-2 ${
-                        errors.nameEn ? "border-red-500" : ""
-                      }`}
+                      className={`rounded-xl mt-2 ${errors.nameEn ? "border-red-500" : ""
+                        }`}
                       dir="ltr"
                       placeholder="John Doe"
                     />
@@ -217,7 +215,7 @@ export function UserForm() {
               />
             </div>
 
-            {}
+            { }
             <Controller
               name="email"
               control={control}
@@ -231,9 +229,8 @@ export function UserForm() {
                     {...field}
                     id="email"
                     type="email"
-                    className={`rounded-xl mt-2 ${
-                      errors.email ? "border-red-500" : ""
-                    }`}
+                    className={`rounded-xl mt-2 ${errors.email ? "border-red-500" : ""
+                      }`}
                     dir="ltr"
                     placeholder="example@university.edu.sa"
                   />
@@ -241,7 +238,7 @@ export function UserForm() {
               )}
             />
 
-            {}
+            { }
             <Controller
               name="roleId"
               control={control}
@@ -258,9 +255,8 @@ export function UserForm() {
                     }
                   >
                     <SelectTrigger
-                      className={`rounded-xl mt-2 ${
-                        errors.roleId ? "border-red-500" : ""
-                      }`}
+                      className={`rounded-xl mt-2 ${errors.roleId ? "border-red-500" : ""
+                        }`}
                     >
                       <SelectValue placeholder={t("users.selectRole")} />
                     </SelectTrigger>
@@ -280,7 +276,7 @@ export function UserForm() {
               )}
             />
 
-            {}
+            { }
             <div className="grid md:grid-cols-2 gap-4">
               <Controller
                 name="mobile"
@@ -295,14 +291,13 @@ export function UserForm() {
                       {...field}
                       id="mobile"
                       type="tel"
-                      className={`rounded-xl mt-2 ${
-                        errors.mobile ? "border-red-500" : ""
-                      }`}
+                      className={`rounded-xl mt-2 ${errors.mobile ? "border-red-500" : ""
+                        }`}
                       dir="ltr"
                       placeholder="05XXXXXXXX"
                       maxLength={10}
                       onInput={(e) => {
-                        // Allow only numbers
+                        
                         const input = e.currentTarget;
                         input.value = input.value.replace(/[^0-9]/g, '');
                         field.onChange(input.value);
@@ -325,14 +320,13 @@ export function UserForm() {
                       {...field}
                       id="nationalId"
                       type="tel"
-                      className={`rounded-xl mt-2 ${
-                        errors.nationalId ? "border-red-500" : ""
-                      }`}
+                      className={`rounded-xl mt-2 ${errors.nationalId ? "border-red-500" : ""
+                        }`}
                       dir="ltr"
                       maxLength={10}
                       placeholder="1234567890"
                       onInput={(e) => {
-                        // Allow only numbers
+                        
                         const input = e.currentTarget;
                         input.value = input.value.replace(/[^0-9]/g, '');
                         field.onChange(input.value);
@@ -343,7 +337,7 @@ export function UserForm() {
               />
             </div>
 
-            {}
+            { }
             <div className="grid md:grid-cols-2 gap-4">
               <Controller
                 name="studentId"
@@ -353,7 +347,7 @@ export function UserForm() {
                     label={t("users.studentIdLabel")}
                     hint={
                       watchedRole === UserRole.ADMIN ||
-                      watchedRole === UserRole.EMPLOYEE
+                        watchedRole === UserRole.EMPLOYEE
                         ? t("users.studentsOnly")
                         : undefined
                     }
@@ -382,7 +376,7 @@ export function UserForm() {
                     required={watchedRole === UserRole.EMPLOYEE}
                     hint={
                       watchedRole === UserRole.ADMIN ||
-                      watchedRole === UserRole.USER
+                        watchedRole === UserRole.USER
                         ? t("users.employeesOnly")
                         : undefined
                     }
@@ -420,7 +414,7 @@ export function UserForm() {
               />
             </div>
 
-            {}
+            { }
             {isEditMode && (
               <Controller
                 name="isActive"
@@ -443,7 +437,7 @@ export function UserForm() {
               />
             )}
 
-            {}
+            { }
             <div className="flex gap-3 justify-end pt-4">
               <Button
                 type="button"
@@ -466,7 +460,7 @@ export function UserForm() {
         </Card>
       </div>
 
-      {/* Confirmation Dialog */}
+      {}
       <ConfirmDialog
         open={isConfirmDialogOpen}
         isEditMode={isEditMode}
@@ -478,9 +472,6 @@ export function UserForm() {
         t={t}
       />
 
-      {}
-      {}
-      {}
     </div>
   );
 }

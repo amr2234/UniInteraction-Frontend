@@ -1,4 +1,4 @@
-import { apiRequest } from '@/core/lib/apiClient';
+import { BaseApi } from '@/core/lib/baseApi';
 import { PaginatedResponse } from '@/core/types/api';
 import type {
   DepartmentDto,
@@ -7,7 +7,6 @@ import type {
   DepartmentFilters,
 } from '../types/department.types';
 
-// Re-export types for backward compatibility
 export type {
   DepartmentDto,
   CreateDepartmentDto,
@@ -15,16 +14,17 @@ export type {
   DepartmentFilters,
 };
 
-// ============================================
-// Departments API Functions
-// ============================================
+class DepartmentsApi extends BaseApi<
+  DepartmentDto,
+  CreateDepartmentDto,
+  UpdateDepartmentDto,
+  DepartmentFilters
+> {
+  constructor() {
+    super('/departments');
+  }
 
-export const departmentsApi = {
-  /**
-   * Get all departments with pagination and filters
-   * GET /api/departments/pagination
-   */
-  getDepartments: async (filters?: DepartmentFilters): Promise<PaginatedResponse<DepartmentDto>> => {
+  async getAll(filters?: DepartmentFilters): Promise<PaginatedResponse<DepartmentDto>> {
     const params = new URLSearchParams();
     
     if (filters?.searchTerm) params.append('search', filters.searchTerm);
@@ -34,55 +34,18 @@ export const departmentsApi = {
     if (filters?.sortOrder === 'desc') params.append('isDesc', 'true');
 
     const queryString = params.toString();
-    return apiRequest.get<PaginatedResponse<DepartmentDto>>(
-      `/departments/pagination${queryString ? `?${queryString}` : ''}`
-    );
-  },
+    return this.customGet<PaginatedResponse<DepartmentDto>>(`/pagination${queryString ? `?${queryString}` : ''}`);
+  }
+}
 
-  /**
-   * Get department by ID
-   * GET /api/departments/{id}
-   */
-  getDepartmentById: async (id: number): Promise<DepartmentDto> => {
-    return apiRequest.get<DepartmentDto>(`/departments/${id}`);
-  },
+const departmentsApiInstance = new DepartmentsApi();
 
-  /**
-   * Create a new department
-   * POST /api/departments
-   */
-  createDepartment: async (payload: CreateDepartmentDto): Promise<DepartmentDto> => {
-    return apiRequest.post<DepartmentDto>('/departments', payload);
-  },
-
-  /**
-   * Update a department
-   * PUT /api/departments/{id}
-   */
-  updateDepartment: async (id: number, payload: UpdateDepartmentDto): Promise<DepartmentDto> => {
-    return apiRequest.put<DepartmentDto>(`/departments/${id}`, payload);
-  },
-
-  /**
-   * Delete a department
-   * DELETE /api/departments/{id}
-   */
-  deleteDepartment: async (id: number): Promise<void> => {
-    return apiRequest.delete<void>(`/departments/${id}`);
-  },
-
-  /**
-   * Toggle department active status
-   * PATCH /api/departments/{id}/status
-   */
-  toggleDepartmentStatus: async (payload: {
-    id: number;
-    isActive: boolean;
-  }): Promise<DepartmentDto> => {
-    return apiRequest.patch<DepartmentDto>(`/departments/${payload.id}/status`, {
-      isActive: payload.isActive,
-    });
-  },
-
-  
+export const departmentsApi = {
+  getDepartments: (filters?: DepartmentFilters) => departmentsApiInstance.getAll(filters),
+  getDepartmentById: (id: number) => departmentsApiInstance.getById(id),
+  createDepartment: (payload: CreateDepartmentDto) => departmentsApiInstance.create(payload),
+  updateDepartment: (id: number, payload: UpdateDepartmentDto) => departmentsApiInstance.update(id, payload),
+  deleteDepartment: (id: number) => departmentsApiInstance.delete(id),
+  toggleDepartmentStatus: (payload: { id: number; isActive: boolean }) => 
+    departmentsApiInstance.toggleStatus(payload.id, payload.isActive),
 };

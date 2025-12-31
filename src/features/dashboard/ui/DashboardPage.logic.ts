@@ -55,12 +55,12 @@ export const useDashboardPage = () => {
     [statusCounts]
   );
 
-  // Get recent requests that need action (Pending or In Progress) - limit to 2
+  // Get recent requests that need action (All non-closed requests) - limit to 2
   const recentRequestsNeedingAction = useMemo(
     () =>
       requestsArray
-        .filter((r) => r.requestStatusId === RequestStatus.RECEIVED || r.requestStatusId === RequestStatus.UNDER_REVIEW)
-        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+        .filter((r: any) => r.requestStatusId !== RequestStatus.CLOSED && r.requestStatusId !== RequestStatus.REPLIED)
+        .sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
         .slice(0, 2),
     [requestsArray]
   );

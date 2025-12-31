@@ -48,8 +48,8 @@ import {
 } from "lucide-react";
 import { useRequestDetailsLogic } from "./RequestDetails.logic";
 import { useI18n } from "@/i18n";
-import { StatusStepper } from "./StatusStepper";
-import { RatingDialog } from "./RatingDialog";
+import { StatusStepper } from "../StatusStepper";
+import { RatingDialog } from "../RatingDialog";
 import {
   getRequestStatusColor,
   getRequestStatusName,
@@ -274,7 +274,7 @@ export function RequestDetailsPage() {
               )}
 
               {/* Edit Button */}
-              {canEditRequest() && (
+              {canEditRequest?.() && (
                 <Button
                   variant="outline"
                   className="gap-2 border-[#115740] text-[#115740] hover:bg-[#115740] hover:text-white"
@@ -406,7 +406,7 @@ export function RequestDetailsPage() {
                     <Button
                       onClick={() => {
                         if (selectedDepartmentId) {
-                          handleAssignDepartment(selectedDepartmentId);
+                          handleAssignDepartment?.(selectedDepartmentId);
                         }
                       }}
                       disabled={!selectedDepartmentId || request.requestStatusId === RequestStatus.REPLIED || request.requestStatusId === RequestStatus.CLOSED}
@@ -427,7 +427,7 @@ export function RequestDetailsPage() {
                   <Select
                     value={request.requestStatusId.toString()}
                     onValueChange={(value: string) => {
-                      handleStatusChange(parseInt(value));
+                      handleStatusChange?.(parseInt(value));
                     }}
                   >
                     <SelectTrigger className="w-[180px] h-9">
@@ -614,7 +614,7 @@ export function RequestDetailsPage() {
                               size="sm"
                               className="hover:bg-[#115740] hover:text-white"
                               onClick={() =>
-                                handleDownloadAttachment(attachment)
+                                handleDownloadAttachment?.(attachment)
                               }
                             >
                               <Download className="w-4 h-4 mr-2" />
@@ -794,7 +794,7 @@ export function RequestDetailsPage() {
                               variant="outline"
                               className="h-14 border-3 border-orange-400 text-orange-600 hover:bg-orange-50 hover:border-orange-600 font-bold text-base rounded-xl shadow-md hover:shadow-lg transition-all"
                               onClick={() => {
-                                handleAcceptVisit();
+                                handleAcceptVisit?.();
                               }}
                             >
                               <CheckCircle className="w-5 h-5 mr-2" />
@@ -1074,7 +1074,7 @@ export function RequestDetailsPage() {
                                   size="sm"
                                   className="hover:bg-[#115740] hover:text-white"
                                   onClick={() =>
-                                    handleDownloadAttachment(attachment)
+                                    handleDownloadAttachment?.(attachment)
                                   }
                                 >
                                   <Download className="w-4 h-4 mr-1" />
@@ -1187,7 +1187,7 @@ export function RequestDetailsPage() {
                                     size="sm"
                                     className="hover:bg-[#115740] hover:text-white"
                                     onClick={() =>
-                                      handleDownloadAttachment(attachment)
+                                      handleDownloadAttachment?.(attachment)
                                     }
                                   >
                                     <Download className="w-4 h-4 mr-1" />
@@ -1291,7 +1291,7 @@ export function RequestDetailsPage() {
                                     size="sm"
                                     className="hover:bg-[#115740] hover:text-white"
                                     onClick={() =>
-                                      handleDownloadAttachment(attachment)
+                                      handleDownloadAttachment?.(attachment)
                                     }
                                   >
                                     <Download className="w-4 h-4 mr-1" />
@@ -1302,7 +1302,7 @@ export function RequestDetailsPage() {
                             </div>
                           </div>
                         )}
-            
+                        
                       {request.resolvedBy && (
                         <div className="border-t pt-4 mt-4">
                           <p className="text-xs text-gray-500">
@@ -1321,7 +1321,7 @@ export function RequestDetailsPage() {
                   </div>
                 </Card>
               )}
-            
+                        
             {/* User Response Section - Show for users when resolution exists */}
             {isUser &&
               (request.resolutionDetailsAr || request.resolutionDetailsEn) && request.requestTypeId !== RequestType.VISIT && (
@@ -1330,7 +1330,7 @@ export function RequestDetailsPage() {
                     <CheckCircle className="w-6 h-6 text-green-600" />
                     {t("requests.responseToRequest")}
                   </h3>
-            
+                        
                   <div className="space-y-4">
                     <div className="bg-white p-6 rounded-xl border-2 border-green-200 shadow-md">
                       <div className="flex items-start gap-3 mb-4">
@@ -1346,7 +1346,7 @@ export function RequestDetailsPage() {
                           </p>
                         </div>
                       </div>
-            
+                        
                       <div className="bg-gray-50 p-4 rounded-lg mb-4">
                         <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">
                           {isRTL
@@ -1355,7 +1355,7 @@ export function RequestDetailsPage() {
                               request.resolutionDetailsAr}
                         </p>
                       </div>
-            
+                        
                       {resolutionAttachments &&
                         resolutionAttachments.length > 0 && (
                           <div className="border-t pt-4">
@@ -1387,13 +1387,13 @@ export function RequestDetailsPage() {
                                       </p>
                                     </div>
                                   </div>
-            
+                        
                                   <Button
                                     variant="ghost"
                                     size="sm"
                                     className="hover:bg-[#115740] hover:text-white"
                                     onClick={() =>
-                                      handleDownloadAttachment(attachment)
+                                      handleDownloadAttachment?.(attachment)
                                     }
                                   >
                                     <Download className="w-4 h-4 mr-1" />
@@ -1665,7 +1665,7 @@ export function RequestDetailsPage() {
       <RatingDialog
         open={isRatingDialogOpen}
         onOpenChange={setIsRatingDialogOpen}
-        onSubmit={handleRatingSubmit}
+        onSubmit={handleRatingSubmit || (() => {})}
       />
 
       {/* Delete Request Confirmation Dialog */}
@@ -2113,7 +2113,7 @@ export function RequestDetailsPage() {
               </Label>
               <Input
                 value={reactivateTitleAr}
-                onChange={(e) => handleReactivateFieldChange("titleAr", e.target.value)}
+                onChange={(e) => handleReactivateFieldChange?.("titleAr", e.target.value)}
                 placeholder={t("form.titleArPlaceholder")}
                 dir="rtl"
                 className={`text-right ${reactivateErrors.titleAr ? "border-red-500" : ""}`}
@@ -2130,7 +2130,7 @@ export function RequestDetailsPage() {
               </Label>
               <Input
                 value={reactivateTitleEn}
-                onChange={(e) => handleReactivateFieldChange("titleEn", e.target.value)}
+                onChange={(e) => handleReactivateFieldChange?.("titleEn", e.target.value)}
                 placeholder={t("form.titleEnPlaceholder")}
                 dir="ltr"
                 className={reactivateErrors.titleEn ? "border-red-500" : ""}
@@ -2148,7 +2148,7 @@ export function RequestDetailsPage() {
               </Label>
               <Textarea
                 value={reactivateSubjectAr}
-                onChange={(e) => handleReactivateFieldChange("subjectAr", e.target.value)}
+                onChange={(e) => handleReactivateFieldChange?.("subjectAr", e.target.value)}
                 placeholder={t("form.subjectArPlaceholder")}
                 dir="rtl"
                 rows={4}
@@ -2166,7 +2166,7 @@ export function RequestDetailsPage() {
               </Label>
               <Textarea
                 value={reactivateSubjectEn}
-                onChange={(e) => handleReactivateFieldChange("subjectEn", e.target.value)}
+                onChange={(e) => handleReactivateFieldChange?.("subjectEn", e.target.value)}
                 placeholder={t("form.subjectEnPlaceholder")}
                 dir="ltr"
                 rows={4}

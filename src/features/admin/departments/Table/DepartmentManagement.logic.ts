@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   useDepartments,
@@ -6,117 +6,110 @@ import {
   useToggleDepartmentStatus,
 } from "../hooks/useDepartments";
 import type { DepartmentDto } from "../types/department.types";
+import { formatDateArabic } from "@/core/utils/dateUtils";
 
 export const useDepartmentManagement = () => {
   const navigate = useNavigate();
 
-  // Filters state
-  const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [pageNumber, setPageNumber] = useState(1);
-  const [pageSize] = useState(10);
+  const [filters, setFilters] = useState({
+    searchTerm: "",
+    statusFilter: "all",
+    pageNumber: 1,
+    pageSize: 10,
+  });
 
-  // Dialog state
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedDepartment, setSelectedDepartment] = useState<DepartmentDto | null>(null);
 
-  // Build filters object for API
-  const filters = useMemo(
+  const queryFilters = useMemo(
     () => ({
-      searchTerm: searchTerm || undefined,
-      isActive: statusFilter === "all" ? undefined : statusFilter === "active",
-      pageNumber,
-      pageSize,
+      searchTerm: filters.searchTerm || undefined,
+      isActive: filters.statusFilter === "all" ? undefined : filters.statusFilter === "active",
+      pageNumber: filters.pageNumber,
+      pageSize: filters.pageSize,
     }),
-    [searchTerm, statusFilter, pageNumber, pageSize]
+    [filters]
   );
 
   // API hooks
-  const { data, isLoading, error, refetch } = useDepartments(filters);
+  const { data, isLoading, error } = useDepartments(queryFilters);
   const deleteDepartmentMutation = useDeleteDepartment();
   const toggleStatusMutation = useToggleDepartmentStatus();
 
-  // Reset to page 1 when filters change
-  useEffect(() => {
-    setPageNumber(1);
-  }, [searchTerm, statusFilter]);
-
   // Handlers
-  const handleSearchChange = (value: string) => {
-    setSearchTerm(value);
-  };
+  const handleFilterChange = useCallback((field: string, value: string | number) => {
+    setFilters((prev) => ({
+      ...prev,
+      [field]: value,
+      ...(field !== "pageNumber" && { pageNumber: 1 }),
+    }));
+  }, []);
 
-  const handleStatusFilterChange = (value: string) => {
-    setStatusFilter(value);
-  };
+  const handleSearchChange = useCallback((value: string) => {
+    handleFilterChange("searchTerm", value);
+  }, [handleFilterChange]);
 
-  const handlePageChange = (newPage: number) => {
-    setPageNumber(newPage);
-  };
+  const handleStatusFilterChange = useCallback((value: string) => {
+    handleFilterChange("statusFilter", value);
+  }, [handleFilterChange]);
 
-  const handleAddDepartment = () => {
+  const handlePageChange = useCallback((newPage: number) => {
+    handleFilterChange("pageNumber", newPage);
+  }, [handleFilterChange]);
+
+  const handleAddDepartment = useCallback(() => {
     navigate("/admin/departments/new");
-  };
+  }, [navigate]);
 
-  const handleEditDepartment = (departmentId: number) => {
+  const handleEditDepartment = useCallback((departmentId: number) => {
     navigate(`/admin/departments/edit/${departmentId}`);
-  };
+  }, [navigate]);
 
-  const handleToggleActive = async (department: DepartmentDto) => {
+  const handleToggleActive = useCallback(async (department: DepartmentDto) => {
     try {
       await toggleStatusMutation.mutateAsync({
         id: department.id,
         isActive: !department.isActive,
       });
-      refetch();
     } catch (error) {
       // Error is handled by the hook
     }
-  };
+  }, [toggleStatusMutation]);
 
-  const handleDeleteClick = (department: DepartmentDto) => {
+  const handleDeleteClick = useCallback((department: DepartmentDto) => {
     setSelectedDepartment(department);
     setIsDeleteDialogOpen(true);
-  };
+  }, []);
 
-  const handleDeleteConfirm = async () => {
+  const handleDeleteConfirm = useCallback(async () => {
     if (!selectedDepartment) return;
 
     try {
       await deleteDepartmentMutation.mutateAsync(selectedDepartment.id);
       setIsDeleteDialogOpen(false);
       setSelectedDepartment(null);
-      refetch();
     } catch (error) {
       // Error is handled by the hook
     }
-  };
+  }, [selectedDepartment, deleteDepartmentMutation]);
 
-  const handleDeleteCancel = () => {
+  const handleDeleteCancel = useCallback(() => {
     setIsDeleteDialogOpen(false);
     setSelectedDepartment(null);
-  };
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("ar-SA", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    });
-  };
+  }, []);
 
   return {
     // Data
     departments: data?.items || [],
     totalCount: data?.totalCount || 0,
     totalPages: data?.totalPages || 0,
-    currentPage: pageNumber,
+    currentPage: filters.pageNumber,
     isLoading,
     error,
 
     // Filters
-    searchTerm,
-    statusFilter,
+    searchTerm: filters.searchTerm,
+    statusFilter: filters.statusFilter,
 
     // Delete dialog
     isDeleteDialogOpen,
@@ -134,6 +127,6 @@ export const useDepartmentManagement = () => {
     handleDeleteClick,
     handleDeleteConfirm,
     handleDeleteCancel,
-    formatDate,
+    formatDate: formatDateArabic,
   };
 };

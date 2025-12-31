@@ -2,8 +2,6 @@ import React, { useState, useEffect, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Bell, X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { useUserNotifications, useMarkNotificationAsRead } from "@/features/notifications/hooks/useNotifications";
 import { useUser } from "@/core/hooks/useUser";
 import { useI18n } from "@/i18n";
@@ -14,19 +12,13 @@ export function NotificationBell() {
   const dropdownRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
   const { t, language } = useI18n();
-  const { userId, isAuthenticated: userIsAuthenticated } = useUser();
-  
-  // Get access token for SignalR (only if user is logged in)
-  const accessToken = localStorage.getItem('authToken') || ''; // Changed from 'accessToken' to 'authToken'
-  const isAuthenticated = userIsAuthenticated && !!accessToken;
+  const { userId } = useUser();
   const userIdNumber = userId ? parseInt(userId, 10) : 0;
-  
-  // Fetch notifications with 30-second polling (fallback if SignalR fails)
   const { data: notifications = [], isLoading } = useUserNotifications(userIdNumber);
   const markAsReadMutation = useMarkNotificationAsRead();
-  
-  // Debug logging
- 
+
+
+
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
@@ -44,7 +36,7 @@ export function NotificationBell() {
   }, [isOpen]);
 
   const unreadCount = notifications.filter((n) => !n.isRead).length;
-  const recentNotifications = notifications.slice(0, 4); // Show last 4 notifications
+  const recentNotifications = notifications.slice(0, 4);
 
   const getTimeAgo = (dateString: string): string => {
     const date = new Date(dateString);
@@ -72,14 +64,14 @@ export function NotificationBell() {
   };
 
   const handleNotificationClick = async (notification: NotificationDto) => {
-    // Mark as read
+
     if (!notification.isRead) {
       await handleMarkAsRead(notification.id);
     }
 
-    // Navigate to request details if it's a request-related notification
+
     const requestId = notification.relatedEntityId || notification.userRequestId;
-    
+
     if (requestId) {
       setIsOpen(false);
       navigate(`/dashboard/request/${requestId}`);
@@ -96,7 +88,7 @@ export function NotificationBell() {
 
   return (
     <div className="relative" ref={dropdownRef}>
-      {/* Bell Icon */}
+      { }
       <button
         onClick={() => setIsOpen(!isOpen)}
         className="relative p-2 text-[#6F6F6F] hover:text-[#6CAEBD] transition"
@@ -109,10 +101,10 @@ export function NotificationBell() {
         )}
       </button>
 
-      {/* Dropdown Panel */}
+      { }
       {isOpen && (
         <div className="absolute rtl:right-0 ltr:left-0 mt-2 w-96 max-w-[calc(100vw-2rem)] bg-white rounded-xl shadow-lg border border-gray-200 z-50">
-          {/* Header */}
+          { }
           <div className="flex items-center justify-between p-4 border-b">
             <div className="flex items-center gap-2">
               <h3 className="font-semibold text-[#2B2B2B]">{t("notifications.title")}</h3>
@@ -125,7 +117,7 @@ export function NotificationBell() {
             </button>
           </div>
 
-          {/* Notifications List */}
+          { }
           <div className="max-h-96 overflow-y-auto">
             {isLoading ? (
               <div className="p-8 text-center text-gray-500">
@@ -140,9 +132,8 @@ export function NotificationBell() {
               recentNotifications.map((notification) => (
                 <div
                   key={notification.id}
-                  className={`p-4 border-b hover:bg-gray-50 transition cursor-pointer ${
-                    !notification.isRead ? "bg-blue-50/50" : ""
-                  }`}
+                  className={`p-4 border-b hover:bg-gray-50 transition cursor-pointer ${!notification.isRead ? "bg-blue-50/50" : ""
+                    }`}
                   onClick={() => handleNotificationClick(notification)}
                 >
                   <div className="flex items-start gap-3">
@@ -177,7 +168,7 @@ export function NotificationBell() {
             )}
           </div>
 
-          {/* Footer */}
+          { }
           {notifications.length > 0 && (
             <div className="p-3 border-t bg-gray-50">
               <Link

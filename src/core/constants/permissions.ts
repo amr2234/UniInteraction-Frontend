@@ -1,8 +1,4 @@
-// ============================================
-// Permission Constants - RBAC System
-// ============================================
 
-// All 32 Permission Codes
 export const PERMISSIONS = {
   // Users (5)
   USERS_VIEW: 'USERS_VIEW',
@@ -59,10 +55,8 @@ export const PERMISSIONS = {
   
 } as const;
 
-// Type for permission codes
 export type PermissionCode = typeof PERMISSIONS[keyof typeof PERMISSIONS];
 
-// Permission groups for easier management
 export const PERMISSION_GROUPS = {
   USERS: [
     PERMISSIONS.USERS_VIEW,

@@ -1,3 +1,5 @@
+import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { useRegister } from "@/features/auth/hooks/useAuth";
 import type { RegisterRequest } from "@/core/types/api";
 import { 
@@ -16,6 +18,7 @@ import { useForm } from "@/core/utils/formUtils";
 import { i18n } from "@/i18n/i18n";
 
 export const useRegisterPage = () => {
+  const navigate = useNavigate();
   const register = useRegister();
   const { formData, errors, setFormData, setErrors } = useForm<RegisterRequest>({
     username: "",
@@ -29,6 +32,14 @@ export const useRegisterPage = () => {
     isStudent: false,
     studentId: ""
   });
+
+  // Redirect to dashboard if user is already authenticated
+  useEffect(() => {
+    const token = localStorage.getItem('authToken');
+    if (token) {
+      navigate('/dashboard', { replace: true });
+    }
+  }, [navigate]);
 
   const getValidationRules = () => [
     requiredRule<RegisterRequest>('username', formData.username, i18n.t("validation.usernameRequired")),

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useLogin } from "@/features/auth/hooks/useAuth";
 import type { LoginRequest } from "@/core/types/api";
@@ -11,16 +11,7 @@ import {
 import { useForm } from "@/core/utils/formUtils";
 import { i18n } from "@/i18n/i18n";
 import { toast } from "sonner";
-
-interface NafathLoginData {
-  nationalId: string;
-}
-
-interface NafathSession {
-  transactionId: string;
-  randomNumber: string;
-  status: 'pending' | 'approved' | 'rejected';
-}
+import type { NafathLoginData, NafathSession } from "./LoginPage.types";
 
 export const useLoginPage = () => {
   const navigate = useNavigate();
@@ -29,15 +20,30 @@ export const useLoginPage = () => {
     email: "",
     password: ""
   });
-  const [nafathData, setNafathData] = useState<NafathLoginData>({
-    nationalId: ""
+  
+  // Consolidated state for Nafath login
+  const [nafathState, setNafathState] = useState({
+    data: { nationalId: "" } as NafathLoginData,
+    errors: {} as Partial<NafathLoginData>,
+    isLoading: false,
+    showNafathLogin: false,
+    step: 'nationalId' as 'nationalId' | 'waiting',
+    session: null as NafathSession | null,
+    pollingInterval: null as NodeJS.Timeout | null,
   });
-  const [nafathErrors, setNafathErrors] = useState<Partial<NafathLoginData>>({});
-  const [isLoading, setIsLoading] = useState(false);
-  const [showNafathLogin, setShowNafathLogin] = useState(false);
-  const [nafathStep, setNafathStep] = useState<'nationalId' | 'waiting'>('nationalId');
-  const [nafathSession, setNafathSession] = useState<NafathSession | null>(null);
-  const [pollingInterval, setPollingInterval] = useState<NodeJS.Timeout | null>(null);
+
+  // Redirect to dashboard if user is already authenticated
+  useEffect(() => {
+    const token = localStorage.getItem('authToken');
+    if (token) {
+      navigate('/dashboard', { replace: true });
+    }
+  }, [navigate]);
+
+  // Helper to update nafath state
+  const updateNafathState = (updates: Partial<typeof nafathState>) => {
+    setNafathState(prev => ({ ...prev, ...updates }));
+  };
 
   const getValidationRules = () => [
     requiredRule<LoginRequest>('email', formData.email, i18n.t("validation.emailRequired")),
@@ -63,13 +69,13 @@ export const useLoginPage = () => {
   const validateNafathNationalId = (): boolean => {
     const newErrors: Partial<NafathLoginData> = {};
     
-    if (!nafathData.nationalId) {
+    if (!nafathState.data.nationalId) {
       newErrors.nationalId = i18n.t("validation.nationalIdRequired");
-    } else if (!/^[0-9]{10}$/.test(nafathData.nationalId)) {
+    } else if (!/^[0-9]{10}$/.test(nafathState.data.nationalId)) {
       newErrors.nationalId = i18n.t("validation.nationalIdFormat");
     }
     
-    setNafathErrors(newErrors);
+    updateNafathState({ errors: newErrors });
     return Object.keys(newErrors).length === 0;
   };
 
@@ -91,27 +97,31 @@ export const useLoginPage = () => {
       
       if (status === 'approved') {
         clearInterval(interval);
-        setPollingInterval(null);
+        updateNafathState({ pollingInterval: null });
         
         setTimeout(() => {
           navigate("/dashboard");
         }, 500);
       } else if (status === 'rejected') {
         clearInterval(interval);
-        setPollingInterval(null);
-        setNafathStep('nationalId');
-        setNafathSession(null);
+        updateNafathState({
+          pollingInterval: null,
+          step: 'nationalId',
+          session: null,
+        });
       }
     }, 3000);
     
-    setPollingInterval(interval);
+    updateNafathState({ pollingInterval: interval });
     
     setTimeout(() => {
       if (interval) {
         clearInterval(interval);
-        setPollingInterval(null);
-        setNafathStep('nationalId');
-        setNafathSession(null);
+        updateNafathState({
+          pollingInterval: null,
+          step: 'nationalId',
+          session: null,
+        });
       }
     }, 180000);
   };
@@ -123,35 +133,39 @@ export const useLoginPage = () => {
       return;
     }
 
-    setIsLoading(true);
+    updateNafathState({ isLoading: true });
     
     try {
       const randomNumber = generateRandomNumber();
       await new Promise(resolve => setTimeout(resolve, 1000));
       const transactionId = `TXN-${Date.now()}`;
       
-      setNafathSession({
-        transactionId,
-        randomNumber,
-        status: 'pending'
+      updateNafathState({
+        session: {
+          transactionId,
+          randomNumber,
+          status: 'pending'
+        },
+        step: 'waiting',
       });
       
-      setNafathStep('waiting');
       startPollingNafathStatus(transactionId);
     } catch (error) {
     } finally {
-      setIsLoading(false);
+      updateNafathState({ isLoading: false });
     }
   };
 
   const handleCancelNafath = () => {
-    if (pollingInterval) {
-      clearInterval(pollingInterval);
-      setPollingInterval(null);
+    if (nafathState.pollingInterval) {
+      clearInterval(nafathState.pollingInterval);
     }
-    setNafathStep('nationalId');
-    setNafathSession(null);
-    setNafathData({ nationalId: "" });
+    updateNafathState({
+      pollingInterval: null,
+      step: 'nationalId',
+      session: null,
+      data: { nationalId: "" },
+    });
   };
   
   const validateFormFields = (): boolean => {
@@ -176,30 +190,32 @@ export const useLoginPage = () => {
   };
 
   const toggleLoginMethod = () => {
-    if (pollingInterval) {
-      clearInterval(pollingInterval);
-      setPollingInterval(null);
+    if (nafathState.pollingInterval) {
+      clearInterval(nafathState.pollingInterval);
     }
-    setShowNafathLogin(!showNafathLogin);
-    setNafathStep('nationalId');
-    setNafathData({ nationalId: "" });
-    setNafathErrors({});
-    setNafathSession(null);
+    updateNafathState({
+      showNafathLogin: !nafathState.showNafathLogin,
+      pollingInterval: null,
+      step: 'nationalId',
+      data: { nationalId: "" },
+      errors: {},
+      session: null,
+    });
     setErrors({});
   };
 
   return {
     formData,
     errors,
-    nafathData,
-    nafathErrors,
-    isLoading,
-    showNafathLogin,
-    nafathStep,
-    nafathSession,
+    nafathData: nafathState.data,
+    nafathErrors: nafathState.errors,
+    isLoading: nafathState.isLoading,
+    showNafathLogin: nafathState.showNafathLogin,
+    nafathStep: nafathState.step,
+    nafathSession: nafathState.session,
     login,
-    setNafathData,
-    setNafathErrors,
+    setNafathData: (data: NafathLoginData) => updateNafathState({ data }),
+    setNafathErrors: (errors: Partial<NafathLoginData>) => updateNafathState({ errors }),
     handleInputChange,
     handleNafathRequestOtp,
     handleCancelNafath,

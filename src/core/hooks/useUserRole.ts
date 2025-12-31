@@ -2,10 +2,7 @@ import { useMemo } from 'react';
 import { useUserRoleIds } from './usePermissions';
 import { UserRole } from '@/core/constants/roles';
 
-/**
- * Custom hook to check user roles
- * Returns boolean flags for each role type
- */
+
 export function useUserRole() {
   const userRoleIds = useUserRoleIds();
 
@@ -20,11 +17,11 @@ export function useUserRole() {
       isAdmin,
       isEmployee,
       isUser,
-      // Helper to check if user has any admin-level access
+      
       hasAdminAccess: isSuperAdmin || isAdmin,
-      // Helper to check if user has staff-level access
+      
       hasStaffAccess: isSuperAdmin || isAdmin || isEmployee,
-      // Get all role IDs
+      
       roleIds: userRoleIds,
     };
   }, [userRoleIds]);

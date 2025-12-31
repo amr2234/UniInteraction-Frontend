@@ -1,14 +1,12 @@
-import { apiRequest } from "@/core/lib/apiClient";
+import { BaseApi } from '@/core/lib/baseApi';
 import { SystemLogDto, LogFilters, Result } from "../types/logs.types";
 
-/**
- * System Logs API
- */
-export const logsApi = {
-  /**
-   * Get system logs with filters
-   */
-  getLogs: async (filters: LogFilters): Promise<Result<SystemLogDto[]>> => {
+class LogsApi extends BaseApi<SystemLogDto> {
+  constructor() {
+    super('/SystemLogs');
+  }
+
+  async getLogs(filters: LogFilters): Promise<Result<SystemLogDto[]>> {
     const params = new URLSearchParams();
 
     if (filters.level) params.append("level", filters.level);
@@ -23,11 +21,9 @@ export const logsApi = {
     params.append("pageSize", (filters.pageSize ?? 20).toString());
 
     const queryString = params.toString();
-    const url = `/SystemLogs${queryString ? `?${queryString}` : ""}`;
 
     try {
-      // Backend returns array directly, not wrapped in Result
-      const data = await apiRequest.get<SystemLogDto[]>(url);
+      const data = await this.customGet<SystemLogDto[]>(`?${queryString}`);
       
       return {
         success: true,
@@ -43,12 +39,9 @@ export const logsApi = {
         errors: [error?.message || "Unknown error"],
       };
     }
-  },
+  }
 
-  /**
-   * Export logs (future implementation)
-   */
-  exportLogs: async (filters: LogFilters, format: "csv" | "excel" | "pdf"): Promise<Blob> => {
+  async exportLogs(filters: LogFilters, format: "csv" | "excel" | "pdf"): Promise<Blob> {
     const params = new URLSearchParams();
 
     if (filters.level) params.append("level", filters.level);
@@ -62,9 +55,14 @@ export const logsApi = {
     params.append("format", format);
 
     const queryString = params.toString();
-    const url = `/SystemLogs/export${queryString ? `?${queryString}` : ""}`;
+    return this.customGet<Blob>(`/export?${queryString}`);
+  }
+}
 
-    // This would be implemented when backend supports export
-    return apiRequest.get<Blob>(url);
-  },
+const logsApiInstance = new LogsApi();
+
+export const logsApi = {
+  getLogs: (filters: LogFilters) => logsApiInstance.getLogs(filters),
+  exportLogs: (filters: LogFilters, format: "csv" | "excel" | "pdf") => 
+    logsApiInstance.exportLogs(filters, format),
 };
