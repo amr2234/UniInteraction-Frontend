@@ -3,7 +3,7 @@ import { Routes, Route } from "react-router-dom";
 import {
   ProtectedRoute,
   AuthenticatedRoute,
-} from "@/core/components/ProtectedRoute";
+} from "@/core/Auth/ProtectedRoute";
 import { UserRole } from "@/core/constants/roles";
 
 // Lazy load all page components
@@ -17,11 +17,11 @@ const Dashboard = lazy(() => import("@/features/dashboard/ui/Dashboard").then(m 
 const ComplaintPage = lazy(() => import("@/features/requests/pages/ComplaintPage").then(m => ({ default: m.ComplaintPage })));
 const InquiryPage = lazy(() => import("@/features/requests/pages/InquiryPage").then(m => ({ default: m.InquiryPage })));
 const VisitPage = lazy(() => import("@/features/requests/pages/VisitPage").then(m => ({ default: m.VisitPage })));
-const TrackRequestsPage = lazy(() => import("@/features/requests/pages/TrackRequestsPage").then(m => ({ default: m.TrackRequestsPage })));
-const RequestDetailsPage = lazy(() => import("@/features/requests/ui/RequestDetails").then(m => ({ default: m.RequestDetailsPage })));
-const EditRequestPage = lazy(() => import("@/features/requests/ui/EditRequest").then(m => ({ default: m.EditRequestPage })));
+const TrackRequestsPage = lazy(() => import("@/features/requests/pages/TrackRequests").then(m => ({ default: m.TrackRequestsPage })));
+const RequestDetailsPage = lazy(() => import("@/features/requests/ui/RequestDetails/RequestDetails").then(m => ({ default: m.RequestDetailsPage })));
+const EditRequestPage = lazy(() => import("@/features/requests/ui/EditRequest/EditRequest").then(m => ({ default: m.EditRequestPage })));
 const NotificationsPage = lazy(() => import("@/features/notifications/ui/NotificationsPage").then(m => ({ default: m.NotificationsPage })));
-const ProfilePage = lazy(() => import("@/features/profile/ui/ProfilePage").then(m => ({ default: m.ProfilePage })));
+const ProfilePage = lazy(() => import("@/features/profile/ui/ProfilePage/ProfilePage").then(m => ({ default: m.ProfilePage })));
 const FAQPage = lazy(() => import("@/features/faq/ui/FAQPage").then(m => ({ default: m.FAQPage })));
 const FAQManagement = lazy(() => import("@/features/admin/faqs/Table/FAQManagement").then(m => ({ default: m.FAQManagement })));
 const FAQForm = lazy(() => import("@/features/admin/faqs/Form/FAQForm").then(m => ({ default: m.FAQForm })));

@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   useUsers,
@@ -9,17 +9,20 @@ import type { UserManagementDto } from "../types/user.types";
 import { useDepartmentsLookup } from "@/features/lookups/hooks/useLookups";
 import { UserRole, ROLE_TRANSLATION_KEYS } from "@/core/constants/roles";
 import { useI18n } from "@/i18n";
+import { formatDateEnglish } from "@/core/utils/dateUtils";
 
 export const useUserManagement = () => {
   const navigate = useNavigate();
   const { language } = useI18n();
 
-  const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [departmentFilter, setDepartmentFilter] = useState<string>("all");
-  const [roleFilter, setRoleFilter] = useState<string>("all");
-  const [pageNumber, setPageNumber] = useState(1);
-  const [pageSize] = useState(10);
+  const [filters, setFilters] = useState({
+    searchTerm: "",
+    statusFilter: "all",
+    departmentFilter: "all",
+    roleFilter: "all",
+    pageNumber: 1,
+    pageSize: 10,
+  });
 
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<UserManagementDto | null>(
@@ -40,72 +43,69 @@ export const useUserManagement = () => {
     return map;
   }, [departments]);
 
-  const filters = useMemo(
+  const queryFilters = useMemo(
     () => ({
-      searchTerm: searchTerm || undefined,
-      roleId: roleFilter !== "all" ? parseInt(roleFilter) : undefined,
-      isActive: statusFilter === "all" ? undefined : statusFilter === "active",
+      searchTerm: filters.searchTerm || undefined,
+      roleId: filters.roleFilter !== "all" ? parseInt(filters.roleFilter) : undefined,
+      isActive: filters.statusFilter === "all" ? undefined : filters.statusFilter === "active",
       departmentId:
-        departmentFilter !== "all" ? parseInt(departmentFilter) : undefined,
-      pageNumber,
-      pageSize,
+        filters.departmentFilter !== "all" ? parseInt(filters.departmentFilter) : undefined,
+      pageNumber: filters.pageNumber,
+      pageSize: filters.pageSize,
     }),
-    [
-      searchTerm,
-      roleFilter,
-      statusFilter,
-      departmentFilter,
-      pageNumber,
-      pageSize,
-    ]
+    [filters]
   );
 
-  const { data, isLoading, error, refetch } = useUsers(filters);
+  const { data, isLoading, error } = useUsers(queryFilters);
   const deleteUserMutation = useDeleteUser();
   const toggleStatusMutation = useToggleUserStatus();
 
-  useEffect(() => {
-    setPageNumber(1);
-  }, [searchTerm, statusFilter, departmentFilter, roleFilter]);
+  const handleFilterChange = useCallback((field: string, value: string | number) => {
+    setFilters((prev) => ({
+      ...prev,
+      [field]: value,
+      ...(field !== "pageNumber" && { pageNumber: 1 }),
+    }));
+  }, []);
 
-  const handleSearchChange = (value: string) => {
-    setSearchTerm(value);
-  };
+  const handleSearchChange = useCallback((value: string) => {
+    handleFilterChange("searchTerm", value);
+  }, [handleFilterChange]);
 
-  const handleStatusFilterChange = (value: string) => {
-    setStatusFilter(value);
-  };
+  const handleStatusFilterChange = useCallback((value: string) => {
+    handleFilterChange("statusFilter", value);
+  }, [handleFilterChange]);
 
-  const handleDepartmentFilterChange = (value: string) => {
-    setDepartmentFilter(value);
-  };
+  const handleDepartmentFilterChange = useCallback((value: string) => {
+    handleFilterChange("departmentFilter", value);
+  }, [handleFilterChange]);
 
-  const handleRoleFilterChange = (value: string) => {
-    setRoleFilter(value);
-  };
+  const handleRoleFilterChange = useCallback((value: string) => {
+    handleFilterChange("roleFilter", value);
+  }, [handleFilterChange]);
 
-  const handlePageChange = (newPage: number) => {
-    setPageNumber(newPage);
-  };
+  const handlePageChange = useCallback((newPage: number) => {
+    handleFilterChange("pageNumber", newPage);
+  }, [handleFilterChange]);
 
-  const handleAddUser = () => {
+  const handleAddUser = useCallback(() => {
     navigate("/admin/users/new");
-  };
+  }, [navigate]);
 
-  const handleEditUser = (userId: number) => {
+  const handleEditUser = useCallback((userId: number) => {
     navigate(`/admin/users/edit/${userId}`);
-  };
+  }, [navigate]);
 
-  const handleToggleActive = async (user: UserManagementDto) => {
+  const handleToggleActive = useCallback(async (user: UserManagementDto) => {
     try {
       await toggleStatusMutation.mutateAsync({
         id: user.id,
         isActive: !user.isActive,
       });
-
-      refetch();
-    } catch (error) {}
-  };
+    } catch (error) {
+      // Error handling is done in the mutation hook
+    }
+  }, [toggleStatusMutation]);
 
   const handleDeleteClick = (user: UserManagementDto) => {
     // Blur the active element to prevent aria-hidden focus trap warning
@@ -114,35 +114,30 @@ export const useUserManagement = () => {
     }
     setSelectedUser(user);
     setIsDeleteDialogOpen(true);
-  };
+  }, []);
 
-  const handleDeleteConfirm = async () => {
+  const handleDeleteConfirm = useCallback(async () => {
     if (!selectedUser) return;
 
     try {
       await deleteUserMutation.mutateAsync(selectedUser.id);
       setIsDeleteDialogOpen(false);
       setSelectedUser(null);
+    } catch (error) {
+      // Error handling is done in the mutation hook
+    }
+  }, [selectedUser, deleteUserMutation]);
 
-      refetch();
-    } catch (error) {}
-  };
-
-  const handleDeleteCancel = () => {
+  const handleDeleteCancel = useCallback(() => {
     setIsDeleteDialogOpen(false);
     setSelectedUser(null);
-  };
+  }, []);
 
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return new Intl.DateTimeFormat("en-US", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-    }).format(date);
-  };
+  const getUserFullName = useCallback((user: UserManagementDto): string => {
+    return language === "ar" ? user.nameAr : user.nameEn || user.nameAr;
+  }, [language]);
 
-  const getDepartmentName = (
+  const getDepartmentName = useCallback((
     departmentId: string | number | undefined
   ): string => {
     if (!departmentId) return "-";
@@ -158,24 +153,20 @@ export const useUserManagement = () => {
     return language === "ar"
       ? department.nameAr
       : department.nameEn || department.nameAr;
-  };
-
-  const getUserFullName = (user: UserManagementDto): string => {
-    return language === "ar" ? user.nameAr : user.nameEn || user.nameAr;
-  };
+  }, [departmentMap, departments.length, language]);
 
   return {
     users: data?.items || [],
     totalCount: data?.totalCount || 0,
     totalPages: data?.totalPages || 0,
-    currentPage: pageNumber,
+    currentPage: filters.pageNumber,
     isLoading,
     error,
 
-    searchTerm,
-    statusFilter,
-    departmentFilter,
-    roleFilter,
+    searchTerm: filters.searchTerm,
+    statusFilter: filters.statusFilter,
+    departmentFilter: filters.departmentFilter,
+    roleFilter: filters.roleFilter,
     departments,
 
     isDeleteDialogOpen,
@@ -194,7 +185,7 @@ export const useUserManagement = () => {
     handleDeleteClick,
     handleDeleteConfirm,
     handleDeleteCancel,
-    formatDate,
+    formatDate: formatDateEnglish,
     getDepartmentName,
     getUserFullName,
 

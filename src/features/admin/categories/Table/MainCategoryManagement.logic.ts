@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { useI18n } from "@/i18n";
@@ -8,74 +8,78 @@ import {
   useToggleMainCategoryStatus,
 } from "@/features/admin/categories/hooks/useCategories";
 import type { MainCategoryDto } from "@/core/types/api";
+import { formatDateArabic } from "@/core/utils/dateUtils";
 
 export const useMainCategoryManagement = () => {
   const navigate = useNavigate();
   const { t } = useI18n();
 
-  // Filters state
-  const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [pageNumber, setPageNumber] = useState(1);
-  const [pageSize] = useState(10);
+  const [filters, setFilters] = useState({
+    searchTerm: "",
+    statusFilter: "all",
+    pageNumber: 1,
+    pageSize: 10,
+  });
 
   // Dialog state
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<MainCategoryDto | null>(null);
 
   // Build filters object for API
-  const filters = useMemo(
+  const queryFilters = useMemo(
     () => ({
-      searchTerm: searchTerm || undefined,
-      isActive: statusFilter === "all" ? undefined : statusFilter === "active",
-      pageNumber,
-      pageSize,
+      searchTerm: filters.searchTerm || undefined,
+      isActive: filters.statusFilter === "all" ? undefined : filters.statusFilter === "active",
+      pageNumber: filters.pageNumber,
+      pageSize: filters.pageSize,
     }),
-    [searchTerm, statusFilter, pageNumber, pageSize]
+    [filters]
   );
 
   // API hooks
-  const { data, isLoading, error, refetch } = useMainCategoriesAdmin(filters);
+  const { data, isLoading, error } = useMainCategoriesAdmin(queryFilters);
   const deleteMainCategoryMutation = useDeleteMainCategory();
   const toggleStatusMutation = useToggleMainCategoryStatus();
 
-  // Reset to page 1 when filters change
-  useEffect(() => {
-    setPageNumber(1);
-  }, [searchTerm, statusFilter]);
-
   // Handlers
-  const handleSearchChange = (value: string) => {
-    setSearchTerm(value);
-  };
+  const handleFilterChange = useCallback((field: string, value: string | number) => {
+    setFilters((prev) => ({
+      ...prev,
+      [field]: value,
+      ...(field !== "pageNumber" && { pageNumber: 1 }),
+    }));
+  }, []);
 
-  const handleStatusFilterChange = (value: string) => {
-    setStatusFilter(value);
-  };
+  const handleSearchChange = useCallback((value: string) => {
+    handleFilterChange("searchTerm", value);
+  }, [handleFilterChange]);
 
-  const handlePageChange = (newPage: number) => {
-    setPageNumber(newPage);
-  };
+  const handleStatusFilterChange = useCallback((value: string) => {
+    handleFilterChange("statusFilter", value);
+  }, [handleFilterChange]);
 
-  const handleAddCategory = () => {
+  const handlePageChange = useCallback((newPage: number) => {
+    handleFilterChange("pageNumber", newPage);
+  }, [handleFilterChange]);
+
+  const handleAddCategory = useCallback(() => {
     navigate("/admin/main-categories/new");
-  };
+  }, [navigate]);
 
-  const handleEditCategory = (categoryId: number) => {
+  const handleEditCategory = useCallback((categoryId: number) => {
     navigate(`/admin/main-categories/edit/${categoryId}`);
-  };
+  }, [navigate]);
 
-  const handleToggleActive = async (category: MainCategoryDto) => {
+  const handleToggleActive = useCallback(async (category: MainCategoryDto) => {
     try {
       await toggleStatusMutation.mutateAsync({
         id: category.id,
         isActive: !category.isActive,
       });
-      refetch();
     } catch (error) {
       // Error is handled by the hook
     }
-  };
+  }, [toggleStatusMutation]);
 
   const handleDeleteClick = (category: MainCategoryDto) => {
     // Blur the active element to prevent aria-hidden focus trap warning
@@ -84,46 +88,37 @@ export const useMainCategoryManagement = () => {
     }
     setSelectedCategory(category);
     setIsDeleteDialogOpen(true);
-  };
+  }, []);
 
-  const handleDeleteConfirm = async () => {
+  const handleDeleteConfirm = useCallback(async () => {
     if (!selectedCategory) return;
 
     try {
       await deleteMainCategoryMutation.mutateAsync(selectedCategory.id);
       setIsDeleteDialogOpen(false);
       setSelectedCategory(null);
-      refetch();
     } catch (error) {
       // Error is handled by the hook
     }
-  };
+  }, [selectedCategory, deleteMainCategoryMutation]);
 
-  const handleDeleteCancel = () => {
+  const handleDeleteCancel = useCallback(() => {
     setIsDeleteDialogOpen(false);
     setSelectedCategory(null);
-  };
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("ar-SA", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    });
-  };
+  }, []);
 
   return {
     // Data
     categories: data?.items || [],
     totalCount: data?.totalCount || 0,
     totalPages: data?.totalPages || 0,
-    currentPage: pageNumber,
+    currentPage: filters.pageNumber,
     isLoading,
     error,
 
     // Filters
-    searchTerm,
-    statusFilter,
+    searchTerm: filters.searchTerm,
+    statusFilter: filters.statusFilter,
 
     // Delete dialog
     isDeleteDialogOpen,
@@ -141,6 +136,6 @@ export const useMainCategoryManagement = () => {
     handleDeleteClick,
     handleDeleteConfirm,
     handleDeleteCancel,
-    formatDate,
+    formatDate: formatDateArabic,
   };
 };

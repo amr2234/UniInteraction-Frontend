@@ -1,4 +1,4 @@
-import { apiRequest } from '@/core/lib/apiClient';
+import { BaseApi } from '@/core/lib/baseApi';
 import {
   ScheduleVisitPayload,
   UpdateVisitStatusPayload,
@@ -6,78 +6,54 @@ import {
   UserRequestDto,
 } from '@/core/types/api';
 
-/**
- * Visits API
- * Handles all visit-related endpoints
- */
-export const visitsApi = {
-  /**
-   * Schedule a visit (Employee sets visit date and leadership)
-   * POST /api/Visits/schedule
-   */
-  scheduleVisit: async (payload: ScheduleVisitPayload): Promise<UserRequestDto> => {
-    return apiRequest.post<UserRequestDto>('/visits/schedule', payload);
-  },
+class VisitsApi extends BaseApi<VisitDto> {
+  constructor() {
+    super('/visits');
+  }
 
-  /**
-   * Update visit status (Accept, Reschedule, Complete, etc.)
-   * PUT /api/Visits/{visitId}/status
-   */
-  updateVisitStatus: async (
-    visitId: number,
-    payload: UpdateVisitStatusPayload
-  ): Promise<UserRequestDto> => {
-    return apiRequest.put<UserRequestDto>(`/visits/${visitId}/status`, payload);
-  },
+  async scheduleVisit(payload: ScheduleVisitPayload): Promise<UserRequestDto> {
+    return this.customPost<UserRequestDto>('/schedule', payload);
+  }
 
-  /**
-   * Get visit details by ID
-   * GET /api/Visits/{visitId}
-   */
-  getVisitById: async (visitId: number): Promise<VisitDto> => {
-    return apiRequest.get<VisitDto>(`/visits/${visitId}`);
-  },
+  async updateVisitStatus(visitId: number, payload: UpdateVisitStatusPayload): Promise<UserRequestDto> {
+    return this.customPut<UserRequestDto>(`/${visitId}/status`, payload);
+  }
 
-  /**
-   * Get all visits (for calendar)
-   * GET /api/Visits
-   */
-  getAllVisits: async (leadershipId?: number): Promise<VisitDto[]> => {
+  async getVisitById(visitId: number): Promise<VisitDto> {
+    return this.getById(visitId);
+  }
+
+  async getAllVisits(leadershipId?: number): Promise<VisitDto[]> {
     const params = new URLSearchParams();
     if (leadershipId) {
       params.append('leadershipId', leadershipId.toString());
     }
-    
     const queryString = params.toString();
-    const url = queryString ? `/visits?${queryString}` : '/visits';
-    
-    return apiRequest.get<VisitDto[]>(url);
-  },
-
-  /**
-   * Get visits filtered by leadership
-   * GET /api/Visits?leadershipId={id}
-   */
-  getVisitsByLeadership: async (leadershipId: number): Promise<VisitDto[]> => {
-    return apiRequest.get<VisitDto[]>(`/visits?leadershipId=${leadershipId}`);
-  },
-
-  /**
-   * Get visits for a specific request
-   * GET /api/Visits/request/{requestId}
-   */
-  getVisitsByRequest: async (requestId: number): Promise<VisitDto[]> => {
-    return apiRequest.get<VisitDto[]>(`/visits/request/${requestId}`);
-  },
-
-
-  /**
-   * Update visit details
-   * PUT /api/Visits/{visitId}
-   */
-  updateVisit: async (payload: ScheduleVisitPayload): Promise<VisitDto> => {
-    return apiRequest.put<VisitDto>(`/visits/${payload.visitId}`, payload);
+    return this.customGet<VisitDto[]>(queryString ? `?${queryString}` : '');
   }
 
+  async getVisitsByLeadership(leadershipId: number): Promise<VisitDto[]> {
+    return this.customGet<VisitDto[]>(`?leadershipId=${leadershipId}`);
+  }
 
+  async getVisitsByRequest(requestId: number): Promise<VisitDto[]> {
+    return this.customGet<VisitDto[]>(`/request/${requestId}`);
+  }
+
+  async updateVisit(payload: ScheduleVisitPayload): Promise<VisitDto> {
+    return this.customPut<VisitDto>(`/${payload.visitId}`, payload);
+  }
+}
+
+const visitsApiInstance = new VisitsApi();
+
+export const visitsApi = {
+  scheduleVisit: (payload: ScheduleVisitPayload) => visitsApiInstance.scheduleVisit(payload),
+  updateVisitStatus: (visitId: number, payload: UpdateVisitStatusPayload) => 
+    visitsApiInstance.updateVisitStatus(visitId, payload),
+  getVisitById: (visitId: number) => visitsApiInstance.getVisitById(visitId),
+  getAllVisits: (leadershipId?: number) => visitsApiInstance.getAllVisits(leadershipId),
+  getVisitsByLeadership: (leadershipId: number) => visitsApiInstance.getVisitsByLeadership(leadershipId),
+  getVisitsByRequest: (requestId: number) => visitsApiInstance.getVisitsByRequest(requestId),
+  updateVisit: (payload: ScheduleVisitPayload) => visitsApiInstance.updateVisit(payload),
 };

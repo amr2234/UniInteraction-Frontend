@@ -1,126 +1,65 @@
-import { apiRequest } from '@/core/lib/apiClient';
+import { BaseApi } from '@/core/lib/baseApi';
 import {
   RoleDto,
   PermissionDto,
   CreateRolePayload,
   UpdateRolePayload,
-  AssignRolePayload,
   UserPermissionsDto,
 } from '@/core/types/api';
 
-// ============================================
-// Roles & Permissions API Functions
-// ============================================
+class RolesApi extends BaseApi<RoleDto, CreateRolePayload, UpdateRolePayload> {
+  constructor() {
+    super('/roles');
+  }
+
+  async getAllPermissions(): Promise<PermissionDto[]> {
+    return this.customGet<PermissionDto[]>('/permissions', { baseURL: '' });
+  }
+
+  async getRolePermissions(roleId: number): Promise<PermissionDto[]> {
+    return this.customGet<PermissionDto[]>(`/${roleId}/permissions`);
+  }
+
+  async updateRolePermissions(roleId: number, permissionIds: number[]): Promise<RoleDto> {
+    return this.customPut<RoleDto>(`/${roleId}/permissions`, { permissionIds });
+  }
+
+  async getUserPermissions(userId: number): Promise<UserPermissionsDto> {
+    return this.customGet<UserPermissionsDto>(`/users/${userId}/permissions`, { baseURL: '' });
+  }
+
+  async getCurrentUserPermissions(): Promise<UserPermissionsDto> {
+    return this.customGet<UserPermissionsDto>('/auth/me/permissions', { baseURL: '' });
+  }
+
+  async checkPermission(permissionCode: string): Promise<boolean> {
+    return this.customPost<boolean>('/auth/check-permission', { permissionCode }, { baseURL: '' });
+  }
+
+  async checkAnyPermission(permissionCodes: string[]): Promise<boolean> {
+    return this.customPost<boolean>('/auth/check-any-permission', { permissionCodes }, { baseURL: '' });
+  }
+
+  async checkAllPermissions(permissionCodes: string[]): Promise<boolean> {
+    return this.customPost<boolean>('/auth/check-all-permissions', { permissionCodes }, { baseURL: '' });
+  }
+}
+
+const rolesApiInstance = new RolesApi();
 
 export const rolesApi = {
-  // ========== Roles Management ==========
-  
-  /**
-   * Get all roles
-   */
-  getRoles: async (): Promise<RoleDto[]> => {
-    return apiRequest.get<RoleDto[]>('/roles');
-  },
-
-  /**
-   * Get role by ID
-   */
-  getRoleById: async (id: number): Promise<RoleDto> => {
-    return apiRequest.get<RoleDto>(`/roles/${id}`);
-  },
-
-  /**
-   * Create a new role
-   */
-  createRole: async (payload: CreateRolePayload): Promise<RoleDto> => {
-    return apiRequest.post<RoleDto>('/roles', payload);
-  },
-
-  /**
-   * Update a role
-   */
-  updateRole: async (id: number, payload: UpdateRolePayload): Promise<RoleDto> => {
-    return apiRequest.put<RoleDto>(`/roles/${id}`, payload);
-  },
-
-  /**
-   * Delete a role
-   */
-  deleteRole: async (id: number): Promise<void> => {
-    return apiRequest.delete<void>(`/roles/${id}`);
-  },
-
-  // ========== Permissions Management ==========
-  
-  /**
-   * Get all available permissions
-   */
-  getAllPermissions: async (): Promise<PermissionDto[]> => {
-    return apiRequest.get<PermissionDto[]>('/permissions');
-  },
-
-  /**
-   * Get permissions for a specific role
-   */
-  getRolePermissions: async (roleId: number): Promise<PermissionDto[]> => {
-    return apiRequest.get<PermissionDto[]>(`/roles/${roleId}/permissions`);
-  },
-
-  /**
-   * Update permissions for a role
-   */
-  updateRolePermissions: async (roleId: number, permissionIds: number[]): Promise<RoleDto> => {
-    return apiRequest.put<RoleDto>(`/roles/${roleId}/permissions`, { permissionIds });
-  },
-
-  // ========== User Role Assignment ==========
-  
-  /**
-   * Get user's roles and permissions
-   */
-  getUserPermissions: async (userId: number): Promise<UserPermissionsDto> => {
-    return apiRequest.get<UserPermissionsDto>(`/users/${userId}/permissions`);
-  },
-
-  /**
-   * Assign roles to a user
-   */
-  assignRolesToUser: async (userId: number, roleIds: number[]): Promise<void> => {
-    return apiRequest.post<void>(`/users/${userId}/roles`, { roleIds });
-  },
-
-  /**
-   * Remove role from user
-   */
-  removeRoleFromUser: async (userId: number, roleId: number): Promise<void> => {
-    return apiRequest.delete<void>(`/users/${userId}/roles/${roleId}`);
-  },
-
-  /**
-   * Get current user's permissions
-   */
-  getCurrentUserPermissions: async (): Promise<UserPermissionsDto> => {
-    return apiRequest.get<UserPermissionsDto>('/auth/me/permissions');
-  },
-
-  /**
-   * Check if current user has permission
-   */
-  checkPermission: async (permissionCode: string): Promise<boolean> => {
-    return apiRequest.post<boolean>('/auth/check-permission', { permissionCode });
-  },
-
-  /**
-   * Check if current user has any of the permissions
-   */
-  checkAnyPermission: async (permissionCodes: string[]): Promise<boolean> => {
-    return apiRequest.post<boolean>('/auth/check-any-permission', { permissionCodes });
-  },
-
-  /**
-   * Check if current user has all of the permissions
-   */
-  checkAllPermissions: async (permissionCodes: string[]): Promise<boolean> => {
-    return apiRequest.post<boolean>('/auth/check-all-permissions', { permissionCodes });
-  },
+  getRoles: () => rolesApiInstance.getList(),
+  getRoleById: (id: number) => rolesApiInstance.getById(id),
+  createRole: (payload: CreateRolePayload) => rolesApiInstance.create(payload),
+  updateRole: (id: number, payload: UpdateRolePayload) => rolesApiInstance.update(id, payload),
+  deleteRole: (id: number) => rolesApiInstance.delete(id),
+  getAllPermissions: () => rolesApiInstance.getAllPermissions(),
+  getRolePermissions: (roleId: number) => rolesApiInstance.getRolePermissions(roleId),
+  updateRolePermissions: (roleId: number, permissionIds: number[]) => 
+    rolesApiInstance.updateRolePermissions(roleId, permissionIds),
+  getUserPermissions: (userId: number) => rolesApiInstance.getUserPermissions(userId),
+  getCurrentUserPermissions: () => rolesApiInstance.getCurrentUserPermissions(),
+  checkPermission: (permissionCode: string) => rolesApiInstance.checkPermission(permissionCode),
+  checkAnyPermission: (permissionCodes: string[]) => rolesApiInstance.checkAnyPermission(permissionCodes),
+  checkAllPermissions: (permissionCodes: string[]) => rolesApiInstance.checkAllPermissions(permissionCodes),
 };

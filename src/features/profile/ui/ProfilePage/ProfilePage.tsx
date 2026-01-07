@@ -4,9 +4,12 @@ import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import { User, Mail, Phone, ArrowRight, Edit, Lock, LogOut, Shield, CheckCircle, XCircle, Camera, Loader2 } from "lucide-react";
 import { useProfilePageLogic } from "./ProfilePage.logic";
-import { NafathActivationDialog } from "../components/NafathActivationDialog";
+import { NafathActivationDialog } from "@/features/profile/components/NafathActivationDialog";
+import { UserRoleBadges } from "@/components/RoleBadge";
+import { useUser } from "@/core/hooks/useUser";
 
 export function ProfilePage() {
+  const user = useUser();
   const {
     isEditing,
     showChangePassword,
@@ -301,6 +304,12 @@ export function ProfilePage() {
                   {t('profile.imageRequirements')}
                 </p>
               </div>
+            </Card>
+
+            {/* User Role Badge */}
+            <Card className="p-6">
+              <h4 className="text-[#115740] mb-4">{t("profile.yourRole")}</h4>
+              <UserRoleBadges roleIds={user.roleIds} variant="detailed" />
             </Card>
 
             {/* Quick Actions */}

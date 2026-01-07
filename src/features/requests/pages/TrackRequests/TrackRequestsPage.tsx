@@ -160,22 +160,24 @@ export function TrackRequestsPage() {
               </Select>
             </div>
 
-            {/* Department Filter */}
-            <div>
-              <Select value={filterDepartment} onValueChange={handleDepartmentChange}>
-                <SelectTrigger>
-                  <SelectValue placeholder={t("requests.track.filterByDepartment")} />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">{t("requests.track.allDepartments")}</SelectItem>
-                  {departments.map((dept) => (
-                    <SelectItem key={dept.id} value={dept.id.toString()}>
-                      {isRTL ? dept.nameAr : (dept.nameEn || dept.nameAr)}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+            {/* Department Filter - Hide for normal users */}
+            {!isUser && (
+              <div>
+                <Select value={filterDepartment} onValueChange={handleDepartmentChange}>
+                  <SelectTrigger>
+                    <SelectValue placeholder={t("requests.track.filterByDepartment")} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">{t("requests.track.allDepartments")}</SelectItem>
+                    {departments.map((dept) => (
+                      <SelectItem key={dept.id} value={dept.id.toString()}>
+                        {isRTL ? dept.nameAr : (dept.nameEn || dept.nameAr)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
 
             {/* Leadership Filter */}
             <div>
@@ -187,51 +189,57 @@ export function TrackRequestsPage() {
                   <SelectItem value="all">{t("requests.track.allLeadership")}</SelectItem>
                   {leadership.map((leader) => (
                     <SelectItem key={leader.id} value={leader.id.toString()}>
-                      {isRTL ? leader.nameAr : (leader.nameEn || leader.nameAr)}
+                      {isRTL ? leader.positionTitleAr : (leader.positionTitleEn || leader.positionTitleAr)}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
 
-            {/* Start Date Filter */}
-            <div>
-              <label className="text-sm font-medium text-gray-700 mb-1 block">
-                {t("requests.track.startDate")}
-              </label>
-              <Input
-                type="date"
-                value={startDate}
-                onChange={(e) => handleStartDateChange(e.target.value)}
-                className="w-full"
-              />
-            </div>
+            {/* Start Date Filter - Hide for normal users */}
+            {!isUser && (
+              <div>
+                <label className="text-sm font-medium text-gray-700 mb-1 block">
+                  {t("requests.track.startDate")}
+                </label>
+                <Input
+                  type="date"
+                  value={startDate}
+                  onChange={(e) => handleStartDateChange(e.target.value)}
+                  className="w-full"
+                />
+              </div>
+            )}
 
-            {/* End Date Filter */}
-            <div>
-              <label className="text-sm font-medium text-gray-700 mb-1 block">
-                {t("requests.track.endDate")}
-              </label>
-              <Input
-                type="date"
-                value={endDate}
-                onChange={(e) => handleEndDateChange(e.target.value)}
-                className="w-full"
-                min={startDate}
-              />
-            </div>
+            {/* End Date Filter - Hide for normal users */}
+            {!isUser && (
+              <div>
+                <label className="text-sm font-medium text-gray-700 mb-1 block">
+                  {t("requests.track.endDate")}
+                </label>
+                <Input
+                  type="date"
+                  value={endDate}
+                  onChange={(e) => handleEndDateChange(e.target.value)}
+                  className="w-full"
+                  min={startDate}
+                />
+              </div>
+            )}
 
-            {/* Reset Dates Button */}
-            <div className="flex items-end">
-              <Button
-                variant="outline"
-                onClick={handleResetDates}
-                className="w-full gap-2"
-              >
-                <RotateCcw className="w-4 h-4" />
-                {t("requests.track.resetDates")}
-              </Button>
-            </div>
+            {/* Reset Dates Button - Hide for normal users */}
+            {!isUser && (
+              <div className="flex items-end">
+                <Button
+                  variant="outline"
+                  onClick={handleResetDates}
+                  className="w-full gap-2"
+                >
+                  <RotateCcw className="w-4 h-4" />
+                  {t("requests.track.resetDates")}
+                </Button>
+              </div>
+            )}
 
             {/* Department Assignment Filter - Admin Only */}
             {canAssignRequests && (

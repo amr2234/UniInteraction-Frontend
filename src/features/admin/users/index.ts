@@ -15,11 +15,8 @@ export {
   useUpdateUser,
   useDeleteUser,
   useToggleUserStatus,
-  useActivateUser,
-  useDeactivateUser,
   useSearchUsers,
   useUsersByRole,
-  useUsersByDepartment,
 } from "./hooks/useUsers";
 
 // Types exports

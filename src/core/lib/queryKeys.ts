@@ -1,14 +1,14 @@
-// ============================================
-// React Query Keys - Centralized for cache management
-// ============================================
+
+
+
 
 export const queryKeys = {
-  // Authentication
+
   auth: {
     user: ['auth', 'user'] as const,
   },
 
-  // Requests
+
   requests: {
     all: ['requests'] as const,
     list: (filters?: Record<string, any>) => ['requests', 'list', filters] as const,
@@ -17,13 +17,13 @@ export const queryKeys = {
     countsByStatus: ['requests', 'counts-by-status'] as const,
   },
 
-  // Notifications
+
   notifications: {
     all: ['notifications'] as const,
     user: (userId: number) => ['notifications', 'user', userId] as const,
   },
 
-  // Lookups
+
   lookups: {
     requestTypes: ['lookups', 'request-types'] as const,
     requestStatuses: ['lookups', 'request-statuses'] as const,
@@ -33,28 +33,28 @@ export const queryKeys = {
     leadership: ['lookups', 'leadership'] as const,
   },
 
-  // FAQs
+
   faqs: {
     all: ['faqs'] as const,
     list: ['faqs', 'list'] as const,
     detail: (id: number) => ['faqs', 'detail', id] as const,
   },
 
-  // Leadership
+
   leadership: {
     all: ['leadership'] as const,
     list: ['leadership', 'list'] as const,
     detail: (id: number) => ['leadership', 'detail', id] as const,
   },
 
-  // Users (Admin)
+
   users: {
     all: ['users'] as const,
     list: (filters?: Record<string, any>) => ['users', 'list', filters] as const,
     detail: (id: number) => ['users', 'detail', id] as const,
   },
 
-  // Categories (Admin)
+
   categories: {
     main: {
       all: ['categories', 'main'] as const,
@@ -73,7 +73,7 @@ export const queryKeys = {
     },
   },
 
-  // Departments (Admin)
+
   departments: {
     all: ['departments'] as const,
     list: (filters?: Record<string, any>) => ['departments', 'list', filters] as const,

@@ -4,7 +4,7 @@ export interface UserFormData {
   nameEn?: string;
   email: string;
   mobile: string;
-  nationalId?: string;
+  nationalId: string;
   studentId?: string;
   departmentId?: string;
   roleId: number;

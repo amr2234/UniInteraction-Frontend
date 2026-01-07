@@ -67,7 +67,7 @@ export const useDashboardPage = () => {
     [statusCounts]
   );
 
-  // Get recent requests that need action (Pending or In Progress) - limit to 2
+  // Get recent requests that need action (All non-closed requests) - limit to 2
   const recentRequestsNeedingAction = useMemo(
     () =>
       requestsArray

@@ -1,6 +1,6 @@
-// ============================================
-// API Response Envelope Types
-// ============================================
+
+
+
 
 export interface ApiResponse<T = any> {
   success: boolean;
@@ -37,9 +37,9 @@ export interface PaginationParams {
   sortOrder?: 'asc' | 'desc';
 }
 
-// ============================================
-// Authentication Types
-// ============================================
+
+
+
 
 export interface LoginRequest {
   email: string;
@@ -76,16 +76,16 @@ export interface UserInfo {
   roleIds: number[];
   universityId?: string;
   nationalId?: string;
-  permissions?: string[]; // Permission codes from JWT
+  permissions?: string[]; 
   isActive?: boolean;
   isInternal?: boolean;
-  profilePicture?: string; // For backward compatibility - file path/URL
-  profilePictureId?: number; // ID of the profile picture attachment
+  profilePicture?: string; 
+  profilePictureId?: number; 
 }
 
-// ============================================
-// Request (User Request) Types
-// ============================================
+
+
+
 
 export interface CreateRequestPayload {
   userId?: number;
@@ -136,9 +136,9 @@ export interface UserRequestDto {
   serviceName?: string;
   visitReasonAr?: string;
   visitReasonEn?: string;
-  visitDate?: string; // ISO-8601 format for visit date
-  visitId?: number; // Visit ID for updating visit
-  visitStatus?: number; // 1=Scheduled, 2=Accepted, 3=Rescheduled, 4=Completed
+  visitDate?: string; 
+  visitId?: number; 
+  visitStatus?: number; 
   universityLeadershipId?: number;
   universityLeadershipName?: string;
   departmentId?: number;
@@ -154,7 +154,7 @@ export interface UserRequestDto {
   updatedAt?: string;
   resolutionDetailsAr?: string;
   resolutionDetailsEn?: string;
-  attachments?: RequestAttachment[];  // Changed from Attachments to match backend
+  attachments?: RequestAttachment[];  
   resolvedBy?: string;
   resolvedAt?: string;
   relatedRequestId?: number;
@@ -216,7 +216,7 @@ export interface UpdateRequestStatusPayload {
   changedByUserId?: number;
   redirectToNewRequest?: boolean;
   relatedRequestId?: number;
-  visitId?: number; // Visit ID for updating visit status
+  visitId?: number; 
 }
 
 export interface SubmitResolutionPayload {
@@ -244,20 +244,18 @@ export interface RequestNewVisitDatePayload {
 
 export interface ScheduleVisitPayload {
   requestId: number;
-  visitDate: string; // ISO-8601 format: "2025-12-20T10:00:00Z"
+  visitDate: string; 
   leadershipId: number;
-  visitId?: number; // Optional: Visit ID for updating existing visit
+  visitId?: number; 
 }
 
 export interface UpdateVisitStatusPayload {
   visitId: number;
-  newStatus: number; // VisitStatus enum: 1=Scheduled, 2=Accepted, 3=Rescheduled, 4=Completed
-  newVisitDate?: string; // ISO string, required when status is Rescheduled (3)
+  newStatus: number; 
+  newVisitDate?: string; 
 }
 
-/**
- * Visit DTO - Represents a visit record
- */
+
 export interface VisitDto {
   id: number;
   requestId: number;
@@ -267,7 +265,7 @@ export interface VisitDto {
   leadershipName?: string;
   leadershipNameAr?: string;
   leadershipNameEn?: string;
-  status: number; // VisitStatus enum: 1=Scheduled, 2=Accepted, 3=Rescheduled, 4=Completed
+  status: number; 
   statusName?: string;
   userId?: number;
   userName?: string;
@@ -281,24 +279,24 @@ export interface VisitDto {
 
 export interface CreateRelatedRequestPayload {
   relatedRequestId: number;
-  // ... other request fields
+  
 }
 
 export interface RequestAttachment {
   id: number;
   fileName: string;
-  filePath: string;  // Backend returns filePath, not fileUrl
-  fileUrl?: string;  // Keep for backward compatibility
-  contentType: string;  // Backend returns contentType
-  fileSizeKb: number;  // Backend returns fileSizeKb, not fileSize
-  fileSize?: number;  // Keep for backward compatibility
+  filePath: string;  
+  fileUrl?: string;  
+  contentType: string;  
+  fileSizeKb: number;  
+  fileSize?: number;  
   uploadedAt: string;
-  attachmentTypeId: number; // 1 = Request Form, 2 = Resolution Response, 3 = Profile Picture
+  attachmentTypeId: number; 
 }
 
-// ============================================
-// Notification Types
-// ============================================
+
+
+
 
 export interface NotificationDto {
   id: number;
@@ -307,16 +305,16 @@ export interface NotificationDto {
   titleEn?: string;
   messageAr: string;
   messageEn?: string;
-  bodyAr: string; // Alias for messageAr
-  bodyEn?: string; // Alias for messageEn
+  bodyAr: string; 
+  bodyEn?: string; 
   type: string;
   isRead: boolean;
   relatedEntityId?: number;
   relatedEntityType?: string;
-  userRequestId?: number; // For backward compatibility
+  userRequestId?: number; 
   createdAt: string;
-  receivedAt?: string; // Client-side timestamp when notification was received
-  // Additional metadata
+  receivedAt?: string; 
+  
   senderName?: string;
   senderNameAr?: string;
   senderNameEn?: string;
@@ -328,9 +326,9 @@ export interface NotificationDto {
   requestTypeNameEn?: string;
 }
 
-// ============================================
-// Lookup Types
-// ============================================
+
+
+
 
 export interface RequestTypeDto {
   id: number;
@@ -402,9 +400,9 @@ export interface UniversityLeadershipDto {
   updatedAt?: string;
 }
 
-// ============================================
-// FAQ Types
-// ============================================
+
+
+
 
 export interface FaqDto {
   id: number;
@@ -433,9 +431,9 @@ export interface UpdateFaqPayload extends CreateFaqPayload {
   isActive?: boolean;
 }
 
-// ============================================
-// Leadership (Admin) Types
-// ============================================
+
+
+
 
 export interface CreateLeadershipPayload {
   nameAr: string;
@@ -451,9 +449,9 @@ export interface UpdateLeadershipPayload extends CreateLeadershipPayload {
   isActive?: boolean;
 }
 
-// ============================================
-// User Management Types
-// ============================================
+
+
+
 
 export interface UserDto {
   id: number;
@@ -496,9 +494,9 @@ export interface UpdateUserPayload {
   isActive?: boolean;
 }
 
-// ============================================
-// Category Management Types
-// ============================================
+
+
+
 
 export interface CreateMainCategoryPayload {
   nameAr: string;
@@ -538,9 +536,9 @@ export interface UpdateServicePayload extends CreateServicePayload {
   isActive?: boolean;
 }
 
-// ============================================
-// Roles & Permissions Types
-// ============================================
+
+
+
 
 export interface PermissionDto {
   id: number;
@@ -590,9 +588,9 @@ export interface UserPermissionsDto {
   permissionCodes: string[];
 }
 
-// ============================================
-// Notification Types
-// ============================================
+
+
+
 
 export interface NotificationDto {
   id: number;

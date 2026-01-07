@@ -109,8 +109,72 @@ export function DashboardPage() {
         {/* Employee Request Management Section - Only for Employee */}
         {isEmployee && (
           <>
+            {/* Request Overview - Redesigned and Moved to Top */}
+            <div className="mb-8">
+              <div className="bg-gradient-to-br from-[#6CAEBD] via-[#5A9FB0] to-[#875E9E] rounded-3xl p-8 shadow-2xl relative overflow-hidden">
+                {/* Decorative background elements */}
+                <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl"></div>
+                <div className="absolute bottom-0 left-0 w-48 h-48 bg-[#EABB4E]/20 rounded-full blur-2xl"></div>
+                
+                <div className="relative z-10">
+                  <div className="flex items-center gap-3 mb-6">
+                    <div className="w-12 h-12 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center">
+                      <FileSearch className="w-6 h-6 text-white" />
+                    </div>
+                    <div>
+                      <h2 className="text-white text-2xl sm:text-3xl font-bold">{t("dashboard.requestOverview")}</h2>
+                      <p className="text-white/90 text-sm">{t("dashboard.requestOverviewSubtitle")}</p>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-3 sm:grid-cols-3 gap-4 sm:gap-6">
+                    {/* Pending Requests */}
+                    <div className="group bg-white/15 backdrop-blur-md hover:bg-white/25 rounded-2xl p-6 border border-white/20 hover:border-white/40 transition-all duration-300 hover:scale-105 cursor-pointer">
+                      <div className="flex items-start justify-between mb-4">
+                        <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-[#EABB4E] to-[#D4A43D] flex items-center justify-center shadow-lg group-hover:scale-110 group-hover:rotate-6 transition-all">
+                          <Clock className="w-7 h-7 text-white" />
+                        </div>
+                        <div className="w-3 h-3 bg-[#EABB4E] rounded-full animate-pulse"></div>
+                      </div>
+                      <h3 className="text-white text-4xl sm:text-5xl font-bold mb-2 drop-shadow-lg">{requestCounts.pending}</h3>
+                      <p className="text-white/95 text-base font-semibold">{t("dashboard.employee.pendingRequests")}</p>
+                    </div>
+                    
+                    {/* In Progress Requests */}
+                    <div className="group bg-white/15 backdrop-blur-md hover:bg-white/25 rounded-2xl p-6 border border-white/20 hover:border-white/40 transition-all duration-300 hover:scale-105 cursor-pointer">
+                      <div className="flex items-start justify-between mb-4">
+                        <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-white/30 to-white/20 flex items-center justify-center shadow-lg group-hover:scale-110 group-hover:rotate-6 transition-all">
+                          <TrendingUp className="w-7 h-7 text-white" />
+                        </div>
+                        <div className="flex gap-1">
+                          <div className="w-1 h-4 bg-white/80 rounded-full animate-pulse" style={{ animationDelay: '0s' }}></div>
+                          <div className="w-1 h-5 bg-white/80 rounded-full animate-pulse" style={{ animationDelay: '0.2s' }}></div>
+                          <div className="w-1 h-6 bg-white/80 rounded-full animate-pulse" style={{ animationDelay: '0.4s' }}></div>
+                        </div>
+                      </div>
+                      <h3 className="text-white text-4xl sm:text-5xl font-bold mb-2 drop-shadow-lg">{requestCounts.inProgress}</h3>
+                      <p className="text-white/95 text-base font-semibold">{t("dashboard.employee.inProgressRequests")}</p>
+                    </div>
+                    
+                    {/* Completed Requests */}
+                    <div className="group bg-white/15 backdrop-blur-md hover:bg-white/25 rounded-2xl p-6 border border-white/20 hover:border-white/40 transition-all duration-300 hover:scale-105 cursor-pointer">
+                      <div className="flex items-start justify-between mb-4">
+                        <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-[#115740] to-[#0D4030] flex items-center justify-center shadow-lg group-hover:scale-110 group-hover:rotate-6 transition-all">
+                          <CheckCircle2 className="w-7 h-7 text-white" />
+                        </div>
+                        <div className="w-3 h-3 bg-green-400 rounded-full"></div>
+                      </div>
+                      <h3 className="text-white text-4xl sm:text-5xl font-bold mb-2 drop-shadow-lg">{requestCounts.replied + requestCounts.closed}</h3>
+                      <p className="text-white/95 text-base font-semibold">{t("dashboard.employee.completedRequests")}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
             {/* Quick Action Buttons */}
             <div className="mb-8">
+              <h3 className="text-[#2B2B2B] text-xl font-bold mb-4">إجراءات سريعة</h3>
               <div className="grid md:grid-cols-2 gap-6">
                 <Link to="/dashboard/track">
                   <Card className="p-6 hover:shadow-soft-lg transition-all hover:-translate-y-1 cursor-pointer group h-full rounded-xl border-0 shadow-soft bg-white">
@@ -131,49 +195,6 @@ export function DashboardPage() {
                     <p className="text-[#6F6F6F] text-sm">{t("dashboard.visitCalendarDesc")}</p>
                   </Card>
                 </Link>
-              </div>
-            </div>
-
-            {/* Request Status Counters - Compact & Animated */}
-            <div className="mb-8">
-              <h2 className="text-[#6CAEBD] mb-6 text-2xl font-bold">{t("dashboard.requestOverview")}</h2>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <Card className="p-6 hover:shadow-soft-lg transition-all hover:-translate-y-1 rounded-xl border-0 shadow-soft bg-gradient-to-br from-[#FFEFC1] to-[#FFF9E6] group cursor-pointer">
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-[#EABB4E] to-[#D4A43D] flex items-center justify-center group-hover:scale-110 transition-transform shadow-lg">
-                      <Clock className="w-6 h-6 text-white" />
-                    </div>
-                    <div className="w-2.5 h-2.5 bg-[#EABB4E] rounded-full animate-pulse"></div>
-                  </div>
-                  <h3 className="text-3xl font-bold text-[#EABB4E] mb-1">{requestCounts.pending}</h3>
-                  <p className="text-[#6F6F6F] text-sm font-medium">{t("dashboard.employee.pendingRequests")}</p>
-                </Card>
-                
-                <Card className="p-6 hover:shadow-soft-lg transition-all hover:-translate-y-1 rounded-xl border-0 shadow-soft bg-gradient-to-br from-[#D4EBEF] to-[#E8F4F6] group cursor-pointer">
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-[#6CAEBD] to-[#5A9AAA] flex items-center justify-center group-hover:scale-110 transition-transform group-hover:rotate-12 shadow-lg">
-                      <TrendingUp className="w-6 h-6 text-white" />
-                    </div>
-                    <div className="flex gap-0.5">
-                      <div className="w-1 h-4 bg-[#6CAEBD] rounded-full animate-pulse" style={{ animationDelay: '0s' }}></div>
-                      <div className="w-1 h-5 bg-[#6CAEBD] rounded-full animate-pulse" style={{ animationDelay: '0.2s' }}></div>
-                      <div className="w-1 h-6 bg-[#6CAEBD] rounded-full animate-pulse" style={{ animationDelay: '0.4s' }}></div>
-                    </div>
-                  </div>
-                  <h3 className="text-3xl font-bold text-[#6CAEBD] mb-1">{requestCounts.inProgress}</h3>
-                  <p className="text-[#6F6F6F] text-sm font-medium">{t("dashboard.employee.inProgressRequests")}</p>
-                </Card>
-                
-                <Card className="p-6 hover:shadow-soft-lg transition-all hover:-translate-y-1 rounded-xl border-0 shadow-soft bg-gradient-to-br from-[#D5E8E0] to-[#E6F2ED] group cursor-pointer">
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-[#115740] to-[#0D4030] flex items-center justify-center group-hover:scale-110 transition-transform shadow-lg">
-                      <CheckCircle2 className="w-6 h-6 text-white" />
-                    </div>
-                    <div className="w-2.5 h-2.5 bg-[#115740] rounded-full"></div>
-                  </div>
-                  <h3 className="text-3xl font-bold text-[#115740] mb-1">{requestCounts.replied + requestCounts.closed}</h3>
-                  <p className="text-[#6F6F6F] text-sm font-medium">{t("dashboard.employee.completedRequests")}</p>
-                </Card>
               </div>
             </div>
 

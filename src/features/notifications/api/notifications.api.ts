@@ -1,51 +1,37 @@
-import { apiRequest } from '@/core/lib/apiClient';
+import { BaseApi } from '@/core/lib/baseApi';
 import { NotificationDto } from '@/core/types/api';
 
-// ============================================
-// Notifications API Functions
-// ============================================
+class NotificationsApi extends BaseApi<NotificationDto> {
+  constructor() {
+    super('/Notifications');
+  }
+
+  async getUserNotifications(userId: number, unreadOnly = false): Promise<NotificationDto[]> {
+    return this.customGet<NotificationDto[]>(`/user/${userId}?unreadOnly=${unreadOnly}`);
+  }
+
+  async markNotificationAsRead(notificationId: number): Promise<void> {
+    return this.customPut<void>(`/${notificationId}/mark-read`);
+  }
+
+  async markAllAsRead(userId: number): Promise<void> {
+    return this.customPut<void>(`/user/${userId}/mark-all-read`);
+  }
+
+  async getUnreadCount(userId: number): Promise<number> {
+    const notifications = await this.getUserNotifications(userId, true);
+    return notifications.length;
+  }
+}
+
+const notificationsApiInstance = new NotificationsApi();
 
 export const notificationsApi = {
-  /**
-   * Get notifications for a specific user
-   * @param userId - User ID
-   * @param unreadOnly - Optional flag to get only unread notifications
-   */
-  getUserNotifications: async (userId: number, unreadOnly = false): Promise<NotificationDto[]> => {
-    const result = await apiRequest.get<NotificationDto[]>(
-      `/Notifications/user/${userId}?unreadOnly=${unreadOnly}`
-    );
-    return result;
-  },
-
-  /**
-   * Mark notification as read
-   */
-  markNotificationAsRead: async (notificationId: number): Promise<void> => {
-    return apiRequest.put<void>(`/Notifications/${notificationId}/mark-read`);
-  },
-
-  /**
-   * Mark all notifications as read for current user
-   */
-  markAllAsRead: async (userId: number): Promise<void> => {
-    return apiRequest.put<void>(`/Notifications/user/${userId}/mark-all-read`);
-  },
-
-  /**
-   * Delete a notification
-   */
-  deleteNotification: async (notificationId: number): Promise<void> => {
-    return apiRequest.delete<void>(`/Notifications/${notificationId}`);
-  },
-
-  /**
-   * Get unread notification count
-   */
-  getUnreadCount: async (userId: number): Promise<number> => {
-    const notifications = await apiRequest.get<NotificationDto[]>(
-      `/Notifications/user/${userId}?unreadOnly=true`
-    );
-    return notifications.length;
-  },
+  getUserNotifications: (userId: number, unreadOnly?: boolean) => 
+    notificationsApiInstance.getUserNotifications(userId, unreadOnly),
+  markNotificationAsRead: (notificationId: number) => 
+    notificationsApiInstance.markNotificationAsRead(notificationId),
+  markAllAsRead: (userId: number) => notificationsApiInstance.markAllAsRead(userId),
+  deleteNotification: (notificationId: number) => notificationsApiInstance.delete(notificationId),
+  getUnreadCount: (userId: number) => notificationsApiInstance.getUnreadCount(userId),
 };

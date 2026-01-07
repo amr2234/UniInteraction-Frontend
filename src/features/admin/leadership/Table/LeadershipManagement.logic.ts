@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { useI18n } from "@/i18n";
@@ -9,146 +9,141 @@ import {
 } from "@/features/admin/leadership/hooks/useLeadership";
 import { useDepartmentsLookup } from "@/features/lookups/hooks/useLookups";
 import type { UniversityLeadershipDto } from "@/core/types/api";
+import { formatDateArabic } from "@/core/utils/dateUtils";
 
 export const useLeadershipManagement = () => {
   const navigate = useNavigate();
   const { t, language } = useI18n();
 
-  // Filters state
-  const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [departmentFilter, setDepartmentFilter] = useState<string>("all");
-  const [pageNumber, setPageNumber] = useState(1);
-  const [pageSize] = useState(10);
+  const [filters, setFilters] = useState({
+    searchTerm: "",
+    statusFilter: "all",
+    departmentFilter: "all",
+    pageNumber: 1,
+    pageSize: 10,
+  });
 
-  // Dialog state
+  
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedLeader, setSelectedLeader] = useState<UniversityLeadershipDto | null>(null);
 
-  // Build filters object for API
-  const filters = useMemo(
+  
+  const queryFilters = useMemo(
     () => ({
-      searchTerm: searchTerm || undefined,
-      isActive: statusFilter === "all" ? undefined : statusFilter === "active",
-      departmentId: departmentFilter === "all" ? undefined : Number(departmentFilter),
-      pageNumber,
-      pageSize,
+      searchTerm: filters.searchTerm || undefined,
+      isActive: filters.statusFilter === "all" ? undefined : filters.statusFilter === "active",
+      departmentId: filters.departmentFilter === "all" ? undefined : Number(filters.departmentFilter),
+      pageNumber: filters.pageNumber,
+      pageSize: filters.pageSize,
     }),
-    [searchTerm, statusFilter, departmentFilter, pageNumber, pageSize]
+    [filters]
   );
 
-  // API hooks
-  const { data, isLoading, error, refetch } = useLeadership(filters);
+  
+  const { data, isLoading, error } = useLeadership(queryFilters);
   const deleteLeadershipMutation = useDeleteLeadership();
   const toggleStatusMutation = useToggleLeadershipStatus();
   const { data: departments = [] } = useDepartmentsLookup();
 
-  // Reset to page 1 when filters change
-  useEffect(() => {
-    setPageNumber(1);
-  }, [searchTerm, statusFilter, departmentFilter]);
+  
+  const handleFilterChange = useCallback((field: string, value: string | number) => {
+    setFilters((prev) => ({
+      ...prev,
+      [field]: value,
+      ...(field !== "pageNumber" && { pageNumber: 1 }),
+    }));
+  }, []);
 
-  // Handlers
-  const handleSearchChange = (value: string) => {
-    setSearchTerm(value);
-  };
+  const handleSearchChange = useCallback((value: string) => {
+    handleFilterChange("searchTerm", value);
+  }, [handleFilterChange]);
 
-  const handleStatusFilterChange = (value: string) => {
-    setStatusFilter(value);
-  };
+  const handleStatusFilterChange = useCallback((value: string) => {
+    handleFilterChange("statusFilter", value);
+  }, [handleFilterChange]);
 
-  const handleDepartmentFilterChange = (value: string) => {
-    setDepartmentFilter(value);
-  };
+  const handleDepartmentFilterChange = useCallback((value: string) => {
+    handleFilterChange("departmentFilter", value);
+  }, [handleFilterChange]);
 
-  const handlePageChange = (newPage: number) => {
-    setPageNumber(newPage);
-  };
+  const handlePageChange = useCallback((newPage: number) => {
+    handleFilterChange("pageNumber", newPage);
+  }, [handleFilterChange]);
 
-  const handleAddLeader = () => {
+  const handleAddLeader = useCallback(() => {
     navigate("/admin/leadership/new");
-  };
+  }, [navigate]);
 
-  const handleEditLeader = (leaderId: number) => {
+  const handleEditLeader = useCallback((leaderId: number) => {
     navigate(`/admin/leadership/edit/${leaderId}`);
-  };
+  }, [navigate]);
 
-  const handleToggleActive = async (leader: UniversityLeadershipDto) => {
+  const handleToggleActive = useCallback(async (leader: UniversityLeadershipDto) => {
     try {
       await toggleStatusMutation.mutateAsync({
         id: leader.id,
         isActive: !leader.isActive,
       });
-      refetch();
     } catch (error) {
-      // Error is handled by the hook
+      
     }
-  };
+  }, [toggleStatusMutation]);
 
-  const handleDeleteClick = (leader: UniversityLeadershipDto) => {
+  const handleDeleteClick = useCallback((leader: UniversityLeadershipDto) => {
     // Blur the active element to prevent aria-hidden focus trap warning
     if (document.activeElement instanceof HTMLElement) {
       document.activeElement.blur();
     }
     setSelectedLeader(leader);
     setIsDeleteDialogOpen(true);
-  };
+  }, []);
 
-  const handleDeleteConfirm = async () => {
+  const handleDeleteConfirm = useCallback(async () => {
     if (!selectedLeader) return;
 
     try {
       await deleteLeadershipMutation.mutateAsync(selectedLeader.id);
       setIsDeleteDialogOpen(false);
       setSelectedLeader(null);
-      refetch();
     } catch (error) {
-      // Error is handled by the hook
+      
     }
-  };
+  }, [selectedLeader, deleteLeadershipMutation]);
 
-  const handleDeleteCancel = () => {
+  const handleDeleteCancel = useCallback(() => {
     setIsDeleteDialogOpen(false);
     setSelectedLeader(null);
-  };
+  }, []);
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("ar-SA", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    });
-  };
-
-  const getDepartmentName = (departmentId?: number) => {
+  const getDepartmentName = useCallback((departmentId?: number) => {
     if (!departmentId) return "-";
     const department = departments.find((dept) => dept.id === departmentId);
     if (!department) return "-";
     return language === "ar" ? department.nameAr : (department.nameEn || department.nameAr);
-  };
+  }, [departments, language]);
 
   return {
-    // Data
+    
     leadership: data?.items || [],
     totalCount: data?.totalCount || 0,
     totalPages: data?.totalPages || 0,
-    currentPage: pageNumber,
+    currentPage: filters.pageNumber,
     isLoading,
     error,
 
-    // Filters
-    searchTerm,
-    statusFilter,
-    departmentFilter,
+    
+    searchTerm: filters.searchTerm,
+    statusFilter: filters.statusFilter,
+    departmentFilter: filters.departmentFilter,
     departments,
 
-    // Delete dialog
+    
     isDeleteDialogOpen,
     selectedLeader,
     isDeleting: deleteLeadershipMutation.isPending,
     isToggling: toggleStatusMutation.isPending,
 
-    // Handlers
+    
     handleSearchChange,
     handleStatusFilterChange,
     handleDepartmentFilterChange,
@@ -159,7 +154,7 @@ export const useLeadershipManagement = () => {
     handleDeleteClick,
     handleDeleteConfirm,
     handleDeleteCancel,
-    formatDate,
+    formatDate: formatDateArabic,
     getDepartmentName,
   };
 };

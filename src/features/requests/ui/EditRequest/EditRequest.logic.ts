@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -11,6 +11,7 @@ import { RequestType } from "@/core/constants/requestTypes";
 import { queryKeys } from "@/core/lib/queryKeys";
 import { apiRequest } from "@/core/lib/apiClient";
 import type { UserRequestDto } from "@/core/types/api";
+import type { EditFormData, FormErrors } from "./EditRequest.types";
 
 // Regex patterns for validation (same as request form)
 const hasArabicRegex = /[\u0600-\u06FF]/;
@@ -18,39 +19,25 @@ const noEnglishRegex = /^[^a-zA-Z]*$/;
 const hasEnglishRegex = /[a-zA-Z]/;
 const noArabicRegex = /^[^\u0600-\u06FF]*$/;
 
-interface EditFormData {
-  titleAr: string;
-  titleEn?: string;
-  subjectAr: string;
-  subjectEn?: string;
-  additionalDetailsAr?: string;
-  additionalDetailsEn?: string;
-  mainCategoryId?: number;
-  subCategoryId?: number;
-  serviceId?: number;
-  visitReasonAr?: string;
-  visitReasonEn?: string;
-  universityLeadershipId?: number;
-}
-
-interface FormErrors {
-  [key: string]: string;
-}
-
 export const useEditRequestLogic = () => {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const { t, language } = useI18n();
-  const { isSuperAdmin, isEmployee, isUser } = useUserRole();
+  const { isSuperAdmin, isAdmin, isEmployee, isUser } = useUserRole();
   const queryClient = useQueryClient();
 
-  // State
-  const [formData, setFormData] = useState<EditFormData>({
-    titleAr: "",
-    subjectAr: "",
+  // Consolidated state for better performance
+  const [state, setState] = useState({
+    formData: {
+      titleAr: "",
+      subjectAr: "",
+    } as EditFormData,
+    formErrors: {} as FormErrors,
+    isConfirmDialogOpen: false,
   });
-  const [formErrors, setFormErrors] = useState<FormErrors>({});
-  const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false);
+
+  // Destructure state for easier access
+  const { formData, formErrors, isConfirmDialogOpen } = state;
 
   // Fetch request details
   const { data: request, isLoading: isLoadingRequest } = useRequestDetails(id || "");
@@ -68,32 +55,33 @@ export const useEditRequestLogic = () => {
   const canEditRequest = useMemo(() => {
     if (!request) return false;
 
-    // Super Admin can always edit
-    if (isSuperAdmin) return true;
-
-    // Employee can only edit RECEIVED status requests
-    if (isEmployee && request.requestStatusId === RequestStatus.RECEIVED) return true;
+    // Only Super Admin and Admin can edit requests
+    // Employees are not allowed to edit
+    if (isSuperAdmin || isAdmin) return true;
 
     return false;
-  }, [request, isSuperAdmin, isEmployee]);
+  }, [request, isSuperAdmin, isAdmin]);
 
   // Initialize form data when request is loaded
   useEffect(() => {
     if (request) {
-      setFormData({
-        titleAr: request.titleAr || "",
-        titleEn: request.titleEn,
-        subjectAr: request.subjectAr || "",
-        subjectEn: request.subjectEn,
-        additionalDetailsAr: request.additionalDetailsAr,
-        additionalDetailsEn: request.additionalDetailsEn,
-        mainCategoryId: request.mainCategoryId,
-        subCategoryId: request.subCategoryId,
-        serviceId: request.serviceId,
-        visitReasonAr: request.visitReasonAr,
-        visitReasonEn: request.visitReasonEn,
-        universityLeadershipId: request.universityLeadershipId,
-      });
+      setState((prev) => ({
+        ...prev,
+        formData: {
+          titleAr: request.titleAr || "",
+          titleEn: request.titleEn,
+          subjectAr: request.subjectAr || "",
+          subjectEn: request.subjectEn,
+          additionalDetailsAr: request.additionalDetailsAr,
+          additionalDetailsEn: request.additionalDetailsEn,
+          mainCategoryId: request.mainCategoryId,
+          subCategoryId: request.subCategoryId,
+          serviceId: request.serviceId,
+          visitReasonAr: request.visitReasonAr,
+          visitReasonEn: request.visitReasonEn,
+          universityLeadershipId: request.universityLeadershipId,
+        },
+      }));
     }
   }, [request]);
 
@@ -115,22 +103,27 @@ export const useEditRequestLogic = () => {
     },
   });
 
-  // Handle input change
-  const handleInputChange = (field: keyof EditFormData, value: any) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
-
-    // Clear error for this field
-    if (formErrors[field]) {
-      setFormErrors((prev) => {
-        const newErrors = { ...prev };
+  // Handle input change - Memoized for performance
+  const handleInputChange = useCallback((field: keyof EditFormData, value: any) => {
+    setState((prev) => {
+      const newFormData = { ...prev.formData, [field]: value };
+      const newErrors = { ...prev.formErrors };
+      
+      // Clear error for this field
+      if (newErrors[field]) {
         delete newErrors[field];
-        return newErrors;
-      });
-    }
-  };
+      }
+      
+      return {
+        ...prev,
+        formData: newFormData,
+        formErrors: newErrors,
+      };
+    });
+  }, []);
 
-  // Validate form
-  const validateForm = (): boolean => {
+  // Validate form - Memoized validation logic
+  const validateForm = useCallback((): boolean => {
     const errors: FormErrors = {};
 
     // Title Arabic validation
@@ -183,12 +176,12 @@ export const useEditRequestLogic = () => {
       }
     }
 
-    setFormErrors(errors);
+    setState((prev) => ({ ...prev, formErrors: errors }));
     return Object.keys(errors).length === 0;
-  };
+  }, [formData, isVisitRequest, t]);
 
-  // Handle submit
-  const handleSubmit = async (e: React.FormEvent) => {
+  // Handle submit - Memoized
+  const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!validateForm()) {
@@ -196,19 +189,24 @@ export const useEditRequestLogic = () => {
       return;
     }
 
-    setIsConfirmDialogOpen(true);
-  };
+    setState((prev) => ({ ...prev, isConfirmDialogOpen: true }));
+  }, [validateForm, t]);
 
-  // Confirm and save changes
-  const confirmSave = async () => {
-    setIsConfirmDialogOpen(false);
+  // Confirm and save changes - Memoized
+  const confirmSave = useCallback(async () => {
+    setState((prev) => ({ ...prev, isConfirmDialogOpen: false }));
     updateRequestMutation.mutate(formData);
-  };
+  }, [formData, updateRequestMutation]);
 
-  // Cancel edit
-  const handleCancel = () => {
+  // Cancel edit - Memoized
+  const handleCancel = useCallback(() => {
     navigate(`/dashboard/request/${id}`);
-  };
+  }, [navigate, id]);
+
+  // Toggle dialog - Memoized
+  const setIsConfirmDialogOpen = useCallback((value: boolean) => {
+    setState((prev) => ({ ...prev, isConfirmDialogOpen: value }));
+  }, []);
 
   return {
     // State
@@ -228,6 +226,7 @@ export const useEditRequestLogic = () => {
     isComplaintRequest,
     isVisitRequest,
     canEditRequest,
+    isAdmin,
     isSuperAdmin,
     isEmployee,
 

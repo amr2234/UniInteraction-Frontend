@@ -159,7 +159,7 @@ export const requestsApi = {
 
   assignDepartment: async (
     requestId: number | string,
-    departmentId: number
+    departmentId: number | null
   ): Promise<UserRequestDto> => {
     return apiRequest.put<UserRequestDto>(
       `/requests/${requestId}/assign-department`,

@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useI18n } from "@/i18n";
 import { useHasPermission } from "@/core/hooks/usePermissions";
@@ -7,12 +7,14 @@ import { PERMISSIONS } from "@/core/constants/permissions";
 import { RequestStatus, getRequestStatusName } from "@/core/constants/requestStatuses";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { requestsApi } from "@/features/requests/api/requests.api";
-import { lookupsApi } from "@/features/lookups/api/lookups.api";
+import {
+  useDepartmentsLookup,
+  useLeadershipLookup,
+} from "@/features/lookups/hooks/useLookups";
 import { apiRequest } from "@/core/lib/apiClient";
 import { toast } from "sonner";
 import type { UserRequestDto, PaginatedResponse } from "@/core/types/api";
-
-
+import type { Department } from "./TrackRequests.types";
 
 export const REQUEST_TYPES = {
   INQUIRY: 1,
@@ -32,14 +34,6 @@ export const REQUEST_TYPE_NAMES_EN = {
   [REQUEST_TYPES.VISIT]: "Visit Booking",
 } as const;
 
-// Department type
-export interface Department {
-  id: number;
-  nameAr: string;
-  nameEn?: string;
-  code?: string;
-}
-
 
 
 export const useTrackRequests = () => {
@@ -53,58 +47,52 @@ export const useTrackRequests = () => {
   const { isAdmin, isEmployee, isSuperAdmin, isUser } = useUserRole();
 
   // State
-  const [searchQuery, setSearchQuery] = useState("");
-  const [filterStatus, setFilterStatus] = useState<string>("all");
-  const [filterType, setFilterType] = useState<string>("all");
-  const [filterDepartment, setFilterDepartment] = useState<string>("all");
-  const [filterLeadership, setFilterLeadership] = useState<string>("all");
-  const [filterDepartmentAssignment, setFilterDepartmentAssignment] = useState<string>("all");
-  const [filterUserAssignment, setFilterUserAssignment] = useState<string>("all");
-  const [startDate, setStartDate] = useState<string>("");
-  const [endDate, setEndDate] = useState<string>("");
-  const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize] = useState(10);
+  const [filters, setFilters] = useState({
+    searchQuery: "",
+    filterStatus: "all",
+    filterType: "all",
+    filterDepartment: "all",
+    filterLeadership: "all",
+    filterDepartmentAssignment: "all",
+    filterUserAssignment: "all",
+    startDate: "",
+    endDate: "",
+    currentPage: 1,
+    pageSize: 10,
+  });
 
   // Fetch requests with pagination
   const { data: requestsData, isLoading: isLoadingRequests } = useQuery<PaginatedResponse<UserRequestDto> | UserRequestDto[]>({
-    queryKey: ['requests', 'paginated', currentPage, pageSize, searchQuery, filterStatus, filterType, filterDepartment, filterLeadership, startDate, endDate],
+    queryKey: ['requests', 'paginated', filters.currentPage, filters.pageSize, filters.searchQuery, filters.filterStatus, filters.filterType, filters.filterDepartment, filters.filterLeadership, filters.startDate, filters.endDate],
     queryFn: async () => {
-      const filters: any = {
-        pageNumber: currentPage,
-        pageSize: pageSize,
+      const apiFilters: any = {
+        pageNumber: filters.currentPage,
+        pageSize: filters.pageSize,
       };
-      if (searchQuery) filters.searchTerm = searchQuery;
-      if (filterStatus !== 'all') {
+      if (filters.searchQuery) apiFilters.searchTerm = filters.searchQuery;
+      if (filters.filterStatus !== 'all') {
         const statusMap: Record<string, RequestStatus> = {
           new: RequestStatus.RECEIVED,
           review: RequestStatus.UNDER_REVIEW,
           processing: RequestStatus.UNDER_REVIEW,
           closed: RequestStatus.CLOSED,
         };
-        filters.requestStatusId = statusMap[filterStatus];
+        apiFilters.requestStatusId = statusMap[filters.filterStatus];
       }
-      if (filterType !== 'all') filters.requestTypeId = parseInt(filterType);
-      if (filterDepartment !== 'all') filters.departmentId = parseInt(filterDepartment);
-      if (filterLeadership !== 'all') filters.universityLeadershipId = parseInt(filterLeadership);
-      if (startDate) filters.startDate = startDate;
-      if (endDate) filters.endDate = endDate;
+      if (filters.filterType !== 'all') apiFilters.requestTypeId = parseInt(filters.filterType);
+      if (filters.filterDepartment !== 'all') apiFilters.departmentId = parseInt(filters.filterDepartment);
+      if (filters.filterLeadership !== 'all') apiFilters.universityLeadershipId = parseInt(filters.filterLeadership);
+      if (filters.startDate) apiFilters.startDate = filters.startDate;
+      if (filters.endDate) apiFilters.endDate = filters.endDate;
       
       // Use getUserRequests with enablePagination=true (single unified API)
-      return requestsApi.getUserRequests({ ...filters, enablePagination: true });
+      return requestsApi.getUserRequests({ ...apiFilters, enablePagination: true });
     },
   });
 
-  // Fetch departments
-  const { data: departmentsData } = useQuery({
-    queryKey: ['departments', 'lookup'],
-    queryFn: lookupsApi.getDepartments,
-  });
-
-  // Fetch leadership
-  const { data: leadershipData } = useQuery({
-    queryKey: ['leadership', 'lookup'],
-    queryFn: lookupsApi.getUniversityLeaderships,
-  });
+  // Fetch departments and leadership
+  const { data: departmentsData } = useDepartmentsLookup();
+  const { data: leadershipData } = useLeadershipLookup();
 
   // Handle both paginated and non-paginated responses
   const requests = Array.isArray(requestsData) 
@@ -168,20 +156,20 @@ export const useTrackRequests = () => {
       // Department assignment filter
       const hasDepartmentAssignment = req.assignedDepartmentId !== undefined && req.assignedDepartmentId !== null;
       const matchesDepartmentAssignment =
-        filterDepartmentAssignment === "all" ||
-        (filterDepartmentAssignment === "assigned" && hasDepartmentAssignment) ||
-        (filterDepartmentAssignment === "unassigned" && !hasDepartmentAssignment);
+        filters.filterDepartmentAssignment === "all" ||
+        (filters.filterDepartmentAssignment === "assigned" && hasDepartmentAssignment) ||
+        (filters.filterDepartmentAssignment === "unassigned" && !hasDepartmentAssignment);
 
       // User assignment filter
       const hasUserAssignment = req.assignedToUserId !== undefined && req.assignedToUserId !== null;
       const matchesUserAssignment =
-        filterUserAssignment === "all" ||
-        (filterUserAssignment === "assigned" && hasUserAssignment) ||
-        (filterUserAssignment === "unassigned" && !hasUserAssignment);
+        filters.filterUserAssignment === "all" ||
+        (filters.filterUserAssignment === "assigned" && hasUserAssignment) ||
+        (filters.filterUserAssignment === "unassigned" && !hasUserAssignment);
 
       return matchesDepartmentAssignment && matchesUserAssignment;
     });
-  }, [enrichedRequests, filterDepartmentAssignment, filterUserAssignment]);
+  }, [enrichedRequests, filters.filterDepartmentAssignment, filters.filterUserAssignment]);
 
   // Statistics from API
   const stats = useMemo(() => {
@@ -194,79 +182,90 @@ export const useTrackRequests = () => {
   }, [enrichedRequests, totalCount]);
 
   // Handlers
-  const handleSearchChange = (value: string) => {
-    setSearchQuery(value);
-  };
+  const handleFilterChange = useCallback((field: string, value: string | number) => {
+    setFilters((prev) => ({
+      ...prev,
+      [field]: value,
+      ...(field !== "currentPage" && { currentPage: 1 }),
+    }));
+  }, []);
 
-  const handleStatusChange = (value: string) => {
-    setFilterStatus(value);
-  };
+  const handleSearchChange = useCallback((value: string) => {
+    handleFilterChange("searchQuery", value);
+  }, [handleFilterChange]);
 
-  const handleTypeChange = (value: string) => {
-    setFilterType(value);
-  };
+  const handleStatusChange = useCallback((value: string) => {
+    handleFilterChange("filterStatus", value);
+  }, [handleFilterChange]);
 
-  const handleDepartmentChange = (value: string) => {
-    setFilterDepartment(value);
-    setCurrentPage(1);
-  };
+  const handleTypeChange = useCallback((value: string) => {
+    handleFilterChange("filterType", value);
+  }, [handleFilterChange]);
 
-  const handleLeadershipChange = (value: string) => {
-    setFilterLeadership(value);
-    setCurrentPage(1);
-  };
+  const handleDepartmentChange = useCallback((value: string) => {
+    handleFilterChange("filterDepartment", value);
+  }, [handleFilterChange]);
 
-  const handleDepartmentAssignmentChange = (value: string) => {
-    setFilterDepartmentAssignment(value);
-  };
+  const handleLeadershipChange = useCallback((value: string) => {
+    handleFilterChange("filterLeadership", value);
+  }, [handleFilterChange]);
 
-  const handleUserAssignmentChange = (value: string) => {
-    setFilterUserAssignment(value);
-  };
+  const handleDepartmentAssignmentChange = useCallback((value: string) => {
+    handleFilterChange("filterDepartmentAssignment", value);
+  }, [handleFilterChange]);
 
-  const handleStartDateChange = (value: string) => {
-    setStartDate(value);
-    setCurrentPage(1);
-  };
+  const handleUserAssignmentChange = useCallback((value: string) => {
+    handleFilterChange("filterUserAssignment", value);
+  }, [handleFilterChange]);
 
-  const handleEndDateChange = (value: string) => {
-    setEndDate(value);
-    setCurrentPage(1);
-  };
+  const handleStartDateChange = useCallback((value: string) => {
+    handleFilterChange("startDate", value);
+  }, [handleFilterChange]);
 
-  const handlePageChange = (page: number) => {
-    setCurrentPage(page);
-  };
+  const handleEndDateChange = useCallback((value: string) => {
+    handleFilterChange("endDate", value);
+  }, [handleFilterChange]);
 
-  const handleBackToDashboard = () => {
+  const handlePageChange = useCallback((page: number) => {
+    handleFilterChange("currentPage", page);
+  }, [handleFilterChange]);
+
+  const handleBackToDashboard = useCallback(() => {
     navigate("/dashboard");
-  };
+  }, [navigate]);
 
-  const handleViewRequest = (requestId: number) => {
+  const handleViewRequest = useCallback((requestId: number) => {
     navigate(`/dashboard/request/${requestId}`);
-  };
+  }, [navigate]);
 
-  const handleAssignDepartment = (requestId: number, departmentId: number) => {
+  const handleAssignDepartment = useCallback((requestId: number, departmentId: number) => {
     assignDepartmentMutation.mutate({ requestId, departmentId });
-  };
+  }, [assignDepartmentMutation]);
 
-  const handleResetFilters = () => {
-    setSearchQuery("");
-    setFilterStatus("all");
-    setFilterType("all");
-    setFilterDepartment("all");
-    setFilterLeadership("all");
-    setFilterDepartmentAssignment("all");
-    setFilterUserAssignment("all");
-    setStartDate("");
-    setEndDate("");
-    setCurrentPage(1);
-  };
+  const handleResetFilters = useCallback(() => {
+    setFilters({
+      searchQuery: "",
+      filterStatus: "all",
+      filterType: "all",
+      filterDepartment: "all",
+      filterLeadership: "all",
+      filterDepartmentAssignment: "all",
+      filterUserAssignment: "all",
+      startDate: "",
+      endDate: "",
+      currentPage: 1,
+      pageSize: 10,
+    });
+  }, []);
 
-  const handleResetDates = () => {
-    setStartDate("");
-    setEndDate("");
-  };
+  const handleResetDates = useCallback(() => {
+    setFilters((prev) => ({
+      ...prev,
+      startDate: "",
+      endDate: "",
+      currentPage: 1,
+    }));
+  }, []);
 
   // Helper to get request type name
   const getRequestTypeName = (typeId: number) => {
@@ -298,20 +297,20 @@ export const useTrackRequests = () => {
 
   return {
     // State
-    searchQuery,
-    filterStatus,
-    filterType,
-    filterDepartment,
-    filterLeadership,
-    filterDepartmentAssignment,
-    filterUserAssignment,
-    startDate,
-    endDate,
+    searchQuery: filters.searchQuery,
+    filterStatus: filters.filterStatus,
+    filterType: filters.filterType,
+    filterDepartment: filters.filterDepartment,
+    filterLeadership: filters.filterLeadership,
+    filterDepartmentAssignment: filters.filterDepartmentAssignment,
+    filterUserAssignment: filters.filterUserAssignment,
+    startDate: filters.startDate,
+    endDate: filters.endDate,
     filteredRequests,
     stats,
     departments,
     leadership,
-    currentPage,
+    currentPage: filters.currentPage,
     totalPages,
     totalCount,
     isLoadingRequests,

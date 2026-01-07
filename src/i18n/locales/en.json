@@ -248,6 +248,7 @@
     "viewAllRequests": "View All Requests →",
     "viewAll": "View All",
     "requestOverview": "Request Overview",
+    "requestOverviewSubtitle": "Current Requests Statistics",
     "recentActivities": "Recent Activities",
     "noRecentActivities": "No recent activities",
     "visitCalendar": "Visit Schedule",
@@ -911,7 +912,9 @@
     "pictureUploadSuccess": "Profile picture updated successfully",
     "pictureUploadError": "Failed to upload profile picture",
     "invalidImageType": "Invalid file type. Please upload JPG, PNG, or WEBP image.",
-    "imageTooLarge": "Image size exceeds 5MB. Please choose a smaller file."
+    "imageTooLarge": "Image size exceeds 5MB. Please choose a smaller file.",
+    "role": "Role",
+    "yourRole": "Your Role"
   },
   "notifications": {
     "title": "Notifications",

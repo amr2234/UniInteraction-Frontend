@@ -473,16 +473,18 @@ export function RequestForm({ requestTypeId }: RequestFormProps) {
                       name="hasRelatedComplaint"
                       control={control}
                       render={({ field }) => (
-                        field.value === false && (
-                          <div className="mt-3 p-3 bg-orange-50 border border-orange-200 rounded-lg">
-                            <div className="flex items-start gap-2">
-                              <AlertTriangle  className="w-5 h-5 text-orange-600 mt-0.5 flex-shrink-0" />
-                              <p className="text-sm text-orange-800">
-                                {t("requests.visitWithoutComplaintWarning")}
-                              </p>
+                        <>
+                          {field.value === false && (
+                            <div className="mt-3 p-3 bg-orange-50 border border-orange-200 rounded-lg">
+                              <div className="flex items-start gap-2">
+                                <AlertTriangle  className="w-5 h-5 text-orange-600 mt-0.5 flex-shrink-0" />
+                                <p className="text-sm text-orange-800">
+                                  {t("requests.visitWithoutComplaintWarning")}
+                                </p>
+                              </div>
                             </div>
-                          </div>
-                        )
+                          )}
+                        </>
                       )}
                     />
                     
@@ -491,85 +493,87 @@ export function RequestForm({ requestTypeId }: RequestFormProps) {
                       name="hasRelatedComplaint"
                       control={control}
                       render={({ field: hasComplaintField }) => (
-                        hasComplaintField.value === true && (
-                          <Controller
-                            name="relatedRequestId"
-                            control={control}
-                            render={({ field: requestField }) => (
-                              <div className="mt-3">
-                                <Label className="text-sm text-gray-700 mb-2 block">
-                                  {t("requests.selectPreviousRequest")}
-                                  <span className="text-red-500"> *</span>
-                                </Label>
-                                <Popover open={requestOpen} onOpenChange={setRequestOpen}>
-                                  <PopoverTrigger asChild>
-                                    <Button
-                                      variant="outline"
-                                      role="combobox"
-                                      aria-expanded={requestOpen}
-                                      className={`w-full rounded-xl justify-between ${
-                                        errors.relatedRequestId ? "border-red-500" : ""
-                                      }`}
-                                    >
-                                      {requestField.value
-                                        ? userRequests.find((req) => req.id.toString() === requestField.value)?.titleAr || 
-                                          userRequests.find((req) => req.id.toString() === requestField.value)?.requestNumber
-                                        : t("requests.selectPreviousRequestPlaceholder")}
-                                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                                    </Button>
-                                  </PopoverTrigger>
-                                  <PopoverContent className="w-full p-0">
-                                    <Command>
-                                      <CommandInput placeholder={t("common.search")} />
-                                      <CommandEmpty>
-                                        {userRequests.length === 0 
-                                          ? t("common.noData") + " - No previous complaints found"
-                                          : t("common.noData")}
-                                      </CommandEmpty>
-                                      <CommandGroup className="max-h-[200px] overflow-auto">
-                                        {userRequests && userRequests.length > 0 ? (
-                                          userRequests.map((request) => (
-                                            <CommandItem
-                                              key={request.id}
-                                              value={`${request.requestNumber} ${request.titleAr}`}
-                                              onSelect={() => {
-                                                requestField.onChange(request.id.toString());
-                                                setRequestOpen(false);
-                                              }}
-                                            >
-                                              <Check
-                                                className={cn(
-                                                  "mr-2 h-4 w-4",
-                                                  requestField.value === request.id.toString()
-                                                    ? "opacity-100"
-                                                    : "opacity-0"
-                                                )}
-                                              />
-                                              <div className="flex-1">
-                                                <p className="font-medium">{language === "ar" ? request.titleAr : (request.titleEn || request.titleAr)}</p>
-                                                <p className="text-xs text-gray-500">{request.requestNumber}</p>
-                                              </div>
-                                            </CommandItem>
-                                          ))
-                                        ) : (
-                                          <div className="p-4 text-sm text-gray-500 text-center">
-                                            No previous complaints found
-                                          </div>
-                                        )}
-                                      </CommandGroup>
-                                    </Command>
-                                  </PopoverContent>
-                                </Popover>
-                                {errors.relatedRequestId && (
-                                  <p className="text-red-500 text-sm mt-1 flex items-center gap-1">
-                                    <AlertTriangle className="w-3 h-3" />
-                                    {errors.relatedRequestId.message}
-                                  </p>
-                                )}
-                              </div>
-                            )}
-                          />
-                        )
+                        <>
+                          {hasComplaintField.value === true && (
+                            <Controller
+                              name="relatedRequestId"
+                              control={control}
+                              render={({ field: requestField }) => (
+                                <div className="mt-3">
+                                  <Label className="text-sm text-gray-700 mb-2 block">
+                                    {t("requests.selectPreviousRequest")}
+                                    <span className="text-red-500"> *</span>
+                                  </Label>
+                                  <Popover open={requestOpen} onOpenChange={setRequestOpen}>
+                                    <PopoverTrigger asChild>
+                                      <Button
+                                        variant="outline"
+                                        role="combobox"
+                                        aria-expanded={requestOpen}
+                                        className={`w-full rounded-xl justify-between ${
+                                          errors.relatedRequestId ? "border-red-500" : ""
+                                        }`}
+                                      >
+                                        {requestField.value
+                                          ? userRequests.find((req) => req.id.toString() === requestField.value)?.titleAr || 
+                                            userRequests.find((req) => req.id.toString() === requestField.value)?.requestNumber
+                                          : t("requests.selectPreviousRequestPlaceholder")}
+                                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                      </Button>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-full p-0">
+                                      <Command>
+                                        <CommandInput placeholder={t("common.search")} />
+                                        <CommandEmpty>
+                                          {userRequests.length === 0 
+                                            ? t("common.noData") + " - No previous complaints found"
+                                            : t("common.noData")}
+                                        </CommandEmpty>
+                                        <CommandGroup className="max-h-[200px] overflow-auto">
+                                          {userRequests && userRequests.length > 0 ? (
+                                            userRequests.map((request) => (
+                                              <CommandItem
+                                                key={request.id}
+                                                value={`${request.requestNumber} ${request.titleAr}`}
+                                                onSelect={() => {
+                                                  requestField.onChange(request.id.toString());
+                                                  setRequestOpen(false);
+                                                }}
+                                              >
+                                                <Check
+                                                  className={cn(
+                                                    "mr-2 h-4 w-4",
+                                                    requestField.value === request.id.toString()
+                                                      ? "opacity-100"
+                                                      : "opacity-0"
+                                                  )}
+                                                />
+                                                <div className="flex-1">
+                                                  <p className="font-medium">{language === "ar" ? request.titleAr : (request.titleEn || request.titleAr)}</p>
+                                                  <p className="text-xs text-gray-500">{request.requestNumber}</p>
+                                                </div>
+                                              </CommandItem>
+                                            ))
+                                          ) : (
+                                            <div className="p-4 text-sm text-gray-500 text-center">
+                                              No previous complaints found
+                                            </div>
+                                          )}
+                                        </CommandGroup>
+                                      </Command>
+                                    </PopoverContent>
+                                  </Popover>
+                                  {errors.relatedRequestId && (
+                                    <p className="text-red-500 text-sm mt-1 flex items-center gap-1">
+                                      <AlertTriangle className="w-3 h-3" />
+                                      {errors.relatedRequestId.message}
+                                    </p>
+                                  )}
+                                </div>
+                              )}
+                            />
+                          )}
+                        </>
                       )}
                     />
                   </Card>
@@ -595,9 +599,8 @@ export function RequestForm({ requestTypeId }: RequestFormProps) {
                               }`}
                             >
                               {field.value
-                                ? leadershipOptions.find((leader) => leader.id.toString() === field.value)?.
-                                  [language === "ar" ? "nameAr" : "nameEn"] || 
-                                  leadershipOptions.find((leader) => leader.id.toString() === field.value)?.nameAr
+                                ? leadershipOptions.find((leader) => leader.id.toString() === field.value)?.positionTitleAr ||
+                                  leadershipOptions.find((leader) => leader.id.toString() === field.value)?.positionTitleEn
                                 : t("requests.chooseLeader")}
                               <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                             </Button>
@@ -625,8 +628,8 @@ export function RequestForm({ requestTypeId }: RequestFormProps) {
                                       )}
                                     />
                                     {language === "ar"
-                                      ? `${leader.nameAr} - ${leader.positionTitleAr}`
-                                      : `${leader.nameEn || leader.nameAr} - ${leader.positionTitleEn || leader.positionTitleAr}`
+                                      ? leader.positionTitleAr
+                                      : leader.positionTitleEn || leader.positionTitleAr
                                     }
                                   </CommandItem>
                                 ))}

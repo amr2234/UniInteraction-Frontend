@@ -249,6 +249,7 @@
     "viewAllRequests": "عرض جميع الطلبات ←",
     "viewAll": "عرض الكل",
     "requestOverview": "نظرة عامة على الطلبات",
+    "requestOverviewSubtitle": "إحصائيات الطلبات الحالية",
     "recentActivities": "النشاطات الأخيرة",
     "noRecentActivities": "لا توجد نشاطات حديثة",
     "visitCalendar": "جدول الزيارات",
@@ -916,7 +917,9 @@
     "pictureUploadSuccess": "تم تحديث صورة الملف الشخصي بنجاح",
     "pictureUploadError": "فشل رفع صورة الملف الشخصي",
     "invalidImageType": "نوع الملف غير صالح. يرجى رفع صورة JPG أو PNG أو WEBP.",
-    "imageTooLarge": "حجم الصورة يتجاوز 5 ميجابايت. يرجى اختيار ملف أصغر."
+    "imageTooLarge": "حجم الصورة يتجاوز 5 ميجابايت. يرجى اختيار ملف أصغر.",
+    "role": "الدور",
+    "yourRole": "دورك في النظام"
   },
   "notifications": {
     "title": "الإشعارات",
@@ -1226,8 +1229,8 @@
     "actions": "الإجراءات",
     "roles": {
       "superAdmin": "مسؤول أعلى",
-      "admin": "مسؤول",
-      "employee": "موظف",
+      "admin": "مسؤول النظام",
+      "employee": "مسؤول الإدارة",
       "visitor": "مستخدم",
       "unknown": "غير معروف"
     },

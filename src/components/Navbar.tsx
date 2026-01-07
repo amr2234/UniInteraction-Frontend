@@ -7,11 +7,14 @@ import { NotificationBell } from "./NotificationBell";
 import { LanguageSwitcher } from "./LanguageSwitcher";
 import { useI18n } from "@/i18n";
 import { authApi } from "@/features/auth/api/auth.api";
+import { UserRoleBadges } from "@/components/RoleBadge";
+import { useUser } from "@/core/hooks/useUser";
 
 export function Navbar() {
   const location = useLocation();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const isLoggedIn = authApi.isAuthenticated();
+  const user = useUser();
   const { t } = useI18n();
 
   return (
@@ -39,6 +42,7 @@ export function Navbar() {
             ) : (
               <>
                 <NotificationBell />
+                <UserRoleBadges roleIds={user.roleIds} variant="compact" />
                 <button
                   onClick={() => {
                     authApi.logout();

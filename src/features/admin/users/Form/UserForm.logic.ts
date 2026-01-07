@@ -25,10 +25,23 @@ export const useUserForm = (): UseUserFormReturn => {
   const isEditMode = !!id;
   const { t, language } = useI18n();
 
-  const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false);
-  const [currentFormData, setCurrentFormData] = useState<UserFormData | null>(
-    null
-  );
+  
+  const [state, setState] = useState({
+    isConfirmDialogOpen: false,
+    currentFormData: null as UserFormData | null,
+  });
+
+  
+  const updateState = (updates: Partial<typeof state>) => {
+    setState((prev) => ({ ...prev, ...updates }));
+  };
+
+  
+  const setIsConfirmDialogOpen = (value: boolean) => updateState({ isConfirmDialogOpen: value });
+  const setCurrentFormData = (value: UserFormData | null) => updateState({ currentFormData: value });
+
+  
+  const { isConfirmDialogOpen, currentFormData } = state;
 
   const validationSchema = useMemo(() => createUserFormSchema(t), [t]);
 
@@ -67,9 +80,9 @@ export const useUserForm = (): UseUserFormReturn => {
     () =>
       Array.isArray(departmentsData)
         ? departmentsData.map((dept) => ({
-            id: dept.id,
-            name: language === "ar" ? dept.nameAr : dept.nameEn || dept.nameAr,
-          }))
+          id: dept.id,
+          name: language === "ar" ? dept.nameAr : dept.nameEn || dept.nameAr,
+        }))
         : [],
     [departmentsData, language]
   );
@@ -85,7 +98,7 @@ export const useUserForm = (): UseUserFormReturn => {
 
   useEffect(() => {
     if (userData && isEditMode) {
-      
+
       reset({
         nameAr: userData.nameAr,
         nameEn: userData.nameEn || "",
@@ -93,8 +106,8 @@ export const useUserForm = (): UseUserFormReturn => {
         mobile: userData.mobile || "",
         nationalId: userData.nationalId || "",
         studentId: userData.studentId || "",
-        departmentId: userData.departmentId 
-          ? String(userData.departmentId) 
+        departmentId: userData.departmentId
+          ? String(userData.departmentId)
           : "",
         roleId: userData.roleId,
         isActive: userData.isActive,
@@ -108,7 +121,7 @@ export const useUserForm = (): UseUserFormReturn => {
     if (!isDirty && isEditMode) {
       return;
     }
-    
+
     if (watchedRole === UserRole.ADMIN) {
       setValue("studentId", "", { shouldValidate: false });
       setValue("departmentId", "", { shouldValidate: false });
@@ -159,24 +172,24 @@ export const useUserForm = (): UseUserFormReturn => {
 
       navigate("/admin/users");
     } catch (error: any) {
-      // Check for specific backend error messages
-      const backendMessage = error?.response?.data?.message || error?.message || '';
       
+      const backendMessage = error?.response?.data?.message || error?.message || '';
+
       let errorMessage;
-      // Check if error message contains "email already exists" (case-insensitive)
-      if (backendMessage.toLowerCase().includes('email') && 
-          (backendMessage.toLowerCase().includes('already exists') || 
-           backendMessage.toLowerCase().includes('already in use') ||
-           backendMessage.toLowerCase().includes('مستخدم'))) {
+      
+      if (backendMessage.toLowerCase().includes('email') &&
+        (backendMessage.toLowerCase().includes('already exists') ||
+          backendMessage.toLowerCase().includes('already in use') ||
+          backendMessage.toLowerCase().includes('مستخدم'))) {
         errorMessage = t('validation.emailAlreadyExists');
       } else if (backendMessage) {
-        // For other backend messages, show them directly
+        
         errorMessage = backendMessage;
       } else {
-        // Fallback to generic error message
+        
         errorMessage = isEditMode ? t('users.updateError') : t('users.createError');
       }
-      
+
       toast.error(errorMessage);
     }
   }, [

@@ -20,7 +20,7 @@ export const useUsers = (filters?: UserFilters, options?: UseQueryOptions<Pagina
   return useQuery<PaginatedResponse<UserManagementDto>, ApiError>({
     queryKey: queryKeys.users.list(filters || {}),
     queryFn: () => usersApi.getUsers(filters),
-    staleTime: 5 * 60 * 1000, 
+    staleTime: 5 * 60 * 1000,
     ...options,
   });
 };
@@ -44,10 +44,10 @@ export const useCreateUser = () => {
     mutationFn: usersApi.createUser,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.users.all });
-      // Toast handled by form component for better i18n
+      
     },
     onError: (error) => {
-      // Error handled by form component for better i18n
+      
     },
   });
 };
@@ -62,7 +62,7 @@ export const useUpdateUser = () => {
     onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.users.all });
       queryClient.invalidateQueries({ queryKey: queryKeys.users.detail(variables.id) });
-      
+
     },
     onError: (error) => {
       toast.error(t('users.updateError'), {
@@ -101,7 +101,6 @@ export const useToggleUserStatus = () => {
     onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.users.all });
       queryClient.invalidateQueries({ queryKey: queryKeys.users.detail(data.id) });
-      // Use the input variable (what we're setting TO) not the response
       toast.success(variables.isActive ? t('users.activateSuccess') : t('users.deactivateSuccess'));
     },
     onError: (error) => {
@@ -163,7 +162,7 @@ export const useSearchUsers = (
     queryKey: [...queryKeys.users.all, 'search', searchTerm, pageNumber, pageSize],
     queryFn: () => usersApi.searchUsers(searchTerm, pageNumber, pageSize),
     enabled: searchTerm.length > 0,
-    staleTime: 2 * 60 * 1000, 
+    staleTime: 2 * 60 * 1000,
     ...options,
   });
 };
@@ -184,51 +183,6 @@ export const useUsersByRole = (
   });
 };
 
-
-export const useUsersByDepartment = (
-  department: string,
-  pageNumber = 1,
-  pageSize = 10,
-  options?: UseQueryOptions<PaginatedResponse<UserManagementDto>, ApiError>
-) => {
-  return useQuery<PaginatedResponse<UserManagementDto>, ApiError>({
-    queryKey: [...queryKeys.users.all, 'department', department, pageNumber, pageSize],
-    queryFn: () => usersApi.getUsersByDepartment(department, pageNumber, pageSize),
-    enabled: department.length > 0,
-    staleTime: 5 * 60 * 1000,
-    ...options,
-  });
-};
-
-
-export const useActiveUsers = (
-  pageNumber = 1,
-  pageSize = 10,
-  options?: UseQueryOptions<PaginatedResponse<UserManagementDto>, ApiError>
-) => {
-  return useQuery<PaginatedResponse<UserManagementDto>, ApiError>({
-    queryKey: [...queryKeys.users.all, 'active', pageNumber, pageSize],
-    queryFn: () => usersApi.getActiveUsers(pageNumber, pageSize),
-    staleTime: 5 * 60 * 1000,
-    ...options,
-  });
-};
-
-
-export const useInactiveUsers = (
-  pageNumber = 1,
-  pageSize = 10,
-  options?: UseQueryOptions<PaginatedResponse<UserManagementDto>, ApiError>
-) => {
-  return useQuery<PaginatedResponse<UserManagementDto>, ApiError>({
-    queryKey: [...queryKeys.users.all, 'inactive', pageNumber, pageSize],
-    queryFn: () => usersApi.getInactiveUsers(pageNumber, pageSize),
-    staleTime: 5 * 60 * 1000,
-    ...options,
-  });
-};
-
-
 export const useResetUserPassword = () => {
   const { t } = useI18n();
 
@@ -246,58 +200,3 @@ export const useResetUserPassword = () => {
 };
 
 
-export const useBulkDeleteUsers = () => {
-  const queryClient = useQueryClient();
-  const { t } = useI18n();
-
-  return useMutation<void, ApiError, number[]>({
-    mutationFn: usersApi.bulkDeleteUsers,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.users.all });
-      toast.success(t('users.bulkDeleteSuccess'));
-    },
-    onError: (error) => {
-      toast.error(t('users.bulkDeleteError'), {
-        description: error.message,
-      });
-    },
-  });
-};
-
-
-export const useBulkActivateUsers = () => {
-  const queryClient = useQueryClient();
-  const { t } = useI18n();
-
-  return useMutation<void, ApiError, number[]>({
-    mutationFn: usersApi.bulkActivateUsers,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.users.all });
-      toast.success(t('users.bulkActivateSuccess'));
-    },
-    onError: (error) => {
-      toast.error(t('users.bulkActivateError'), {
-        description: error.message,
-      });
-    },
-  });
-};
-
-
-export const useBulkDeactivateUsers = () => {
-  const queryClient = useQueryClient();
-  const { t } = useI18n();
-
-  return useMutation<void, ApiError, number[]>({
-    mutationFn: usersApi.bulkDeactivateUsers,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.users.all });
-      toast.success(t('users.bulkDeactivateSuccess'));
-    },
-    onError: (error) => {
-      toast.error(t('users.bulkDeactivateError'), {
-        description: error.message,
-      });
-    },
-  });
-};

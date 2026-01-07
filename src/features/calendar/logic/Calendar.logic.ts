@@ -84,9 +84,26 @@ export const transformVisitToEvent = (
 export const useCalendarLogic = () => {
   const { language } = useI18n();
   const navigate = useNavigate();
-  const [events, setEvents] = useState<CalendarEvent[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [currentView, setCurrentView] = useState<CalendarView>("dayGridMonth");
+  
+  // State - Consolidated for better performance
+  const [state, setState] = useState({
+    events: [] as CalendarEvent[],
+    isLoading: false,
+    currentView: "dayGridMonth" as CalendarView,
+  });
+
+  // Generic state updater
+  const updateState = (updates: Partial<typeof state>) => {
+    setState((prev) => ({ ...prev, ...updates }));
+  };
+
+  // Individual setters for backward compatibility
+  const setEvents = (value: CalendarEvent[]) => updateState({ events: value });
+  const setIsLoading = (value: boolean) => updateState({ isLoading: value });
+  const setCurrentView = (value: CalendarView) => updateState({ currentView: value });
+
+  // Destructure state for easier access
+  const { events, isLoading, currentView } = state;
 
   /**
    * Fetch visits from API
