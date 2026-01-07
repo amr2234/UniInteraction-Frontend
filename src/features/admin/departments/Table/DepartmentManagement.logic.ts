@@ -76,7 +76,7 @@ export const useDepartmentManagement = () => {
     }
   }, [toggleStatusMutation]);
 
-  const handleDeleteClick = (department: DepartmentDto) => {
+  const handleDeleteClick = useCallback((department: DepartmentDto) => {
     // Blur the active element to prevent aria-hidden focus trap warning
     if (document.activeElement instanceof HTMLElement) {
       document.activeElement.blur();

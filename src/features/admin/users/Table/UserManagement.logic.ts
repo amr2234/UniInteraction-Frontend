@@ -107,7 +107,7 @@ export const useUserManagement = () => {
     }
   }, [toggleStatusMutation]);
 
-  const handleDeleteClick = (user: UserManagementDto) => {
+  const handleDeleteClick = useCallback((user: UserManagementDto) => {
     // Blur the active element to prevent aria-hidden focus trap warning
     if (document.activeElement instanceof HTMLElement) {
       document.activeElement.blur();
