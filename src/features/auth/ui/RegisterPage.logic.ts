@@ -16,6 +16,7 @@ import {
 } from "@/core/utils/validation";
 import { useForm } from "@/core/utils/formUtils";
 import { i18n } from "@/i18n/i18n";
+import { isTokenExpired } from "@/core/lib/authUtils";
 
 export const useRegisterPage = () => {
   const navigate = useNavigate();
@@ -33,10 +34,11 @@ export const useRegisterPage = () => {
     studentId: ""
   });
 
-  // Redirect to dashboard if user is already authenticated
+  // Redirect to dashboard if user is already authenticated with a VALID token
   useEffect(() => {
     const token = localStorage.getItem('authToken');
-    if (token) {
+    // Only redirect if token exists AND is not expired
+    if (token && !isTokenExpired(token)) {
       navigate('/dashboard', { replace: true });
     }
   }, [navigate]);

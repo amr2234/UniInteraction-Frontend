@@ -39,8 +39,13 @@ function AppContent() {
   useEffect(() => {
     const checkAuth = () => {
       const token = authApi.getToken();
-            const publicRoutes = ['/', '/login', '/register'];
-      const isPublicRoute = publicRoutes.some(route => location.pathname === route || location.pathname.startsWith(route));
+      const publicRoutes = ['/', '/login', '/register', '/verify-email', '/create-password', '/faqs'];
+      // Check exact match for public routes (don't use startsWith for '/')
+      const isPublicRoute = publicRoutes.includes(location.pathname) || 
+        location.pathname.startsWith('/login') || 
+        location.pathname.startsWith('/register') ||
+        location.pathname.startsWith('/verify-email') ||
+        location.pathname.startsWith('/create-password');
       
       if (isPublicRoute) return;
       

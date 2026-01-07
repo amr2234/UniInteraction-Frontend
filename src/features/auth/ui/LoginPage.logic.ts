@@ -11,6 +11,7 @@ import {
 import { useForm } from "@/core/utils/formUtils";
 import { i18n } from "@/i18n/i18n";
 import { toast } from "sonner";
+import { isTokenExpired } from "@/core/lib/authUtils";
 import type { NafathLoginData, NafathSession } from "./LoginPage.types";
 
 export const useLoginPage = () => {
@@ -32,10 +33,11 @@ export const useLoginPage = () => {
     pollingInterval: null as NodeJS.Timeout | null,
   });
 
-  // Redirect to dashboard if user is already authenticated
+  // Redirect to dashboard if user is already authenticated with a VALID token
   useEffect(() => {
     const token = localStorage.getItem('authToken');
-    if (token) {
+    // Only redirect if token exists AND is not expired
+    if (token && !isTokenExpired(token)) {
       navigate('/dashboard', { replace: true });
     }
   }, [navigate]);
