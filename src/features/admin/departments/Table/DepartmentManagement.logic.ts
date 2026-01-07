@@ -75,6 +75,10 @@ export const useDepartmentManagement = () => {
   };
 
   const handleDeleteClick = (department: DepartmentDto) => {
+    // Blur the active element to prevent aria-hidden focus trap warning
+    if (document.activeElement instanceof HTMLElement) {
+      document.activeElement.blur();
+    }
     setSelectedDepartment(department);
     setIsDeleteDialogOpen(true);
   };

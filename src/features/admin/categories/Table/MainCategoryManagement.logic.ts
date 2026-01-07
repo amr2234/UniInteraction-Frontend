@@ -78,6 +78,10 @@ export const useMainCategoryManagement = () => {
   };
 
   const handleDeleteClick = (category: MainCategoryDto) => {
+    // Blur the active element to prevent aria-hidden focus trap warning
+    if (document.activeElement instanceof HTMLElement) {
+      document.activeElement.blur();
+    }
     setSelectedCategory(category);
     setIsDeleteDialogOpen(true);
   };

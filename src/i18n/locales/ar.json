@@ -42,6 +42,16 @@
     "saveChanges": "حفظ التغييرات",
     "status": "الحالة"
   },
+  "errors": {
+    "networkError": "فشل الاتصال بالخادم. يرجى التحقق من اتصال الإنترنت والمحاولة مرة أخرى.",
+    "timeoutError": "انتهت مهلة الطلب. يرجى التحقق من اتصال الإنترنت والمحاولة مرة أخرى.",
+    "serverError": "حدث خطأ في الخادم. يرجى المحاولة مرة أخرى لاحقاً.",
+    "noResponse": "لم يتم تلقي رد من الخادم. يرجى التحقق من الاتصال.",
+    "unauthorized": "غير مصرح. يرجى تسجيل الدخول مرة أخرى.",
+    "forbidden": "ليس لديك صلاحية لأداء هذا الإجراء.",
+    "notFound": "لم يتم العثور على المورد المطلوب.",
+    "unexpectedError": "حدث خطأ غير متوقع. يرجى المحاولة مرة أخرى."
+  },
   "auth": {
     "login": "تسجيل الدخول",
     "logout": "تسجيل الخروج",
@@ -58,8 +68,6 @@
     "logoutSuccess": "تم تسجيل الخروج بنجاح",
     "registerSuccess": "تم إنشاء الحساب بنجاح",
     "registerFailed": "فشل إنشاء الحساب",
-    "networkError": "فشل الاتصال بالخادم. يرجى التحقق من اتصال الإنترنت والمحاولة مرة أخرى",
-    "timeoutError": "انتهت مهلة الطلب. يرجى التحقق من اتصال الإنترنت والمحاولة مرة أخرى",
     "emailPlaceholder": "أدخل البريد الإلكتروني",
     "passwordPlaceholder": "أدخل كلمة المرور",
     "confirmPasswordPlaceholder": "أدخل تأكيد كلمة المرور",
@@ -84,7 +92,29 @@
     "studentId": "الرقم الجامعي",
     "studentIdPlaceholder": "أدخل الرقم الجامعي",
     "accessDenied": "تم رفض الوصول",
-    "noPermissionAccess": "ليس لديك صلاحية للوصول إلى هذه الصفحة"
+    "noPermissionAccess": "ليس لديك صلاحية للوصول إلى هذه الصفحة",
+    "verifyEmail": "تأكيد البريد الإلكتروني",
+    "verifyEmailDescription": "لقد أرسلنا رمز التحقق إلى بريدك الإلكتروني. الرجاء إدخاله أدناه لتأكيد حسابك.",
+    "enterOtpCode": "أدخل رمز التحقق",
+    "resendOtp": "إعادة إرسال الرمز",
+    "resendIn": "إعادة إرسال الرمز خلال {seconds} ثانية",
+    "canResendNow": "يمكنك إعادة إرسال الرمز الآن",
+    "emailVerifiedSuccess": "تم تأكيد البريد الإلكتروني بنجاح! أهلاً بك.",
+    "verificationFailed": "فشل التحقق. يرجى التحقق من الرمز والمحاولة مرة أخرى.",
+    "otpResentSuccess": "تم إرسال رمز تحقق جديد إلى بريدك الإلكتروني",
+    "otpResendFailed": "فشل إعادة إرسال الرمز. يرجى المحاولة مرة أخرى.",
+    "enterCompleteOtp": "الرجاء إدخال الرمز المكون من 6 أرقام كاملاً",
+    "pleaseRegisterFirst": "يرجى التسجيل أولاً لتأكيد بريدك الإلكتروني",
+    "wrongEmail": "بريد إلكتروني خاطئ؟",
+    "changeEmail": "سجل مرة أخرى",
+    "createPassword": "إنشاء كلمة المرور",
+    "createPasswordDescription": "أهلاً بك! يرجى إنشاء كلمة المرور للوصول إلى حسابك.",
+    "newPassword": "كلمة المرور الجديدة",
+    "newPasswordPlaceholder": "أدخل كلمة المرور الجديدة",
+    "passwordRequirements": "يجب أن تكون كلمة المرور 6 أحرف على الأقل",
+    "passwordCreatedSuccess": "تم إنشاء كلمة المرور بنجاح! يمكنك الآن تسجيل الدخول.",
+    "passwordCreationFailed": "فشل إنشاء كلمة المرور. يرجى المحاولة مرة أخرى.",
+    "alreadyHavePassword": "لديك كلمة مرور بالفعل؟"
   },
   "navigation": {
     "home": "الرئيسية",
@@ -906,7 +936,28 @@
       "all": "الكل",
       "unread": "غير مقروء",
       "requests": "الطلبات"
-    }
+    },
+    "types": {
+      "request_update": "تحديث طلب",
+      "request_status_change": "تغيير حالة الطلب",
+      "new_reply": "رد جديد",
+      "suggestion_accepted": "قبول الاقتراح",
+      "request_closed": "إغلاق الطلب",
+      "system": "إشعار النظام",
+      "visit_reminder": "تذكير بالزيارة",
+      "visit_scheduled": "تم جدولة الزيارة",
+      "visit_rescheduled": "تم إعادة جدولة الزيارة",
+      "assignment": "تعيين",
+      "department_assigned": "تعيين القسم",
+      "user_assigned": "تعيين المستخدم",
+      "default": "إشعار"
+    },
+    "from": "من",
+    "department": "القسم",
+    "justNow": "الآن",
+    "minutesAgo": "منذ {count} دقيقة | منذ {count} دقائق",
+    "hoursAgo": "منذ {count} ساعة | منذ {count} ساعات",
+    "daysAgo": "منذ {count} يوم | منذ {count} أيام"
   },
   "settings": {
     "title": "الإعدادات",
@@ -1443,6 +1494,7 @@
     "saveSettings": "حفظ الإعدادات",
     "settingsSaved": "تم حفظ الإعدادات بنجاح",
     "settingsFailed": "فشل حفظ الإعدادات",
+    "requiredFieldsError": "يرجى تعبئة جميع الحقول المطلوبة (خادم SMTP والبريد الإلكتروني للمرسل)",
     "featureToggles": "تبديل الميزات",
     "enableEmails": "تفعيل نظام البريد الإلكتروني",
     "enableEmailsDescription": "تفعيل أو تعطيل نظام البريد الإلكتروني بشكل عام",
@@ -1466,9 +1518,7 @@
     "submitError": "فشل في الإرسال",
     "confirmDelete": "هل أنت متأكد من حذف هذا العنصر؟",
     "confirmCancel": "هل أنت متأكد من الإلغاء؟ سيتم فقد التغييرات غير المحفوظة.",
-    "unsavedChanges": "لديك تغييرات غير محفوظة"
-  },
-  "errors": {
+    "unsavedChanges": "لديك تغييرات غير محفوظة",
     "pageNotFound": "الصفحة غير موجودة",
     "pageNotFoundDesc": "عذراً، الصفحة التي تبحث عنها غير موجودة أو تم نقلها إلى موقع آخر"
   }

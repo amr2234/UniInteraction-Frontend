@@ -1,9 +1,15 @@
 import { useMemo } from "react";
 import { useI18n } from "@/i18n";
 import { useUserRole } from "@/core/hooks";
-import { useUserRequests, useRequestCountsByStatus } from "@/features/requests/hooks/useRequests";
+import { 
+  useUserRequests, 
+  useRequestCountsByStatus,
+  useMonthlyStatistics,
+  useRequestTypesDistribution,
+} from "@/features/requests/hooks/useRequests";
 import { authApi } from "@/features/auth/api/auth.api";
 import { RequestStatus } from "@/core/constants/requestStatuses";
+import { RequestType } from "@/core/constants/requestTypes";
 import {
   AlertCircle,
   HelpCircle,
@@ -29,6 +35,12 @@ export const useDashboardPage = () => {
 
   // Fetch request counts by status from API
   const { data: statusCounts = [] } = useRequestCountsByStatus();
+
+  // Fetch monthly statistics for line chart
+  const { data: monthlyStats = [], isLoading: isLoadingMonthly } = useMonthlyStatistics(6);
+
+  // Fetch request types distribution for bar chart
+  const { data: typesDistribution = [], isLoading: isLoadingTypes } = useRequestTypesDistribution();
 
   // Fetch all requests for recent activity
   const { data: allRequests = [] } = useUserRequests({}, false);
@@ -59,8 +71,8 @@ export const useDashboardPage = () => {
   const recentRequestsNeedingAction = useMemo(
     () =>
       requestsArray
-        .filter((r) => r.requestStatusId === RequestStatus.RECEIVED || r.requestStatusId === RequestStatus.UNDER_REVIEW)
-        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+        .filter((r: any) => r.requestStatusId === RequestStatus.RECEIVED || r.requestStatusId === RequestStatus.UNDER_REVIEW)
+        .sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
         .slice(0, 2),
     [requestsArray]
   );
@@ -99,28 +111,61 @@ export const useDashboardPage = () => {
     [t, requestCounts]
   );
 
-  // Line chart data - Requests over time
-  const requestsData = useMemo(
-    () => [
-      { name: t("dashboard.months.january"), طلبات: 65, مكتمل: 45, قيدالمراجعة: 20 },
-      { name: t("dashboard.months.february"), طلبات: 78, مكتمل: 62, قيدالمراجعة: 16 },
-      { name: t("dashboard.months.march"), طلبات: 90, مكتمل: 75, قيدالمراجعة: 15 },
-      { name: t("dashboard.months.april"), طلبات: 81, مكتمل: 70, قيدالمراجعة: 11 },
-      { name: t("dashboard.months.may"), طلبات: 95, مكتمل: 82, قيدالمراجعة: 13 },
-      { name: t("dashboard.months.june"), طلبات: 112, مكتمل: 98, قيدالمراجعة: 14 },
-    ],
-    [t]
-  );
+  // Line chart data - Requests over time (from API)
+  const requestsData = useMemo(() => {
+    if (!monthlyStats || monthlyStats.length === 0) {
+      // Fallback to mock data if API not available
+      return [
+        { name: t("dashboard.months.january"), [t("dashboard.chartLabels.requests")]: 65, [t("dashboard.chartLabels.completed")]: 45, [t("dashboard.chartLabels.underReview")]: 20 },
+        { name: t("dashboard.months.february"), [t("dashboard.chartLabels.requests")]: 78, [t("dashboard.chartLabels.completed")]: 62, [t("dashboard.chartLabels.underReview")]: 16 },
+        { name: t("dashboard.months.march"), [t("dashboard.chartLabels.requests")]: 90, [t("dashboard.chartLabels.completed")]: 75, [t("dashboard.chartLabels.underReview")]: 15 },
+        { name: t("dashboard.months.april"), [t("dashboard.chartLabels.requests")]: 81, [t("dashboard.chartLabels.completed")]: 70, [t("dashboard.chartLabels.underReview")]: 11 },
+        { name: t("dashboard.months.may"), [t("dashboard.chartLabels.requests")]: 95, [t("dashboard.chartLabels.completed")]: 82, [t("dashboard.chartLabels.underReview")]: 13 },
+        { name: t("dashboard.months.june"), [t("dashboard.chartLabels.requests")]: 112, [t("dashboard.chartLabels.completed")]: 98, [t("dashboard.chartLabels.underReview")]: 14 },
+      ];
+    }
 
-  // Bar chart data - Request types
-  const requestTypesData = useMemo(
-    () => [
-      { name: t("requests.types.complaints"), count: 145, fill: "#875E9E" },
-      { name: t("requests.types.inquiries"), count: 198, fill: "#6CAEBD" },
-      { name: t("requests.types.visits"), count: 45, fill: "#EABB4E" },
-    ],
-    [t]
-  );
+    // Map API data to chart format
+    return monthlyStats.map((stat) => ({
+      name: stat.month,
+      [t("dashboard.chartLabels.requests")]: stat.totalRequests,
+      [t("dashboard.chartLabels.completed")]: stat.completedRequests,
+      [t("dashboard.chartLabels.underReview")]: stat.underReviewRequests,
+    }));
+  }, [monthlyStats, t]);
+
+  // Bar chart data - Request types (from API)
+  const requestTypesData = useMemo(() => {
+    if (!typesDistribution || typesDistribution.length === 0) {
+      // Fallback to mock data if API not available
+      return [
+        { name: t("requests.types.complaints"), count: 145, fill: "#875E9E" },
+        { name: t("requests.types.inquiries"), count: 198, fill: "#6CAEBD" },
+        { name: t("requests.types.visits"), count: 45, fill: "#EABB4E" },
+      ];
+    }
+
+    // Map API data to chart format with colors based on request type
+    return typesDistribution.map((item) => {
+      const typeName = language === "ar" ? item.requestTypeNameAr : item.requestTypeNameEn;
+      
+      // Assign colors based on request type ID
+      let fill = "#6CAEBD"; // Default color
+      if (item.requestTypeId === RequestType.COMPLAINT) {
+        fill = "#875E9E"; // Purple for complaints
+      } else if (item.requestTypeId === RequestType.INQUIRY) {
+        fill = "#6CAEBD"; // Blue for inquiries  
+      } else if (item.requestTypeId === RequestType.VISIT) {
+        fill = "#EABB4E"; // Yellow for visits
+      }
+
+      return {
+        name: typeName,
+        count: item.count,
+        fill,
+      };
+    });
+  }, [typesDistribution, language, t]);
 
   // User services
   const services = useMemo(
@@ -251,6 +296,8 @@ export const useDashboardPage = () => {
     stats,
     requestsData,
     requestTypesData,
+    isLoadingMonthly,
+    isLoadingTypes,
     services,
     adminServices,
     

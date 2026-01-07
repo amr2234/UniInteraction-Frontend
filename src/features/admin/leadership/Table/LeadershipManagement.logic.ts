@@ -86,6 +86,10 @@ export const useLeadershipManagement = () => {
   };
 
   const handleDeleteClick = (leader: UniversityLeadershipDto) => {
+    // Blur the active element to prevent aria-hidden focus trap warning
+    if (document.activeElement instanceof HTMLElement) {
+      document.activeElement.blur();
+    }
     setSelectedLeader(leader);
     setIsDeleteDialogOpen(true);
   };

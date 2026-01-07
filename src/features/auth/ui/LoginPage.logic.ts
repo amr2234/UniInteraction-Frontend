@@ -171,7 +171,7 @@ export const useLoginPage = () => {
     try {
       await login.mutateAsync(formData);
     } catch (error) {
-      toast.error(i18n.t("login.error"));
+
     }
   };
 

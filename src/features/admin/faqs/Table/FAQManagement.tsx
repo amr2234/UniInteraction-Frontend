@@ -277,6 +277,10 @@ export function FAQManagement() {
                             variant="ghost"
                             size="sm"
                             onClick={() => {
+                              // Blur the active element to prevent aria-hidden focus trap warning
+                              if (document.activeElement instanceof HTMLElement) {
+                                document.activeElement.blur();
+                              }
                               setSelectedFaq(faq);
                               setIsDeleteDialogOpen(true);
                             }}

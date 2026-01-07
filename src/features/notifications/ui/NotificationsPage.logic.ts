@@ -36,7 +36,11 @@ export const useNotificationsLogic = () => {
       case 'unread':
         return notifications.filter((n) => !n.isRead);
       case 'requests':
-        return notifications.filter((n) => n.relatedEntityType === 'UserRequest');
+        return notifications.filter((n) => 
+          n.relatedEntityType === 'UserRequest' || 
+          n.userRequestId || 
+          n.relatedEntityId
+        );
       default:
         return notifications;
     }
@@ -98,12 +102,15 @@ export const useNotificationsLogic = () => {
       handleMarkAsRead(notification.id);
     }
 
-    // Navigate to request details if it's a request-related notification
+    // Navigate based on notification type and related entity
     const requestId = notification.relatedEntityId || notification.userRequestId;
     
-    if (notification.relatedEntityType === 'UserRequest' && requestId) {
-      // Navigate to request details page
+    if (requestId) {
+      // For all request-related notifications, navigate to request details
       navigate(`/dashboard/request/${requestId}`);
+    } else if (notification.relatedEntityType === 'Visit' && notification.relatedEntityId) {
+      // For visit notifications
+      navigate(`/dashboard/request/${notification.relatedEntityId}`);
     }
   }, [handleMarkAsRead, navigate]);
 
@@ -118,49 +125,38 @@ export const useNotificationsLogic = () => {
     const diffHours = Math.floor(diffMs / 3600000);
     const diffDays = Math.floor(diffMs / 86400000);
 
-    if (language === 'ar') {
-      if (diffMins < 1) return 'الآن';
-      if (diffMins < 60) return `منذ ${diffMins} دقيقة`;
-      if (diffHours < 24) return `منذ ${diffHours} ساعة`;
-      return `منذ ${diffDays} يوم`;
-    } else {
-      if (diffMins < 1) return 'Just now';
-      if (diffMins < 60) return `${diffMins} minute${diffMins > 1 ? 's' : ''} ago`;
-      if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
-      return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
-    }
-  }, [language]);
+    if (diffMins < 1) return t('notifications.justNow');
+    if (diffMins < 60) return t('notifications.minutesAgo').replace('{count}', diffMins.toString());
+    if (diffHours < 24) return t('notifications.hoursAgo').replace('{count}', diffHours.toString());
+    return t('notifications.daysAgo').replace('{count}', diffDays.toString());
+  }, [t]);
 
   // Get notification icon based on type
   const getNotificationIcon = useCallback((type: string) => {
+    const normalizedType = type?.toLowerCase() || 'default';
     const iconMap: Record<string, string> = {
       request_update: '🔄',
-      request_status_change: '🔄',
+      request_status_change: '📋',
       new_reply: '💬',
       suggestion_accepted: '✅',
       request_closed: '✓',
       system: '🔔',
       visit_reminder: '📅',
-      assignment: '📋',
+      visit_scheduled: '📅',
+      visit_rescheduled: '🔄',
+      assignment: '👤',
+      department_assigned: '🏢',
+      user_assigned: '👤',
       default: '🔔',
     };
-    return iconMap[type] || iconMap.default;
+    return iconMap[normalizedType] || iconMap.default;
   }, []);
 
   // Get notification type label
   const getNotificationTypeLabel = useCallback((type: string) => {
-    const typeMap: Record<string, string> = {
-      request_update: language === 'ar' ? 'تحديث طلب' : 'Request Update',
-      request_status_change: language === 'ar' ? 'تغيير حالة' : 'Status Change',
-      new_reply: language === 'ar' ? 'رد جديد' : 'New Reply',
-      suggestion_accepted: language === 'ar' ? 'قبول مقترح' : 'Suggestion Accepted',
-      request_closed: language === 'ar' ? 'إغلاق طلب' : 'Request Closed',
-      system: language === 'ar' ? 'نظام' : 'System',
-      visit_reminder: language === 'ar' ? 'تذكير زيارة' : 'Visit Reminder',
-      assignment: language === 'ar' ? 'تعيين' : 'Assignment',
-    };
-    return typeMap[type] || (language === 'ar' ? 'إشعار' : 'Notification');
-  }, [language]);
+    const normalizedType = type?.toLowerCase() || 'default';
+    return t(`notifications.types.${normalizedType}`) || t('notifications.types.default');
+  }, [t]);
 
   return {
     // State

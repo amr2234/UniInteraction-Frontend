@@ -11,6 +11,8 @@ const LandingPage = lazy(() => import("@/features/pages/LandingPage").then(m => 
 const NotFoundPage = lazy(() => import("@/features/pages/NotFoundPage").then(m => ({ default: m.NotFoundPage })));
 const LoginPage = lazy(() => import("@/features/auth/ui/LoginPage").then(m => ({ default: m.LoginPage })));
 const RegisterPage = lazy(() => import("@/features/auth/ui/RegisterPage").then(m => ({ default: m.RegisterPage })));
+const VerifyEmailPage = lazy(() => import("@/features/auth/ui/VerifyEmailPage").then(m => ({ default: m.VerifyEmailPage })));
+const CreatePasswordPage = lazy(() => import("@/features/auth/ui/CreatePasswordPage").then(m => ({ default: m.CreatePasswordPage })));
 const Dashboard = lazy(() => import("@/features/dashboard/ui/Dashboard").then(m => ({ default: m.Dashboard })));
 const ComplaintPage = lazy(() => import("@/features/requests/pages/ComplaintPage").then(m => ({ default: m.ComplaintPage })));
 const InquiryPage = lazy(() => import("@/features/requests/pages/InquiryPage").then(m => ({ default: m.InquiryPage })));
@@ -51,6 +53,8 @@ export function AppRouter() {
       <Route path="/preview_page_v2.html" element={<LandingPage />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
+      <Route path="/verify-email" element={<VerifyEmailPage />} />
+      <Route path="/create-password" element={<CreatePasswordPage />} />
       <Route path="/faqs" element={<FAQPage />} />
 
       {}

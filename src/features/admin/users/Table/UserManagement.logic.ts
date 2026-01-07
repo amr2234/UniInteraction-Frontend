@@ -108,6 +108,10 @@ export const useUserManagement = () => {
   };
 
   const handleDeleteClick = (user: UserManagementDto) => {
+    // Blur the active element to prevent aria-hidden focus trap warning
+    if (document.activeElement instanceof HTMLElement) {
+      document.activeElement.blur();
+    }
     setSelectedUser(user);
     setIsDeleteDialogOpen(true);
   };

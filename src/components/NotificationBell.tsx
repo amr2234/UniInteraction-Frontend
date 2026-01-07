@@ -54,17 +54,10 @@ export function NotificationBell() {
     const diffHours = Math.floor(diffMs / 3600000);
     const diffDays = Math.floor(diffMs / 86400000);
 
-    if (language === 'ar') {
-      if (diffMins < 1) return "الآن";
-      if (diffMins < 60) return `منذ ${diffMins} دقيقة`;
-      if (diffHours < 24) return `منذ ${diffHours} ساعة`;
-      return `منذ ${diffDays} يوم`;
-    } else {
-      if (diffMins < 1) return "Now";
-      if (diffMins < 60) return `${diffMins} min ago`;
-      if (diffHours < 24) return `${diffHours}h ago`;
-      return `${diffDays}d ago`;
-    }
+    if (diffMins < 1) return t('notifications.justNow');
+    if (diffMins < 60) return t('notifications.minutesAgo').replace('{count}', diffMins.toString());
+    if (diffHours < 24) return t('notifications.hoursAgo').replace('{count}', diffHours.toString());
+    return t('notifications.daysAgo').replace('{count}', diffDays.toString());
   };
 
   const handleMarkAsRead = async (notificationId: number) => {
@@ -77,7 +70,7 @@ export function NotificationBell() {
       await handleMarkAsRead(notification.id);
     }
 
-    // Navigate to request details if it's a request-related notification
+    // Navigate to request details
     const requestId = notification.relatedEntityId || notification.userRequestId;
     
     if (requestId) {
@@ -158,14 +151,14 @@ export function NotificationBell() {
                       </p>
                       <div className="flex items-center gap-2 text-xs text-gray-500">
                         <span>{getTimeAgo(notification.createdAt)}</span>
-                        {notification.userRequestId && (
+                        {(notification.userRequestId || notification.relatedEntityId) && (
                           <>
                             <span>•</span>
                             <Badge
                               variant="outline"
                               className="text-xs border-[#6CAEBD] text-[#6CAEBD]"
                             >
-                              {t("requests.request")} #{notification.userRequestId}
+                              {t("notifications.request")} #{notification.userRequestId || notification.relatedEntityId}
                             </Badge>
                           </>
                         )}

@@ -73,15 +73,29 @@ export const useSettingsPage = () => {
 
   // Update settings mutation
   const updateMutation = useMutation({
-    mutationFn: (data: UpdateSystemSettingCommand) => {
+    mutationFn: async (data: UpdateSystemSettingCommand) => {
       if (!settingId) {
         // Create if no settings exist
         return systemSettingsApi.createSetting(data);
       }
-      // Update existing settings
-      return systemSettingsApi.updateSetting(settingId, data);
+      // Update existing settings - merge with current data
+      return systemSettingsApi.updateSetting(settingId, {
+        ...data,
+        id: settingId,
+      });
     },
-    onSuccess: () => {
+    onSuccess: (updatedSetting) => {
+      // Update the query cache with the new data
+      queryClient.setQueryData<SystemSettingDto[]>(["systemSettings"], (oldData) => {
+        if (!oldData || oldData.length === 0) {
+          return [updatedSetting];
+        }
+        return oldData.map((setting) =>
+          setting.id === updatedSetting.id ? updatedSetting : setting
+        );
+      });
+      
+      // Also invalidate to ensure fresh data from server
       queryClient.invalidateQueries({ queryKey: ["systemSettings"] });
       toast.success(t("settings.settingsSaved"));
     },
@@ -101,7 +115,14 @@ export const useSettingsPage = () => {
 
   // Handle save settings
   const handleSave = useCallback(async () => {
+    // Validate required fields
+    if (!formData.smtpHost || !formData.fromEmail) {
+      toast.error(t("settings.requiredFieldsError") || "Please fill in all required fields");
+      return;
+    }
+
     const command: UpdateSystemSettingCommand = {
+      id: settingId || undefined,
       smtpHost: formData.smtpHost,
       smtpPort: formData.smtpPort,
       smtpUsername: formData.smtpUsername,
@@ -114,8 +135,17 @@ export const useSettingsPage = () => {
       enableNotifications: formData.enableNotifications,
     };
 
-    await updateMutation.mutateAsync(command);
-  }, [formData, updateMutation]);
+    try {
+      const result = await updateMutation.mutateAsync(command);
+      // Update settingId if it was a create operation
+      if (!settingId && result.id) {
+        setSettingId(result.id);
+      }
+    } catch (error) {
+      // Error is already handled in mutation onError
+      console.error('Failed to save settings:', error);
+    }
+  }, [formData, settingId, updateMutation, t]);
 
   // Handle test connection
   const handleTestConnection = useCallback(async () => {

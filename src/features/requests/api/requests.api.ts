@@ -14,6 +14,8 @@ import {
   RequestNewVisitDatePayload,
   Result,
   RequestStatusCount,
+  MonthlyStatistics,
+  RequestTypeDistribution,
 } from "@/core/types/api";
 
 // Generic helper function to build query parameters from any object
@@ -272,5 +274,13 @@ export const requestsApi = {
       `/requests/${requestId}/assign-related-request`,
       { relatedRequestId }
     );
+  },
+
+  getMonthlyStatistics: async (months: number = 6): Promise<MonthlyStatistics[]> => {
+    return apiRequest.get<MonthlyStatistics[]>(`/requests/statistics/monthly?months=${months}`);
+  },
+
+  getRequestTypesDistribution: async (): Promise<RequestTypeDistribution[]> => {
+    return apiRequest.get<RequestTypeDistribution[]>("/requests/statistics/types-distribution");
   },
 };

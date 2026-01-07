@@ -189,6 +189,25 @@ export interface RequestStatusCount {
   count: number;
 }
 
+// Dashboard Statistics Types
+export interface MonthlyStatistics {
+  month: string; // e.g., "January", "February"
+  monthNumber: number; // 1-12
+  year: number;
+  totalRequests: number;
+  completedRequests: number;
+  underReviewRequests: number;
+  pendingRequests: number;
+}
+
+export interface RequestTypeDistribution {
+  requestTypeId: number;
+  requestTypeName: string;
+  requestTypeNameAr: string;
+  requestTypeNameEn: string;
+  count: number;
+}
+
 export interface UpdateRequestStatusPayload {
   requestId: number;
   newStatus: number;

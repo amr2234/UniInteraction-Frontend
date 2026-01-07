@@ -79,6 +79,8 @@ function AlertDialog({ open, onOpenChange, children }: AlertDialogProps) {
       aria-describedby="alert-dialog-description"
       maxWidth="sm"
       fullWidth
+      disableRestoreFocus
+      disableEnforceFocus={false}
     >
       {children}
     </StyledDialog>

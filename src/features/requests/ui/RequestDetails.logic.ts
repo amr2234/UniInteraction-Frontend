@@ -701,12 +701,10 @@ const scheduleOrUpdateVisitMutation = useMutation({
   const handleSubmitFeedback = () => {
     if (rating > 0 && id) {
       submitRatingMutation.mutate({
-        requestId: id,
-        payload: {
-          rating,
-          feedbackAr: feedback,
-          feedbackEn: feedback,
-        },
+        userRequestId: parseInt(id, 10),
+        rating,
+        feedbackAr: feedback,
+        feedbackEn: feedback,
       });
     }
   };
@@ -725,11 +723,9 @@ const scheduleOrUpdateVisitMutation = useMutation({
       
       submitRatingMutation.mutate({
         userRequestId: parseInt(id, 10),
-        userId: userProfile.id,
         rating: newRating,
         feedbackAr: newFeedback,
         feedbackEn: newFeedback,
-        ratedAt: new Date().toISOString(),
       });
     }
   };
@@ -828,6 +824,10 @@ const scheduleOrUpdateVisitMutation = useMutation({
   };
 
   const handleDeleteRequest = () => {
+    // Blur the active element to prevent aria-hidden focus trap warning
+    if (document.activeElement instanceof HTMLElement) {
+      document.activeElement.blur();
+    }
     setIsDeleteDialogOpen(true);
   };
 

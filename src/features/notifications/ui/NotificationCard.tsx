@@ -1,6 +1,7 @@
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { NotificationDto } from '@/core/types/api';
+import { useI18n } from '@/i18n';
 
 interface NotificationCardProps {
   notification: NotificationDto;
@@ -19,6 +20,8 @@ export function NotificationCard({
   getNotificationIcon,
   getNotificationTypeLabel,
 }: NotificationCardProps) {
+  const { t } = useI18n();
+  
   const title = language === 'ar' ? notification.titleAr : (notification.titleEn || notification.titleAr);
   const message = language === 'ar' 
     ? (notification.messageAr || notification.bodyAr) 
@@ -35,6 +38,8 @@ export function NotificationCard({
   const requestTypeName = language === 'ar'
     ? notification.requestTypeNameAr
     : notification.requestTypeNameEn;
+
+  const requestId = notification.relatedEntityId || notification.userRequestId;
 
   return (
     <Card
@@ -68,11 +73,11 @@ export function NotificationCard({
 
           {/* Sender and Department Info */}
           {(senderName || departmentName) && (
-            <div className="flex items-center gap-2 mb-2 text-sm">
+            <div className="flex items-center gap-2 mb-2 text-sm flex-wrap">
               {senderName && (
                 <>
                   <span className="text-gray-600">
-                    {language === 'ar' ? 'من:' : 'From:'}
+                    {t('notifications.from')}:
                   </span>
                   <span className="font-medium text-[#6CAEBD]">{senderName}</span>
                 </>
@@ -83,7 +88,7 @@ export function NotificationCard({
               {departmentName && (
                 <>
                   <span className="text-gray-600">
-                    {language === 'ar' ? 'القسم:' : 'Dept:'}
+                    {t('notifications.department')}:
                   </span>
                   <span className="font-medium text-gray-700">{departmentName}</span>
                 </>
@@ -96,7 +101,7 @@ export function NotificationCard({
               {getTimeAgo(notification.createdAt, notification.receivedAt)}
             </span>
 
-            {notification.relatedEntityType === 'UserRequest' && (notification.relatedEntityId || notification.userRequestId) && (
+            {requestId && (
               <>
                 <span className="text-gray-300">•</span>
                 <Badge
@@ -104,8 +109,8 @@ export function NotificationCard({
                   className="border-[#6CAEBD] text-[#6CAEBD]"
                 >
                   {notification.requestNumber 
-                    ? `${language === 'ar' ? 'طلب' : 'Request'}: ${notification.requestNumber}`
-                    : `${language === 'ar' ? 'طلب' : 'Request'}: #${notification.relatedEntityId || notification.userRequestId}`
+                    ? `${t('notifications.request')}: ${notification.requestNumber}`
+                    : `${t('notifications.request')}: #${requestId}`
                   }
                 </Badge>
               </>
@@ -121,7 +126,7 @@ export function NotificationCard({
             )}
 
             <span className="text-gray-300">•</span>
-            <Badge variant="secondary" className="bg-gray-100">
+            <Badge variant="secondary" className="bg-gray-100 text-gray-700">
               {getNotificationTypeLabel(notification.type)}
             </Badge>
           </div>

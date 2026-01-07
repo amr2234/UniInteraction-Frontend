@@ -39,6 +39,8 @@ export function DashboardPage() {
     stats,
     requestsData,
     requestTypesData,
+    isLoadingMonthly,
+    isLoadingTypes,
     services,
     adminServices,
     getUserDisplayName,
@@ -352,48 +354,54 @@ export function DashboardPage() {
                 <TrendingUp className="w-5 h-5 text-[#6CAEBD]" />
                 {t("dashboard.requestsOverTime")}
               </h3>
-              <ResponsiveContainer width="100%" height={300}>
-                <LineChart data={requestsData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                  <XAxis dataKey="name" stroke="#6F6F6F" />
-                  <YAxis stroke="#6F6F6F" />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: "#fff",
-                      border: "1px solid #e5e7eb",
-                      borderRadius: "8px",
-                    }}
-                  />
-                  <Legend />
-                  <Line
-                    type="monotone"
-                    dataKey="طلبات"
-                    stroke="#6CAEBD"
-                    strokeWidth={3}
-                    dot={{ fill: "#6CAEBD", r: 5 }}
-                    activeDot={{ r: 7 }}
-                    animationDuration={1500}
-                  />
-                  <Line
-                    type="monotone"
-                    dataKey="مكتمل"
-                    stroke="#115740"
-                    strokeWidth={3}
-                    dot={{ fill: "#115740", r: 5 }}
-                    animationDuration={1500}
-                    animationBegin={300}
-                  />
-                  <Line
-                    type="monotone"
-                    dataKey="قيدالمراجعة"
-                    stroke="#EABB4E"
-                    strokeWidth={3}
-                    dot={{ fill: "#EABB4E", r: 5 }}
-                    animationDuration={1500}
-                    animationBegin={600}
-                  />
-                </LineChart>
-              </ResponsiveContainer>
+              {isLoadingMonthly ? (
+                <div className="flex items-center justify-center h-[300px]">
+                  <p className="text-gray-500">{t("common.loading")}</p>
+                </div>
+              ) : (
+                <ResponsiveContainer width="100%" height={300}>
+                  <LineChart data={requestsData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                    <XAxis dataKey="name" stroke="#6F6F6F" />
+                    <YAxis stroke="#6F6F6F" />
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: "#fff",
+                        border: "1px solid #e5e7eb",
+                        borderRadius: "8px",
+                      }}
+                    />
+                    <Legend />
+                    <Line
+                      type="monotone"
+                      dataKey={t("dashboard.chartLabels.requests")}
+                      stroke="#6CAEBD"
+                      strokeWidth={3}
+                      dot={{ fill: "#6CAEBD", r: 5 }}
+                      activeDot={{ r: 7 }}
+                      animationDuration={1500}
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey={t("dashboard.chartLabels.completed")}
+                      stroke="#115740"
+                      strokeWidth={3}
+                      dot={{ fill: "#115740", r: 5 }}
+                      animationDuration={1500}
+                      animationBegin={300}
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey={t("dashboard.chartLabels.underReview")}
+                      stroke="#EABB4E"
+                      strokeWidth={3}
+                      dot={{ fill: "#EABB4E", r: 5 }}
+                      animationDuration={1500}
+                      animationBegin={600}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              )}
             </Card>
 
             {/* Request Types - Bar Chart */}
@@ -402,30 +410,36 @@ export function DashboardPage() {
                 <FileText className="w-5 h-5 text-[#875E9E]" />
                 {t("dashboard.requestTypesDistribution")}
               </h3>
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={requestTypesData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                  <XAxis dataKey="name" stroke="#6F6F6F" />
-                  <YAxis stroke="#6F6F6F" />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: "#fff",
-                      border: "1px solid #e5e7eb",
-                      borderRadius: "8px",
-                    }}
-                  />
-                  <Bar
-                    dataKey="count"
-                    radius={[8, 8, 0, 0]}
-                    animationDuration={1200}
-                    animationBegin={200}
-                  >
-                    {requestTypesData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.fill} />
-                    ))}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
+              {isLoadingTypes ? (
+                <div className="flex items-center justify-center h-[300px]">
+                  <p className="text-gray-500">{t("common.loading")}</p>
+                </div>
+              ) : (
+                <ResponsiveContainer width="100%" height={300}>
+                  <BarChart data={requestTypesData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                    <XAxis dataKey="name" stroke="#6F6F6F" />
+                    <YAxis stroke="#6F6F6F" />
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: "#fff",
+                        border: "1px solid #e5e7eb",
+                        borderRadius: "8px",
+                      }}
+                    />
+                    <Bar
+                      dataKey="count"
+                      radius={[8, 8, 0, 0]}
+                      animationDuration={1200}
+                      animationBegin={200}
+                    >
+                      {requestTypesData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.fill} />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              )}
             </Card>
           </div>
         )}
