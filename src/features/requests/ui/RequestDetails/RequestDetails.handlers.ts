@@ -274,19 +274,6 @@ export const createRequestHandlers = (params: CreateHandlersParams) => {
         requestId: parseInt(id, 10),
         departmentId,
       });
-
-      if (
-        request &&
-        (request.requestTypeId === RequestType.INQUIRY ||
-          request.requestTypeId === RequestType.COMPLAINT)
-      ) {
-        if (request.requestStatusId === RequestStatus.RECEIVED) {
-          updateStatusMutation.mutate({
-            requestId: id,
-            newStatus: RequestStatus.UNDER_REVIEW,
-          });
-        }
-      }
     }
   };
 

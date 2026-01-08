@@ -275,51 +275,6 @@ export function LandingPage() {
         </div>
       </section>
 
-      {/* FAQ Section - Only show if FAQs exist */}
-      {!isFaqsLoading && faqs.length > 0 && (
-        <section className="py-16 sm:py-24 bg-gradient-to-br from-[#F4F4F4] to-white">
-          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-            
-            <motion.div
-              className="text-center mb-12 sm:mb-16"
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.6 }}
-            >
-              <h2 className="text-[#2B2B2B] mb-4">{t("landing.faq.title")}</h2>
-              <p className="text-[#6F6F6F] text-lg">
-                {t("landing.faq.subtitle")}
-              </p>
-            </motion.div>
-
-            <div className="space-y-4">
-              {faqs.map((faq, index) => (
-                <motion.div
-                  key={index}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: index * 0.1, duration: 0.5 }}
-                >
-                  <Card className="bg-white border-0 shadow-soft hover:shadow-soft-lg rounded-2xl p-6 transition-all">
-                    <div className="flex items-start gap-4">
-                      <div className="w-10 h-10 rounded-xl bg-[#6CAEBD]/10 flex items-center justify-center flex-shrink-0">
-                        <HelpCircle className="w-5 h-5 text-[#6CAEBD]" />
-                      </div>
-                      <div className="flex-1">
-                        <h3 className="text-[#2B2B2B] font-semibold mb-2">{faq.question}</h3>
-                        <p className="text-[#6F6F6F] leading-relaxed">{faq.answer}</p>
-                      </div>
-                    </div>
-                  </Card>
-                </motion.div>
-              ))}
-            </div>
-          </div>
-        </section>
-      )}
-
       {/* User Types Section */}
       <section className="py-16 sm:py-24 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -394,6 +349,51 @@ export function LandingPage() {
 
           
             </motion.div>
+          </div>
+        </section>
+      )}
+
+      {/* FAQ Section - Only show if FAQs exist */}
+      {!isFaqsLoading && faqs.length > 0 && (
+        <section className="py-16 sm:py-24 bg-gradient-to-br from-[#F4F4F4] to-white">
+          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+            
+            <motion.div
+              className="text-center mb-12 sm:mb-16"
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6 }}
+            >
+              <h2 className="text-[#2B2B2B] mb-4">{t("landing.faq.title")}</h2>
+              <p className="text-[#6F6F6F] text-lg">
+                {t("landing.faq.subtitle")}
+              </p>
+            </motion.div>
+
+            <div className="space-y-4">
+              {faqs.map((faq, index) => (
+                <motion.div
+                  key={index}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: index * 0.1, duration: 0.5 }}
+                >
+                  <Card className="bg-white border-0 shadow-soft hover:shadow-soft-lg rounded-2xl p-6 transition-all">
+                    <div className="flex items-start gap-4">
+                      <div className="w-10 h-10 rounded-xl bg-[#6CAEBD]/10 flex items-center justify-center flex-shrink-0">
+                        <HelpCircle className="w-5 h-5 text-[#6CAEBD]" />
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="text-[#2B2B2B] font-semibold mb-2">{faq.question}</h3>
+                        <p className="text-[#6F6F6F] leading-relaxed">{faq.answer}</p>
+                      </div>
+                    </div>
+                  </Card>
+                </motion.div>
+              ))}
+            </div>
           </div>
         </section>
       )}

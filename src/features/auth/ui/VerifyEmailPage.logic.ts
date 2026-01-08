@@ -11,27 +11,53 @@ export const useVerifyEmailPage = () => {
   const { t } = useI18n();
   const [searchParams] = useSearchParams();
   const [otp, setOtp] = useState<string[]>(["", "", "", "", "", ""]);
-  const [timer, setTimer] = useState(60);
+  const [timer, setTimer] = useState(120); // 2 minutes timer
   const [canResend, setCanResend] = useState(false);
+  const [userEmail, setUserEmail] = useState<string | null>(null);
 
   
   const verifyMutation = useMutation({
-    mutationFn: (otpCode: string) => authApi.verifyEmail(otpCode),
-    onSuccess: () => {
+    mutationFn: ({ otp, email }: { otp: string; email: string }) => 
+      authApi.verifyEmail(otp, email),
+    onSuccess: (data) => {
       toast.success(t("auth.emailVerifiedSuccess"));
-      
-      navigate("/dashboard");
+  
+      // Check if user needs to create password (admin-created user)
+      if (data.needsPasswordSetup) {
+        // User created by admin → needs to create password
+        // Store email for create password page
+        if (data.email) {
+          localStorage.setItem('verificationEmail', data.email);
+        }
+        navigate("/create-password");
+      } else {
+        // User self-registered → already has password, redirect to login
+        // authToken is already set by verifyEmail API, just clean up
+        localStorage.removeItem('verificationEmail');
+        localStorage.removeItem('tempAuthToken');
+        localStorage.removeItem('authToken');
+        navigate("/login");
+      }
     },
     onError: (error: ApiError) => {
-      toast.error(error.message || t("auth.verificationFailed"));
+      // Check if backend returns "Invalid or expired OTP code"
+      const errorMessage = error.message || '';
+      
+      if (errorMessage === 'Invalid or expired OTP code') {
+        // Show translated error based on current language
+        toast.error(t("auth.invalidOtp"));
+      } else {
+        // Show backend error message or fallback to generic message
+        toast.error(error.message || t("auth.verificationFailed"));
+      }
     },
   });
 
   const resendMutation = useMutation({
-    mutationFn: () => authApi.resendVerificationOtp(),
+    mutationFn: (email: string) => authApi.resendVerificationOtp(email),
     onSuccess: () => {
       toast.success(t("auth.otpResentSuccess"));
-      setTimer(60);
+      setTimer(120); // Reset to 2 minutes
       setCanResend(false);
       setOtp(["", "", "", "", "", ""]);
     },
@@ -45,13 +71,18 @@ export const useVerifyEmailPage = () => {
     const tempToken = localStorage.getItem("tempAuthToken");
     const emailFromUrl = searchParams.get("email");
 
-    
+    // Store email for later use (resending OTP)
     if (emailFromUrl) {
       localStorage.setItem("verificationEmail", emailFromUrl);
+      setUserEmail(emailFromUrl);
+    } else {
+      // Try to get email from localStorage if not in URL
+      const storedEmail = localStorage.getItem("verificationEmail");
+      if (storedEmail) {
+        setUserEmail(storedEmail);
+      }
     }
 
-    
-    
     if (!tempToken && !emailFromUrl) {
       toast.error(t("auth.pleaseRegisterFirst"));
       navigate("/register");
@@ -121,12 +152,22 @@ export const useVerifyEmailPage = () => {
       return;
     }
 
-    verifyMutation.mutate(otpCode);
+    // Get email at submission time from URL or localStorage
+    const emailFromUrl = searchParams.get("email");
+    const storedEmail = localStorage.getItem("verificationEmail");
+    const email = emailFromUrl || storedEmail || "";
+
+    verifyMutation.mutate({ otp: otpCode, email });
   };
 
   const handleResend = () => {
     if (canResend && !resendMutation.isPending) {
-      resendMutation.mutate();
+      // Get email at resend time from URL or localStorage
+      const emailFromUrl = searchParams.get("email");
+      const storedEmail = localStorage.getItem("verificationEmail");
+      const email = emailFromUrl || storedEmail || "";
+      
+      resendMutation.mutate(email);
     }
   };
 

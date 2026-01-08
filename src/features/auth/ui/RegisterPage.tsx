@@ -5,15 +5,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { User, Mail, Lock, Phone, IdCard, Eye, EyeOff } from "lucide-react";
+import { User, Mail, Phone, IdCard } from "lucide-react";
 import logoImage from "@/assets/Logo-Test.png";
 import { useRegisterPage } from "./RegisterPage.logic";
 import { useI18n } from "@/i18n";
 
 export function RegisterPage() {
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-
   const {
     formData,
     errors,
@@ -76,11 +73,14 @@ export function RegisterPage() {
                 placeholder="Enter name in English"
                 value={formData.nameEn}
                 onChange={(e) => handleInputChange("nameEn", e.target.value)}
-                className="pr-10 rounded-xl"
+                className={`pr-10 rounded-xl ${errors.nameEn ? 'border-red-500 focus:ring-red-500' : ''}`}
                 dir="ltr"
                 disabled={register.isPending}
               />
             </div>
+            {errors.nameEn && (
+              <p className="text-red-500 text-sm mt-1">{errors.nameEn}</p>
+            )}
           </div>
 
           <div>
@@ -135,16 +135,9 @@ export function RegisterPage() {
               {t("auth.password")} <span className="text-red-500">*</span>
             </Label>
             <div className="relative mt-2">
-              <Eye
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-[#6F6F6F] w-5 h-5"
-              >
-                {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-              </Eye>
               <Input
                 id="password"
-                type={showPassword ? "text" : "password"}
+                type="password"
                 placeholder={t("auth.passwordPlaceholder")}
                 value={formData.password}
                 onChange={(e) => {
@@ -152,10 +145,7 @@ export function RegisterPage() {
                 }}
                 className={`pr-10 rounded-xl ${errors.password ? 'border-red-500 focus:ring-red-500' : ''}`}
                 disabled={register.isPending}
-
-       
               />
-
             </div>
             {errors.password && (
               <p className="text-red-500 text-sm mt-1">{errors.password}</p>
@@ -167,16 +157,9 @@ export function RegisterPage() {
               {t("auth.confirmPassword")} <span className="text-red-500">*</span>
             </Label>
             <div className="relative mt-2">
-              <Eye
-                type="button"
-                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-[#6F6F6F] w-5 h-5"
-              >
-                {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-              </Eye>
               <Input
                 id="confirmPassword"
-                type={showConfirmPassword ? "text" : "password"}
+                type="password"
                 placeholder={t("auth.confirmPasswordPlaceholder")}
                 value={formData.confirmPassword}
                 onChange={(e) => {
@@ -185,7 +168,6 @@ export function RegisterPage() {
                 className={`pr-10 rounded-xl ${errors.confirmPassword ? 'border-red-500 focus:ring-red-500' : ''}`}
                 disabled={register.isPending}
               />
-
             </div>
             {errors.confirmPassword && (
               <p className="text-red-500 text-sm mt-1">{errors.confirmPassword}</p>

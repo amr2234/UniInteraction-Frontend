@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useMutation } from '@tanstack/react-query';
 import { authApi } from '../api/auth.api';
@@ -23,13 +23,24 @@ export const useCreatePasswordPage = () => {
   const navigate = useNavigate();
   const { t } = useI18n();
   
+  // Pre-fill email from verification flow
+  const storedEmail = localStorage.getItem('verificationEmail') || '';
+  
   const [formData, setFormData] = useState<CreatePasswordFormData>({
-    email: '',
+    email: storedEmail,
     newPassword: '',
     confirmPassword: '',
   });
   
   const [errors, setErrors] = useState<Partial<Record<keyof CreatePasswordFormData, string>>>({});
+
+  // Clean up verification email after component mounts
+  useEffect(() => {
+    // Remove verification email from localStorage after it's used
+    return () => {
+      localStorage.removeItem('verificationEmail');
+    };
+  }, []);
 
   const createPasswordMutation = useMutation({
     mutationFn: ({ email, newPassword }: { email: string; newPassword: string }) =>
@@ -75,9 +86,17 @@ export const useCreatePasswordPage = () => {
       const confirmPassword = field === 'confirmPassword' ? value : formData.confirmPassword;
       
       if (password && confirmPassword) {
-        const confirmPasswordError = validateField('confirmPassword', confirmPassword, rules);
-        if (confirmPasswordError) {
-          setErrors(prev => ({ ...prev, confirmPassword: confirmPasswordError }));
+        // Create a fresh validation rule with the updated password values
+        const confirmPasswordValidation = confirmPasswordRule<CreatePasswordFormData>(
+          'confirmPassword',
+          password,
+          confirmPassword,
+          t('validation.passwordMismatch')
+        );
+        
+        // Check if passwords match
+        if (!confirmPasswordValidation.condition(confirmPassword)) {
+          setErrors(prev => ({ ...prev, confirmPassword: confirmPasswordValidation.message }));
         } else {
           setErrors(prev => ({ ...prev, confirmPassword: undefined }));
         }

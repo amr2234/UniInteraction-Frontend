@@ -363,10 +363,11 @@ export function TrackRequestsPage() {
                                 </span>
                               </div>
                             )}
-                            {request.visitStartAt ? (
+                            {/* Show visit date only if date exists and visit status is Accepted (2) or higher */}
+                            {request.visitDate && request.visitStatus && request.visitStatus >= 2 ? (
                               <div className="flex items-center gap-1">
                                 <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded">
-                                  {t("requests.track.visitDate")}: {new Date(request.visitStartAt).toLocaleDateString(isRTL ? 'ar-SA' : 'en-US')}
+                                  {t("requests.track.visitDate")}: {new Date(request.visitDate).toLocaleDateString(isRTL ? 'ar-SA' : 'en-US')}
                                 </span>
                               </div>
                             ) : (

@@ -12,7 +12,9 @@ import {
   nationalIdRule, 
   confirmPasswordRule,
   patternRule,
-  getFieldRules
+  hasArabicRegex,
+  noEnglishRegex,
+  noArabicRegex
 } from "@/core/utils/validation";
 import { useForm } from "@/core/utils/formUtils";
 import { i18n } from "@/i18n/i18n";
@@ -45,7 +47,14 @@ export const useRegisterPage = () => {
 
   const getValidationRules = () => [
     requiredRule<RegisterRequest>('username', formData.username, i18n.t("validation.usernameRequired")),
+    // Name Arabic - required, must contain Arabic, no English allowed
     requiredRule<RegisterRequest>('nameAr', formData.nameAr, i18n.t("validation.fullNameArRequired")),
+    patternRule<RegisterRequest>('nameAr', formData.nameAr, hasArabicRegex, i18n.t("validation.arabicRequired")),
+    patternRule<RegisterRequest>('nameAr', formData.nameAr, noEnglishRegex, i18n.t("validation.noEnglishAllowed")),
+    // Name English - optional, but if provided must be English only
+    ...(formData.nameEn && formData.nameEn.trim() 
+      ? [patternRule<RegisterRequest>('nameEn', formData.nameEn, noArabicRegex, i18n.t("validation.noArabicAllowed"))]
+      : []),
     requiredRule<RegisterRequest>('email', formData.email, i18n.t("validation.emailRequired")),
     emailRule<RegisterRequest>('email', formData.email, i18n.t("validation.invalidEmail")),
     requiredRule<RegisterRequest>('password', formData.password, i18n.t("validation.passwordRequired")),
@@ -64,14 +73,46 @@ export const useRegisterPage = () => {
   const handleInputChange = (field: keyof RegisterRequest, value: string | boolean) => {
     setFormData({ ...formData, [field]: value });
     
-    if (errors[field]) {
-      setErrors({ ...errors, [field]: undefined });
-    }
-    
     // Clear student ID and national ID errors when isStudent changes
     if (field === 'isStudent') {
       setErrors(prev => ({ ...prev, studentId: undefined, nationalId: undefined }));
       return;
+    }
+    
+    // Live validation for nameAr
+    if (field === 'nameAr') {
+      const valueStr = value as string;
+      const newErrors: Partial<Record<keyof RegisterRequest, string>> = {};
+      
+      if (!valueStr.trim()) {
+        newErrors.nameAr = i18n.t("validation.fullNameArRequired");
+      } else if (!hasArabicRegex.test(valueStr)) {
+        newErrors.nameAr = i18n.t("validation.arabicRequired");
+      } else if (!noEnglishRegex.test(valueStr)) {
+        newErrors.nameAr = i18n.t("validation.noEnglishAllowed");
+      }
+      
+      setErrors(prev => ({ ...prev, nameAr: newErrors.nameAr }));
+      return;
+    }
+    
+    // Live validation for nameEn
+    if (field === 'nameEn') {
+      const valueStr = value as string;
+      const newErrors: Partial<Record<keyof RegisterRequest, string>> = {};
+      
+      // Only validate if value is provided (it's optional)
+      if (valueStr && valueStr.trim() && !noArabicRegex.test(valueStr)) {
+        newErrors.nameEn = i18n.t("validation.noArabicAllowed");
+      }
+      
+      setErrors(prev => ({ ...prev, nameEn: newErrors.nameEn }));
+      return;
+    }
+    
+    // Clear error for the current field
+    if (errors[field]) {
+      setErrors({ ...errors, [field]: undefined });
     }
     
     const rules = getValidationRules();
@@ -81,14 +122,23 @@ export const useRegisterPage = () => {
       setErrors(prev => ({ ...prev, [field]: fieldError }));
     }
     
+    // Special handling for password confirmation
     if (field === 'password' || field === 'confirmPassword') {
       const password = field === 'password' ? value as string : formData.password;
       const confirmPassword = field === 'confirmPassword' ? value as string : formData.confirmPassword;
       
       if (password && confirmPassword) {
-        const confirmPasswordError = validateField('confirmPassword', confirmPassword, rules);
-        if (confirmPasswordError) {
-          setErrors(prev => ({ ...prev, confirmPassword: confirmPasswordError }));
+        // Create a fresh validation rule with the updated password values
+        const confirmPasswordValidation = confirmPasswordRule<RegisterRequest>(
+          'confirmPassword', 
+          password, 
+          confirmPassword, 
+          i18n.t("validation.passwordMismatch")
+        );
+        
+        // Check if passwords match
+        if (!confirmPasswordValidation.condition(confirmPassword)) {
+          setErrors(prev => ({ ...prev, confirmPassword: confirmPasswordValidation.message }));
         } else {
           setErrors(prev => ({ ...prev, confirmPassword: undefined }));
         }

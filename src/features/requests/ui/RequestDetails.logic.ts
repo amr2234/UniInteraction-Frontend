@@ -28,7 +28,7 @@ import {
   ReactivateFormErrors,
   validateReactivateField,
   validateReactivateForm,
-} from "./RequestDetails.validation";
+} from "./RequestDetails/RequestDetails.validation";
 
 export const useRequestDetailsLogic = () => {
   const navigate = useNavigate();
@@ -358,26 +358,52 @@ const scheduleOrUpdateVisitMutation = useMutation({
       return requestsApi.assignDepartment(requestId, departmentId);
     },
     onSuccess: async () => {
-      await queryClient.invalidateQueries({
-        queryKey: queryKeys.requests.detail(id!),
+     // toast.success(t("requests.departmentAssignedSuccessfully"));
+debugger
+      // Debug: Log all relevant values
+      console.log('Department assigned - checking if status update needed:', {
+        id: id,
+        hasRequest: !!request,
+        requestTypeId: request?.requestTypeId,
+        requestStatusId: request?.requestStatusId,
+        isInquiry: request?.requestTypeId === RequestType.INQUIRY,
+        isComplaint: request?.requestTypeId === RequestType.COMPLAINT,
+        isReceived: request?.requestStatusId === RequestStatus.RECEIVED,
+        INQUIRY_CONSTANT: RequestType.INQUIRY,
+        COMPLAINT_CONSTANT: RequestType.COMPLAINT,
+        RECEIVED_CONSTANT: RequestStatus.RECEIVED,
       });
-      await queryClient.invalidateQueries({ queryKey: queryKeys.requests.all });
 
-      toast.success(t("requests.departmentAssignedSuccessfully"));
-
+      // Auto-update status to UNDER_REVIEW for INQUIRY/COMPLAINT if currently RECEIVED
       if (
         id &&
         request &&
         (request.requestTypeId === RequestType.INQUIRY ||
-          request.requestTypeId === RequestType.COMPLAINT)
+          request.requestTypeId === RequestType.COMPLAINT) &&
+        request.requestStatusId === RequestStatus.RECEIVED
       ) {
-        if (request.requestStatusId === RequestStatus.RECEIVED) {
-          updateStatusMutation.mutate({
-            requestId: id,
+        try {
+          console.log('✅ Condition met! Updating request status to UNDER_REVIEW...');
+          
+          await requestsApi.updateRequestStatus(id, {
+            requestId: parseInt(id, 10),
             newStatus: RequestStatus.UNDER_REVIEW,
           });
+          
+          console.log('✅ Status updated successfully to UNDER_REVIEW');
+        } catch (error) {
+          console.error('❌ Failed to update request status:', error);
+          toast.error(t("requests.statusUpdateFailed") || "Failed to update status");
         }
+      } else {
+        console.log('❌ Condition NOT met - status will NOT be updated');
       }
+
+      // Invalidate queries after status update
+      await queryClient.invalidateQueries({
+        queryKey: queryKeys.requests.detail(id!),
+      });
+      await queryClient.invalidateQueries({ queryKey: queryKeys.requests.all });
     },
     onError: () => {
       toast.error(t("requests.departmentAssignmentFailed"));

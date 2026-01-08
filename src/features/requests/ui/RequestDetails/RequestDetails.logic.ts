@@ -201,7 +201,7 @@ export const useRequestDetailsLogic = () => {
   ]);
 
   // Mutations
-  const mutations = useRequestMutations(id, t);
+  const mutations = useRequestMutations(id, t, request);
 
   // Handlers
   const handlers = request ? createRequestHandlers({

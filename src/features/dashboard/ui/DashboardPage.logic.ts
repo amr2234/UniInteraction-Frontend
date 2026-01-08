@@ -258,7 +258,6 @@ export const useDashboardPage = () => {
         description: t("dashboard.admin.visitCalendarDesc"),
         link: "/admin/calendar",
         color: "from-[#EABB4E] to-[#6CAEBD]",
-        showForSuperAdmin: true,
       },
       {
         icon: Settings,

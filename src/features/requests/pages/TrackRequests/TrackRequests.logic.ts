@@ -138,12 +138,32 @@ export const useTrackRequests = () => {
 
   // Assign department mutation
   const assignDepartmentMutation = useMutation({
-    mutationFn: async ({ requestId, departmentId }: { requestId: number; departmentId: number }) => {
+    mutationFn: async ({ requestId, departmentId, requestTypeId, currentStatusId }: { 
+      requestId: number; 
+      departmentId: number;
+      requestTypeId: number;
+      currentStatusId: number;
+    }) => {
       return apiRequest.put(`/requests/${requestId}/assign-department`, { departmentId });
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['requests', 'paginated'] });
+    onSuccess: async (_data, variables) => {
       toast.success(t("requests.track.assignmentSuccess"));
+
+      // Auto-update status to UNDER_REVIEW for INQUIRY/COMPLAINT if currently RECEIVED
+      if (
+        (variables.requestTypeId === REQUEST_TYPES.INQUIRY ||
+          variables.requestTypeId === REQUEST_TYPES.COMPLAINT) &&
+        variables.currentStatusId === RequestStatus.RECEIVED
+      ) {
+        await requestsApi.updateRequestStatus(variables.requestId.toString(), {
+          requestId: variables.requestId,
+          newStatus: RequestStatus.UNDER_REVIEW,
+        });
+      }
+
+      // Invalidate queries after status update
+      queryClient.invalidateQueries({ queryKey: ['requests', 'paginated'] });
+      queryClient.invalidateQueries({ queryKey: ['requests'] });
     },
     onError: () => {
       toast.error(t("requests.track.assignmentError"));
@@ -239,8 +259,17 @@ export const useTrackRequests = () => {
   }, [navigate]);
 
   const handleAssignDepartment = useCallback((requestId: number, departmentId: number) => {
-    assignDepartmentMutation.mutate({ requestId, departmentId });
-  }, [assignDepartmentMutation]);
+    // Find the request to get its type and status
+    const request = enrichedRequests.find((r: any) => r.id === requestId);
+    if (!request) return;
+
+    assignDepartmentMutation.mutate({ 
+      requestId, 
+      departmentId,
+      requestTypeId: request.requestTypeId,
+      currentStatusId: request.requestStatusId
+    });
+  }, [assignDepartmentMutation, enrichedRequests]);
 
   const handleResetFilters = useCallback(() => {
     setFilters({

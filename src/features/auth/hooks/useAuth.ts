@@ -19,12 +19,13 @@ export const useLogin = () => {
 
   return useMutation<AuthResponse, ApiError, LoginRequest>({
     mutationFn: authApi.login,
-    onSuccess: (data) => {
+    onSuccess: () => {
       toast.success(t("auth.loginSuccess"));
 
       const userInfo = authApi.getUserInfo();
       const roleIds = userInfo?.roleIds || [];
 
+      // Admin, Super Admin, and Employees go to dashboard
       if (
         roleIds.includes(UserRole.SUPER_ADMIN) ||
         roleIds.includes(UserRole.ADMIN) ||
@@ -32,6 +33,7 @@ export const useLogin = () => {
       ) {
         navigate("/dashboard");
       } else {
+        // Normal users go to landing page
         navigate("/");
       }
     },
@@ -47,10 +49,11 @@ export const useRegister = () => {
 
   return useMutation<AuthResponse, ApiError, RegisterRequest>({
     mutationFn: authApi.register,
-    onSuccess: (data) => {
+    onSuccess: (_data, variables) => {
       toast.success(t("auth.registerSuccess"));
 
-      navigate("/verify-email");
+      // Navigate to verify-email with the email parameter
+      navigate(`/verify-email?email=${encodeURIComponent(variables.email)}`);
     },
     onError: (error: ApiError) => {
       toast.error(error.message || t("auth.registerFailed"));

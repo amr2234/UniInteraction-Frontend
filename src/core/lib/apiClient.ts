@@ -87,34 +87,44 @@ apiClient.interceptors.response.use(
     // Get the backend error message
     let errorMessage = error.response?.data?.message || error.message;
     
-    // Map generic backend error messages to translated frontend messages
-    const genericErrorPatterns = [
-      /an error occurred/i,
-      /processing your request/i,
-      /something went wrong/i,
-      /internal server error/i,
-      /operation failed/i,
+    // Map specific backend error messages to translated keys
+    const errorMappings = [
+      { pattern: /invalid (username or password|credentials)/i, key: "validation.invalidCredentials" },
+      { pattern: /an error occurred/i, key: "errors.unexpectedError" },
+      { pattern: /processing your request/i, key: "errors.unexpectedError" },
+      { pattern: /something went wrong/i, key: "errors.unexpectedError" },
+      { pattern: /internal server error/i, key: "errors.serverError" },
+      { pattern: /operation failed/i, key: "errors.unexpectedError" },
     ];
     
-    // Check if the error message matches any generic pattern
-    const isGenericError = genericErrorPatterns.some(pattern => 
-      errorMessage && pattern.test(errorMessage)
+    // Check if the error message matches any known pattern
+    const matchedMapping = errorMappings.find(mapping => 
+      errorMessage && mapping.pattern.test(errorMessage)
     );
 
     const apiError: ApiError = {
       status: error.response?.status || 500,
-      message: isGenericError 
-        ? i18n.t("errors.unexpectedError")
+      message: matchedMapping 
+        ? i18n.t(matchedMapping.key)
         : (errorMessage || i18n.t("errors.unexpectedError")),
       errors: error.response?.data?.errors,
     };
 
     if (apiError.status === 401) {
-      localStorage.removeItem("authToken");
-      localStorage.removeItem("refreshToken");
-      localStorage.removeItem("userInfo");
-      localStorage.removeItem("userProfile");
-      window.location.href = "/login";
+      // Don't redirect if user is in the middle of email verification or password creation flow
+      const currentPath = window.location.pathname;
+      const isAuthFlow = currentPath.includes('/verify-email') || 
+                        currentPath.includes('/create-password') ||
+                        currentPath.includes('/register');
+      
+      if (!isAuthFlow) {
+        localStorage.removeItem("authToken");
+        localStorage.removeItem("refreshToken");
+        localStorage.removeItem("userInfo");
+        localStorage.removeItem("userProfile");
+        window.location.href = "/login";
+      }
+      // If in auth flow, just reject the error without redirecting
     }
 
     if (apiError.status === 403) {

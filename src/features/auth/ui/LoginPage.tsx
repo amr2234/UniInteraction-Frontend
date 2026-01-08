@@ -5,15 +5,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { Mail, Lock, Shield, IdCard, Eye, EyeOff } from "lucide-react";
+import { Mail, Lock, Shield, IdCard } from "lucide-react";
 import nafathLogo from "@/assets/Nafaz.png";
 import logoImage from "@/assets/Logo-Test.png";
 import { useLoginPage } from "./LoginPage.logic";
 import { useI18n } from "@/i18n";
 
 export function LoginPage() {
-  const [showPassword, setShowPassword] = useState(false);
-  
   const {
     formData,
     errors,
@@ -107,22 +105,15 @@ export function LoginPage() {
             <div className="relative mt-2">
               <Input
                 id="password"
-                type={showPassword ? "text" : "password"}
+                type="password"
                 placeholder={t("auth.passwordPlaceholder")}
                 value={formData.password}
                 onChange={(e) => {
                   handleInputChange("password", e.target.value);
                 }}
-                className={`rounded-xl pr-12 ${errors.password ? 'border-red-500 focus:ring-red-500' : ''}`}
+                className={`rounded-xl ${errors.password ? 'border-red-500 focus:ring-red-500' : ''}`}
                 disabled={login.isPending}
               />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute top-1/2 transform -translate-y-1/2 text-[#6F6F6F] hover:text-[#2B2B2B] right-3"
-              >
-                {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-              </button>
             </div>
             {errors.password && (
               <p className="text-red-500 text-sm mt-1">{errors.password}</p>

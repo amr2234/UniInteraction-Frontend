@@ -45,6 +45,7 @@ import {
   ArrowRightLeft,
   RefreshCw,
   Save,
+  Loader2,
 } from "lucide-react";
 import { useRequestDetailsLogic } from "./RequestDetails.logic";
 import { useI18n } from "@/i18n";
@@ -841,8 +842,8 @@ export function RequestDetailsPage() {
                                 .toISOString()
                                 .slice(0, 16) && (
                               <Button
-                                className="w-full h-14     hover: text-white font-bold text-lg rounded-xl shadow-lg hover:shadow-xl transition-all"
-                                style={{ backgroundColor: "#115740" }}
+                                className="w-full h-14 bg-[#115740] hover:bg-[#0d4230] text-white font-bold text-lg rounded-xl shadow-lg hover:shadow-xl transition-all"
+                                disabled={scheduleOrUpdateVisitMutation.isPending}
                                 onClick={() => {
                                   if (
                                     request.id &&
@@ -860,8 +861,17 @@ export function RequestDetailsPage() {
                                   }
                                 }}
                               >
-                                <Save className="w-5 h-5 mr-2" />
-                                {t("requests.saveVisitDate")}
+                                {scheduleOrUpdateVisitMutation.isPending ? (
+                                  <>
+                                    <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                                    {t("common.saving")}
+                                  </>
+                                ) : (
+                                  <>
+                                    <Save className="w-5 h-5 mr-2" />
+                                    {t("requests.saveVisitDate")}
+                                  </>
+                                )}
                               </Button>
                             )}
 
@@ -1432,12 +1442,14 @@ export function RequestDetailsPage() {
               <h4 className="text-[#115740] mb-4">
                 {t("requests.requestInfo")}
               </h4>
-                 {/* Related Request - Show if visit is related to previous request OR has linked complaint */}
+                 {/* Related Request - Show if visit is related to previous request OR has linked complaint OR complaint converted from visit */}
                 {((request.isVisitRelatedToPreviousRequest &&
                   request.relatedRequestId) ||
                   (request.requestTypeId === RequestType.VISIT &&
                     request.relatedRequestId &&
-                    !request.redirectToNewRequest)) && (
+                    !request.redirectToNewRequest) ||
+                  (request.requestTypeId === RequestType.COMPLAINT &&
+                    request.relatedRequestId)) && (
                   <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-blue-200 rounded-xl p-4">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
