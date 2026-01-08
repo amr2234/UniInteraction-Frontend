@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useMutation } from '@tanstack/react-query';
 import { authApi } from '../api/auth.api';
 import { toast } from 'sonner';
@@ -9,31 +9,12 @@ import { ApiError } from '@/core/types/api';
 export const useVerifyEmailPage = () => {
   const navigate = useNavigate();
   const { t } = useI18n();
+  const [searchParams] = useSearchParams();
   const [otp, setOtp] = useState<string[]>(['', '', '', '', '', '']);
   const [timer, setTimer] = useState(60);
   const [canResend, setCanResend] = useState(false);
 
-  // Check if user has temp token, otherwise redirect to register
-  useEffect(() => {
-    const tempToken = localStorage.getItem('tempAuthToken');
-    if (!tempToken) {
-      toast.error(t('auth.pleaseRegisterFirst'));
-      navigate('/register');
-    }
-  }, [navigate, t]);
-
-  // Timer for resend OTP
-  useEffect(() => {
-    if (timer > 0) {
-      const interval = setInterval(() => {
-        setTimer((prev) => prev - 1);
-      }, 1000);
-      return () => clearInterval(interval);
-    } else {
-      setCanResend(true);
-    }
-  }, [timer]);
-
+  // Define mutations first
   const verifyMutation = useMutation({
     mutationFn: (otpCode: string) => authApi.verifyEmail(otpCode),
     onSuccess: () => {
@@ -58,6 +39,52 @@ export const useVerifyEmailPage = () => {
       toast.error(error.message || t('auth.otpResendFailed'));
     },
   });
+
+  // Check if user has temp token OR URL params (from email link), otherwise redirect to register
+  useEffect(() => {
+    const tempToken = localStorage.getItem('tempAuthToken');
+    const otpFromUrl = searchParams.get('otp');
+    const tokenFromUrl = searchParams.get('token');
+    const emailFromUrl = searchParams.get('email');
+    
+    // If coming from email link with OTP, auto-fill it
+    if (otpFromUrl && otpFromUrl.length === 6) {
+      const otpArray = otpFromUrl.split('');
+      setOtp(otpArray);
+      // Auto-submit if we have a valid OTP from URL
+      setTimeout(() => {
+        verifyMutation.mutate(otpFromUrl);
+      }, 500);
+    }
+    
+    // If user has verification token from email, store it temporarily
+    if (tokenFromUrl) {
+      localStorage.setItem('tempAuthToken', tokenFromUrl);
+    }
+    
+    // Store email from URL if provided
+    if (emailFromUrl) {
+      localStorage.setItem('verificationEmail', emailFromUrl);
+    }
+    
+    // Only redirect to register if no temp token AND no URL params
+    if (!tempToken && !otpFromUrl && !tokenFromUrl) {
+      toast.error(t('auth.pleaseRegisterFirst'));
+      navigate('/register');
+    }
+  }, [navigate, t, searchParams, verifyMutation]);
+
+  // Timer for resend OTP
+  useEffect(() => {
+    if (timer > 0) {
+      const interval = setInterval(() => {
+        setTimer((prev) => prev - 1);
+      }, 1000);
+      return () => clearInterval(interval);
+    } else {
+      setCanResend(true);
+    }
+  }, [timer]);
 
   const handleOtpChange = (index: number, value: string) => {
     // Only allow digits
