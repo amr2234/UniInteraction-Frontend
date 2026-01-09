@@ -916,7 +916,11 @@
     "invalidImageType": "Invalid file type. Please upload JPG, PNG, or WEBP image.",
     "imageTooLarge": "Image size exceeds 5MB. Please choose a smaller file.",
     "role": "Role",
-    "yourRole": "Your Role"
+    "yourRole": "Your Role",
+    "emailVerified": "Email Verified",
+    "verified": "Verified",
+    "passwordChangedSuccess": "Password changed successfully",
+    "passwordChangeFailed": "Failed to change password"
   },
   "notifications": {
     "title": "Notifications",
@@ -1213,6 +1217,10 @@
     "loadError": "Failed to load users",
     "displayOrder": "Display Order",
     "actions": "Actions",
+    "emailVerified": "Email Verified",
+    "verified": "Verified",
+    "notVerified": "Not Verified",
+    "cannotDeleteSuperAdmin": "Super Admin cannot be deleted",
     "roles": {
       "superAdmin": "Super Admin",
       "admin": "Admin",

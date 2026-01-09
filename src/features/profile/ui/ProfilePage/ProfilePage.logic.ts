@@ -8,6 +8,8 @@ import {
   requiredRule,
   emailRule,
   phoneRule,
+  minLengthRule,
+  confirmPasswordRule,
 } from "@/core/utils/validation";
 import { useUserProfile } from "@/features/auth/hooks/useAuth";
 import {
@@ -17,6 +19,7 @@ import {
 import { authApi } from "@/features/auth/api/auth.api";
 import { profileApi } from "@/features/profile/api/profile.api";
 import { queryClient } from "@/core/lib/QueryProvider";
+import { useMutation } from "@tanstack/react-query";
 
 interface ProfileFormData {
   nameAr: string;
@@ -31,6 +34,16 @@ interface ProfileFormErrors {
   mobile?: string;
 }
 
+interface PasswordFormData {
+  newPassword: string;
+  confirmPassword: string;
+}
+
+interface PasswordFormErrors {
+  newPassword?: string;
+  confirmPassword?: string;
+}
+
 export const useProfilePageLogic = () => {
   const navigate = useNavigate();
   const { t } = useI18n();
@@ -41,7 +54,6 @@ export const useProfilePageLogic = () => {
 
   const [isEditing, setIsEditing] = useState(false);
   const [showChangePassword, setShowChangePassword] = useState(false);
-  const [showNafathDialog, setShowNafathDialog] = useState(false);
   const [profilePicture, setProfilePicture] = useState<string | null>(null);
   const [formData, setFormData] = useState<ProfileFormData>({
     nameAr: "",
@@ -51,6 +63,11 @@ export const useProfilePageLogic = () => {
     nationalId: "",
   });
   const [formErrors, setFormErrors] = useState<ProfileFormErrors>({});
+  const [passwordData, setPasswordData] = useState<PasswordFormData>({
+    newPassword: "",
+    confirmPassword: "",
+  });
+  const [passwordErrors, setPasswordErrors] = useState<PasswordFormErrors>({});
 
   useEffect(() => {
     if (profileData) {
@@ -167,24 +184,101 @@ export const useProfilePageLogic = () => {
     navigate("/login", { replace: true });
   };
 
-  const handleOpenNafathDialog = () => {
-    setShowNafathDialog(true);
-  };
+  // Change password mutation
+  const changePasswordMutation = useMutation({
+    mutationFn: ({ email, newPassword }: { email: string; newPassword: string }) =>
+      authApi.createPassword(email, newPassword),
+    onSuccess: () => {
+      toast.success(t("profile.passwordChangedSuccess"));
+      setShowChangePassword(false);
+      setPasswordData({ newPassword: "", confirmPassword: "" });
+      setPasswordErrors({});
+    },
+    onError: (error: any) => {
+      toast.error(error?.message || t("profile.passwordChangeFailed"));
+    },
+  });
 
-  const handleNafathSuccess = (nationalId: string) => {
-    setFormData((prev) => ({ ...prev, nationalId }));
+  const getPasswordValidationRules = () => [
+    requiredRule<PasswordFormData>(
+      "newPassword",
+      passwordData.newPassword,
+      t("validation.passwordRequired")
+    ),
+    minLengthRule<PasswordFormData>(
+      "newPassword",
+      passwordData.newPassword,
+      6,
+      t("validation.passwordMinLength")
+    ),
+    requiredRule<PasswordFormData>(
+      "confirmPassword",
+      passwordData.confirmPassword,
+      t("validation.confirmPasswordRequired")
+    ),
+    confirmPasswordRule<PasswordFormData>(
+      "confirmPassword",
+      passwordData.newPassword,
+      passwordData.confirmPassword,
+      t("validation.passwordMismatch")
+    ),
+  ];
 
-    const currentProfile = localStorage.getItem("userProfile");
-    if (currentProfile) {
-      const parsedProfile = JSON.parse(currentProfile);
-      const updatedProfile = { ...parsedProfile, nationalId };
-      localStorage.setItem("userProfile", JSON.stringify(updatedProfile));
-      window.dispatchEvent(new Event("localStorageUpdate"));
+  const handlePasswordChange = (field: keyof PasswordFormData, value: string) => {
+    setPasswordData({ ...passwordData, [field]: value });
+
+    if (passwordErrors[field]) {
+      setPasswordErrors({ ...passwordErrors, [field]: undefined });
     }
 
-    toast.success(t("profile.nafathActivatedSuccess"));
+    const rules = getPasswordValidationRules();
+    const fieldError = validateField(field, value, rules);
 
-    setShowNafathDialog(false);
+    if (fieldError) {
+      setPasswordErrors((prev) => ({ ...prev, [field]: fieldError }));
+    }
+
+    // Special handling for password confirmation
+    if (field === "newPassword" || field === "confirmPassword") {
+      const password = field === "newPassword" ? value : passwordData.newPassword;
+      const confirmPassword = field === "confirmPassword" ? value : passwordData.confirmPassword;
+
+      if (password && confirmPassword) {
+        const confirmPasswordValidation = confirmPasswordRule<PasswordFormData>(
+          "confirmPassword",
+          password,
+          confirmPassword,
+          t("validation.passwordMismatch")
+        );
+
+        if (!confirmPasswordValidation.condition(confirmPassword)) {
+          setPasswordErrors((prev) => ({
+            ...prev,
+            confirmPassword: confirmPasswordValidation.message,
+          }));
+        } else {
+          setPasswordErrors((prev) => ({ ...prev, confirmPassword: undefined }));
+        }
+      }
+    }
+  };
+
+  const handleChangePasswordSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    const rules = getPasswordValidationRules();
+    const newErrors = validateForm(rules);
+
+    if (Object.keys(newErrors).length > 0) {
+      setPasswordErrors(newErrors);
+      toast.error(t("validation.pleaseFixErrors"));
+      return;
+    }
+
+    changePasswordMutation.mutate({
+      email: formData.email,
+      newPassword: passwordData.newPassword,
+    });
   };
 
   const handleChangePhotoClick = () => {
@@ -246,24 +340,25 @@ export const useProfilePageLogic = () => {
   return {
     isEditing,
     showChangePassword,
-    showNafathDialog,
     profilePicture,
     formData,
     formErrors,
+    passwordData,
+    passwordErrors,
     isUploadingPicture: uploadPictureMutation.isPending,
+    isChangingPassword: changePasswordMutation.isPending,
     fileInputRef,
 
     setIsEditing,
     setShowChangePassword,
-    setShowNafathDialog,
     handleInputChange,
     handleSave,
     handleCancel,
     handleLogout,
-    handleOpenNafathDialog,
-    handleNafathSuccess,
     handleChangePhotoClick,
     handleFileChange,
+    handlePasswordChange,
+    handleChangePasswordSubmit,
     navigate,
     t,
   };

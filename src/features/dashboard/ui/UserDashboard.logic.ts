@@ -21,8 +21,14 @@ export const useUserDashboard = () => {
   // Fetch request counts by status from API
   const { data: statusCounts = [] } = useRequestCountsByStatus();
 
-  // Fetch all requests for recent activity
-  const { data: allRequests = [] } = useUserRequests({}, false);
+  // Fetch only 2 recent requests for activity section - optimized for users
+  const { data: allRequests = [] } = useUserRequests(
+    { 
+      pageNumber: 1, 
+      pageSize: 2 
+    },
+    true // Enable pagination for better performance
+  );
 
   // Ensure allRequests is always an array
   // Handle both paginated response {items: []} and direct array []

@@ -1,8 +1,8 @@
 import { useMemo } from "react";
 import { useI18n } from "@/i18n";
 import { useUserRole } from "@/core/hooks";
-import { 
-  useUserRequests, 
+import {
+  useUserRequests,
   useRequestCountsByStatus,
   useMonthlyStatistics,
   useRequestTypesDistribution,
@@ -37,42 +37,65 @@ export const useDashboardPage = () => {
   const { data: statusCounts = [] } = useRequestCountsByStatus();
 
   // Fetch monthly statistics for line chart
-  const { data: monthlyStats = [], isLoading: isLoadingMonthly } = useMonthlyStatistics(6);
+  const { data: monthlyStats = [], isLoading: isLoadingMonthly } =
+    useMonthlyStatistics(6);
 
   // Fetch request types distribution for bar chart
-  const { data: typesDistribution = [], isLoading: isLoadingTypes } = useRequestTypesDistribution();
+  const { data: typesDistribution = [], isLoading: isLoadingTypes } =
+    useRequestTypesDistribution();
 
-  // Fetch all requests for recent activity
-  const { data: allRequests = [] } = useUserRequests({}, false);
+  // Fetch only recent requests for employee dashboard (limit to 2) - more efficient than fetching all
+  // For non-employees, don't fetch at all since they don't need recent requests section
+  const { data: allRequests = [] } = useUserRequests(
+    isEmployee
+      ? {
+          pageNumber: 1,
+          pageSize: 2,
+        }
+      : undefined,
+    isEmployee // Only enable pagination for employees
+  );
 
   // Ensure allRequests is always an array
   // Handle both paginated response {items: []} and direct array []
-  const requestsArray = Array.isArray(allRequests) 
-    ? allRequests 
+  const requestsArray = Array.isArray(allRequests)
+    ? allRequests
     : (allRequests as any)?.items || [];
 
   // Calculate request counts from API response
-  const requestCounts = useMemo(
-    () => {
-      const counts = {
-        pending: statusCounts.find((s) => s.statusId === RequestStatus.RECEIVED)?.count || 0,
-        inProgress: statusCounts.find((s) => s.statusId === RequestStatus.UNDER_REVIEW)?.count || 0,
-        replied: statusCounts.find((s) => s.statusId === RequestStatus.REPLIED)?.count || 0,
-        closed: statusCounts.find((s) => s.statusId === RequestStatus.CLOSED)?.count || 0,
-        total: statusCounts.reduce((sum, s) => sum + s.count, 0),
-      };
-      
-      return counts;
-    },
-    [statusCounts]
-  );
+  const requestCounts = useMemo(() => {
+    const counts = {
+      pending:
+        statusCounts.find((s) => s.statusId === RequestStatus.RECEIVED)
+          ?.count || 0,
+      inProgress:
+        statusCounts.find((s) => s.statusId === RequestStatus.UNDER_REVIEW)
+          ?.count || 0,
+      replied:
+        statusCounts.find((s) => s.statusId === RequestStatus.REPLIED)?.count ||
+        0,
+      closed:
+        statusCounts.find((s) => s.statusId === RequestStatus.CLOSED)?.count ||
+        0,
+      total: statusCounts.reduce((sum, s) => sum + s.count, 0),
+    };
+
+    return counts;
+  }, [statusCounts]);
 
   // Get recent requests that need action (All non-closed requests) - limit to 2
   const recentRequestsNeedingAction = useMemo(
     () =>
       requestsArray
-        .filter((r: any) => r.requestStatusId === RequestStatus.RECEIVED || r.requestStatusId === RequestStatus.UNDER_REVIEW)
-        .sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+        .filter(
+          (r: any) =>
+            r.requestStatusId === RequestStatus.RECEIVED ||
+            r.requestStatusId === RequestStatus.UNDER_REVIEW
+        )
+        .sort(
+          (a: any, b: any) =>
+            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        )
         .slice(0, 2),
     [requestsArray]
   );
@@ -80,7 +103,9 @@ export const useDashboardPage = () => {
   // Get user display name based on language
   const getUserDisplayName = () => {
     if (!userProfile) return "";
-    return language === "ar" ? userProfile.nameAr : userProfile.nameEn || userProfile.nameAr;
+    return language === "ar"
+      ? userProfile.nameAr
+      : userProfile.nameEn || userProfile.nameAr;
   };
 
   // Statistics cards
@@ -91,7 +116,9 @@ export const useDashboardPage = () => {
         value: String(requestCounts.pending + requestCounts.inProgress),
         icon: FileText,
         color: "bg-[#6CAEBD]/10 text-[#6CAEBD]",
-        trend: `${requestCounts.pending} ${t("requests.statuses.pending")}, ${requestCounts.inProgress} ${t("requests.statuses.inProgress")}`,
+        trend: `${requestCounts.pending} ${t("requests.statuses.pending")}, ${
+          requestCounts.inProgress
+        } ${t("requests.statuses.inProgress")}`,
       },
       {
         title: t("dashboard.statistics.closedRequests"),
@@ -116,12 +143,42 @@ export const useDashboardPage = () => {
     if (!monthlyStats || monthlyStats.length === 0) {
       // Fallback to mock data if API not available
       return [
-        { name: t("dashboard.months.january"), [t("dashboard.chartLabels.requests")]: 65, [t("dashboard.chartLabels.completed")]: 45, [t("dashboard.chartLabels.underReview")]: 20 },
-        { name: t("dashboard.months.february"), [t("dashboard.chartLabels.requests")]: 78, [t("dashboard.chartLabels.completed")]: 62, [t("dashboard.chartLabels.underReview")]: 16 },
-        { name: t("dashboard.months.march"), [t("dashboard.chartLabels.requests")]: 90, [t("dashboard.chartLabels.completed")]: 75, [t("dashboard.chartLabels.underReview")]: 15 },
-        { name: t("dashboard.months.april"), [t("dashboard.chartLabels.requests")]: 81, [t("dashboard.chartLabels.completed")]: 70, [t("dashboard.chartLabels.underReview")]: 11 },
-        { name: t("dashboard.months.may"), [t("dashboard.chartLabels.requests")]: 95, [t("dashboard.chartLabels.completed")]: 82, [t("dashboard.chartLabels.underReview")]: 13 },
-        { name: t("dashboard.months.june"), [t("dashboard.chartLabels.requests")]: 112, [t("dashboard.chartLabels.completed")]: 98, [t("dashboard.chartLabels.underReview")]: 14 },
+        {
+          name: t("dashboard.months.january"),
+          [t("dashboard.chartLabels.requests")]: 65,
+          [t("dashboard.chartLabels.completed")]: 45,
+          [t("dashboard.chartLabels.underReview")]: 20,
+        },
+        {
+          name: t("dashboard.months.february"),
+          [t("dashboard.chartLabels.requests")]: 78,
+          [t("dashboard.chartLabels.completed")]: 62,
+          [t("dashboard.chartLabels.underReview")]: 16,
+        },
+        {
+          name: t("dashboard.months.march"),
+          [t("dashboard.chartLabels.requests")]: 90,
+          [t("dashboard.chartLabels.completed")]: 75,
+          [t("dashboard.chartLabels.underReview")]: 15,
+        },
+        {
+          name: t("dashboard.months.april"),
+          [t("dashboard.chartLabels.requests")]: 81,
+          [t("dashboard.chartLabels.completed")]: 70,
+          [t("dashboard.chartLabels.underReview")]: 11,
+        },
+        {
+          name: t("dashboard.months.may"),
+          [t("dashboard.chartLabels.requests")]: 95,
+          [t("dashboard.chartLabels.completed")]: 82,
+          [t("dashboard.chartLabels.underReview")]: 13,
+        },
+        {
+          name: t("dashboard.months.june"),
+          [t("dashboard.chartLabels.requests")]: 112,
+          [t("dashboard.chartLabels.completed")]: 98,
+          [t("dashboard.chartLabels.underReview")]: 14,
+        },
       ];
     }
 
@@ -147,14 +204,15 @@ export const useDashboardPage = () => {
 
     // Map API data to chart format with colors based on request type
     return typesDistribution.map((item) => {
-      const typeName = language === "ar" ? item.requestTypeNameAr : item.requestTypeNameEn;
-      
+      const typeName =
+        language === "ar" ? item.requestTypeNameAr : item.requestTypeNameEn;
+
       // Assign colors based on request type ID
       let fill = "#6CAEBD"; // Default color
       if (item.requestTypeId === RequestType.COMPLAINT) {
         fill = "#875E9E"; // Purple for complaints
       } else if (item.requestTypeId === RequestType.INQUIRY) {
-        fill = "#6CAEBD"; // Blue for inquiries  
+        fill = "#6CAEBD"; // Blue for inquiries
       } else if (item.requestTypeId === RequestType.VISIT) {
         fill = "#EABB4E"; // Yellow for visits
       }
@@ -290,7 +348,7 @@ export const useDashboardPage = () => {
     requestsArray,
     requestCounts,
     recentRequestsNeedingAction,
-    
+
     // Data
     stats,
     requestsData,
@@ -299,7 +357,7 @@ export const useDashboardPage = () => {
     isLoadingTypes,
     services,
     adminServices,
-    
+
     // Functions
     getUserDisplayName,
     t,

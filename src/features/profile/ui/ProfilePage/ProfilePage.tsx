@@ -2,34 +2,31 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
-import { User, Mail, Phone, ArrowRight, Edit, Lock, LogOut, Shield, CheckCircle, XCircle, Camera, Loader2 } from "lucide-react";
+import { User, Mail, ArrowRight, Edit, Lock, LogOut, CheckCircle, Camera, Loader2 } from "lucide-react";
 import { useProfilePageLogic } from "./ProfilePage.logic";
-import { NafathActivationDialog } from "@/features/profile/components/NafathActivationDialog";
-import { UserRoleBadges } from "@/components/RoleBadge";
-import { useUser } from "@/core/hooks/useUser";
 
 export function ProfilePage() {
-  const user = useUser();
   const {
     isEditing,
     showChangePassword,
-    showNafathDialog,
     profilePicture,
     formData,
     formErrors,
+    passwordData,
+    passwordErrors,
     isUploadingPicture,
+    isChangingPassword,
     fileInputRef,
     setIsEditing,
     setShowChangePassword,
-    setShowNafathDialog,
     handleInputChange,
     handleSave,
     handleCancel,
     handleLogout,
-    handleOpenNafathDialog,
-    handleNafathSuccess,
     handleChangePhotoClick,
     handleFileChange,
+    handlePasswordChange,
+    handleChangePasswordSubmit,
     navigate,
     t,
   } = useProfilePageLogic();
@@ -171,37 +168,38 @@ export function ProfilePage() {
             {showChangePassword && (
               <Card className="p-6">
                 <h3 className="text-[#115740] mb-6">{t("profile.changePassword")}</h3>
-                <form className="space-y-4">
-                  <div>
-                    <Label htmlFor="current-password">{t("profile.currentPassword")}</Label>
-                    <Input
-                      id="current-password"
-                      type="password"
-                      placeholder={t("profile.enterCurrentPassword")}
-                      className="mt-2"
-                    />
-                  </div>
+                <form onSubmit={handleChangePasswordSubmit} className="space-y-4">
                   <div>
                     <Label htmlFor="new-password">{t("profile.newPassword")}</Label>
                     <Input
                       id="new-password"
                       type="password"
+                      value={passwordData.newPassword}
+                      onChange={(e) => handlePasswordChange('newPassword', e.target.value)}
                       placeholder={t("profile.enterNewPassword")}
-                      className="mt-2"
+                      className={`mt-2 ${passwordErrors.newPassword ? 'border-red-500' : ''}`}
                     />
+                    {passwordErrors.newPassword && (
+                      <p className="text-red-500 text-sm mt-1">{passwordErrors.newPassword}</p>
+                    )}
                   </div>
                   <div>
                     <Label htmlFor="confirm-password">{t("profile.confirmPassword")}</Label>
                     <Input
                       id="confirm-password"
                       type="password"
+                      value={passwordData.confirmPassword}
+                      onChange={(e) => handlePasswordChange('confirmPassword', e.target.value)}
                       placeholder={t("profile.confirmNewPassword")}
-                      className="mt-2"
+                      className={`mt-2 ${passwordErrors.confirmPassword ? 'border-red-500' : ''}`}
                     />
+                    {passwordErrors.confirmPassword && (
+                      <p className="text-red-500 text-sm mt-1">{passwordErrors.confirmPassword}</p>
+                    )}
                   </div>
                   <div className="flex gap-4">
-                    <Button type="submit" className="flex-1 bg-[#115740] hover:bg-[#0d4230]">
-                      {t("profile.updatePassword")}
+                    <Button type="submit" disabled={isChangingPassword} className="flex-1 bg-[#115740] hover:bg-[#0d4230]">
+                      {isChangingPassword ? t('common.saving') : t("profile.updatePassword")}
                     </Button>
                     <Button
                       type="button"
@@ -216,24 +214,7 @@ export function ProfilePage() {
               </Card>
             )}
 
-            {/* Account Statistics */}
-            <Card className="p-6">
-              <h3 className="text-[#115740] mb-4">{t("profile.accountStats")}</h3>
-              <div className="grid grid-cols-3 gap-4">
-                <div className="text-center p-4 bg-blue-50 rounded-2xl">
-                  <p className="text-2xl font-bold text-blue-600">8</p>
-                  <p className="text-sm text-gray-600 mt-1">{t("profile.activeRequests")}</p>
-                </div>
-                <div className="text-center p-4 bg-green-50 rounded-2xl">
-                  <p className="text-2xl font-bold text-green-600">24</p>
-                  <p className="text-sm text-gray-600 mt-1">{t("profile.completedRequests")}</p>
-                </div>
-                <div className="text-center p-4 bg-purple-50 rounded-2xl">
-                  <p className="text-2xl font-bold text-purple-600">32</p>
-                  <p className="text-sm text-gray-600 mt-1">{t("profile.totalRequests")}</p>
-                </div>
-              </div>
-            </Card>
+
           </div>
 
           {/* Sidebar */}
@@ -242,8 +223,8 @@ export function ProfilePage() {
             <Card className="p-6">
               <div className="text-center">
                 <div className="relative inline-block mb-4">
-                  {/* Profile Picture Display */}
-                  <div className="w-32 h-32 bg-gradient-to-br from-[#115740] to-[#1C4E80] rounded-full flex items-center justify-center overflow-hidden">
+                  {/* Profile Picture Display - Centered */}
+                  <div className="w-32 h-32 bg-gradient-to-br from-[#115740] to-[#1C4E80] rounded-full flex items-center justify-center overflow-hidden mx-auto">
                     {profilePicture ? (
                       <img 
                         src={profilePicture} 
@@ -251,22 +232,22 @@ export function ProfilePage() {
                         className="w-full h-full object-cover"
                       />
                     ) : (
-                      <span className="text-4xl text-white">{formData.nameAr?.substring(0, 2) || 'أ.ع'}</span>
+                      <User className="w-16 h-16 text-white" />
                     )}
                   </div>
                   
                   {/* Upload/Loading Overlay */}
                   {isUploadingPicture && (
-                    <div className="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center">
+                    <div className="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center mx-auto" style={{ width: '8rem', height: '8rem' }}>
                       <Loader2 className="w-8 h-8 text-white animate-spin" />
                     </div>
                   )}
                   
-                  {/* Camera Button */}
+                  {/* Camera Button - Positioned relative to centered image */}
                   <button
                     onClick={handleChangePhotoClick}
                     disabled={isUploadingPicture}
-                    className="absolute bottom-0 right-0 bg-[#115740] hover:bg-[#0d4230] text-white p-2 rounded-full shadow-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="absolute bottom-0 right-1/2 transform translate-x-16 bg-[#115740] hover:bg-[#0d4230] text-white p-2 rounded-full shadow-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     title={t('profile.changePhoto')}
                   >
                     <Camera className="w-4 h-4" />
@@ -306,13 +287,7 @@ export function ProfilePage() {
               </div>
             </Card>
 
-            {/* User Role Badge */}
-            <Card className="p-6">
-              <h4 className="text-[#115740] mb-4">{t("profile.yourRole")}</h4>
-              <UserRoleBadges roleIds={user.roleIds} variant="detailed" />
-            </Card>
 
-            {/* Quick Actions */}
             <Card className="p-6">
               <h4 className="text-[#115740] mb-4">{t("profile.accountSettings")}</h4>
               <div className="space-y-2">
@@ -339,60 +314,27 @@ export function ProfilePage() {
             <Card className="p-6">
               <h4 className="text-[#115740] mb-4">{t("profile.connectedAccounts")}</h4>
               <div className="space-y-3">
-                {/* Nafath Status - Dynamic based on nationalId */}
-                {formData.nationalId ? (
-                  // Nafath Connected
-                  <div className="flex items-center justify-between p-3 bg-green-50 rounded-xl">
-                    <div className="flex items-center gap-3">
-                      <Shield className="w-5 h-5 text-green-600" />
-                      <div>
-                        <p className="text-sm font-medium text-gray-900">{t("profile.nafath")}</p>
-                        <p className="text-xs text-gray-500">{t("profile.connected")}</p>
-                      </div>
-                    </div>
-                    <span className="text-xs text-green-600 flex items-center gap-1">
-                      <CheckCircle className="w-3 h-3" />
-                      {t("profile.active")}
-                    </span>
-                  </div>
-                ) : (
-                  // Nafath Not Connected
-                  <div className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
-                    <div className="flex items-center gap-3">
-                      <Shield className="w-5 h-5 text-gray-400" />
-                      <div>
-                        <p className="text-sm font-medium text-gray-900">{t("profile.nafath")}</p>
-                        <p className="text-xs text-gray-500">{t("profile.notConnected")}</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs text-gray-400 flex items-center gap-1">
-                        <XCircle className="w-3 h-3" />
-                        {t("profile.inactive")}
-                      </span>
-                      <Button 
-                        size="sm" 
-                        variant="outline"
-                        onClick={handleOpenNafathDialog}
-                        className="h-7 px-3 text-xs bg-green-50 hover:bg-green-100 text-green-700 border-green-200"
-                      >
-                        {t("common.activate")}
-                      </Button>
+                {/* Email Verified Status */}
+                <div className="flex items-center justify-between p-3 bg-green-50 rounded-xl">
+                  <div className="flex items-center gap-3">
+                    <Mail className="w-5 h-5 text-green-600" />
+                    <div>
+                      <p className="text-sm font-medium text-gray-900">{t("profile.emailVerified")}</p>
+                      <p className="text-xs text-gray-500">{formData.email}</p>
                     </div>
                   </div>
-                )}
+                  <span className="text-xs text-green-600 flex items-center gap-1">
+                    <CheckCircle className="w-3 h-3" />
+                    {t("profile.verified")}
+                  </span>
+                </div>
               </div>
             </Card>
           </div>
         </div>
       </div>
 
-      {/* Nafath Activation Dialog */}
-      <NafathActivationDialog
-        open={showNafathDialog}
-        onOpenChange={setShowNafathDialog}
-        onSuccess={handleNafathSuccess}
-      />
+
     </div>
   );
 }

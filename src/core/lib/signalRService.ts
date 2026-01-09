@@ -65,7 +65,10 @@ class SignalRService {
     }
     this.connection.on(
       "ReceiveNotification",
-      (notification: NotificationDto) => {}
+      (notification: NotificationDto) => {
+        // Trigger the callback with the notification
+        callback(notification);
+      }
     );
   }
 

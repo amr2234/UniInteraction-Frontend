@@ -921,7 +921,11 @@
     "invalidImageType": "نوع الملف غير صالح. يرجى رفع صورة JPG أو PNG أو WEBP.",
     "imageTooLarge": "حجم الصورة يتجاوز 5 ميجابايت. يرجى اختيار ملف أصغر.",
     "role": "الدور",
-    "yourRole": "دورك في النظام"
+    "yourRole": "دورك في النظام",
+    "emailVerified": "البريد مؤكد",
+    "verified": "مؤكد",
+    "passwordChangedSuccess": "تم تغيير كلمة المرور بنجاح",
+    "passwordChangeFailed": "فشل تغيير كلمة المرور"
   },
   "notifications": {
     "title": "الإشعارات",
@@ -1235,6 +1239,10 @@
     "loadError": "فشل تحميل المستخدمين",
     "displayOrder": "ترتيب العرض",
     "actions": "الإجراءات",
+    "emailVerified": "البريد مؤكد",
+    "verified": "مؤكد",
+    "notVerified": "غير مؤكد",
+    "cannotDeleteSuperAdmin": "لا يمكن حذف المدير العام",
     "roles": {
       "superAdmin": "مسؤول أعلى",
       "admin": "مسؤول النظام",

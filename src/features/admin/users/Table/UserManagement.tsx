@@ -38,6 +38,8 @@ import {
   ChevronLeft,
   ChevronRight,
   ArrowRight,
+  CheckCircle,
+  XCircle,
 } from "lucide-react";
 import { useI18n } from "@/i18n";
 import { useUserManagement } from "./UserManagement.logic";
@@ -180,6 +182,9 @@ export function UserManagement() {
                   <TableHead className="text-center font-semibold text-gray-700 w-[200px]">
                     {t("form.email")}
                   </TableHead>
+                  <TableHead className="text-center font-semibold text-gray-700 w-[120px]">
+                    {t("users.emailVerified")}
+                  </TableHead>
                   <TableHead className="text-center font-semibold text-gray-700 w-[130px]">
                     {t("form.mobile")}
                   </TableHead>
@@ -261,6 +266,19 @@ export function UserManagement() {
                       <TableCell className="text-center overflow-hidden">
                         <p style={{ wordBreak: 'break-all', maxWidth: '12.5rem', marginLeft: 'auto', marginRight: 'auto' }}>{user.email}</p>
                       </TableCell>
+                      <TableCell className="text-center overflow-hidden">
+                        {user.emailConfirmed ? (
+                          <div className="flex items-center justify-center gap-1 text-green-600">
+                            <CheckCircle className="w-4 h-4" />
+                            <span className="text-xs">{t("users.verified")}</span>
+                          </div>
+                        ) : (
+                          <div className="flex items-center justify-center gap-1 text-gray-400">
+                            <XCircle className="w-4 h-4" />
+                            <span className="text-xs">{t("users.notVerified")}</span>
+                          </div>
+                        )}
+                      </TableCell>
                       <TableCell className="text-center overflow-hidden" dir="ltr">
                         <p style={{ wordBreak: 'break-all', maxWidth: '8.125rem', marginLeft: 'auto', marginRight: 'auto' }}>{user.mobile || "-"}</p>
                       </TableCell>
@@ -321,7 +339,9 @@ export function UserManagement() {
                             variant="ghost"
                             size="sm"
                             onClick={() => handleDeleteClick(user)}
-                            className="text-red-600 hover:text-red-800 hover:bg-red-50"
+                            disabled={user.roleId === UserRole.SUPER_ADMIN}
+                            className="text-red-600 hover:text-red-800 hover:bg-red-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                            title={user.roleId === UserRole.SUPER_ADMIN ? t("users.cannotDeleteSuperAdmin") : t("common.delete")}
                           >
                             <Trash2 className="w-4 h-4" />
                           </Button>

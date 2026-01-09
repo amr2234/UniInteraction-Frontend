@@ -3,6 +3,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { RequestType } from "@/core/constants/requestTypes";
 import { RequestStatus } from "@/core/constants/requestStatuses";
+import { useCallback } from "react";
 import {
   TrendingUp,
   Clock,
@@ -47,8 +48,8 @@ export function DashboardPage() {
     t,
   } = useDashboardPage();
 
-  // Helper function to get request type name
-  const getRequestTypeName = (typeId: number) => {
+  // Memoize helper functions to prevent recreation on every render
+  const getRequestTypeName = useCallback((typeId: number) => {
     switch (typeId) {
       case RequestType.COMPLAINT:
         return t("requests.types.complaint");
@@ -59,10 +60,9 @@ export function DashboardPage() {
       default:
         return t("requests.types.other");
     }
-  };
+  }, [t]);
 
-  // Helper function to get status name
-  const getStatusName = (statusId: number) => {
+  const getStatusName = useCallback((statusId: number) => {
     switch (statusId) {
       case RequestStatus.RECEIVED:
         return t("requests.statuses.pending");
@@ -75,10 +75,9 @@ export function DashboardPage() {
       default:
         return t("requests.statuses.unknown");
     }
-  };
+  }, [t]);
 
-  // Helper function to format time ago
-  const getTimeAgo = (date: string) => {
+  const getTimeAgo = useCallback((date: string) => {
     const now = new Date();
     const past = new Date(date);
     const diffInDays = Math.floor((now.getTime() - past.getTime()) / (1000 * 60 * 60 * 24));
@@ -92,7 +91,7 @@ export function DashboardPage() {
     }
     const months = Math.floor(diffInDays / 30);
     return months === 1 ? t("requests.timeAgo.monthAgo") : t("requests.timeAgo.monthsAgo").replace("{count}", String(months));
-  };
+  }, [t]);
 
   return (
     <div className="min-h-screen bg-[#F4F4F4]">

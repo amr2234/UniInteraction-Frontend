@@ -11,6 +11,7 @@ export interface UserManagementDto {
   nameAr: string;
   nameEn?: string;
   email: string;
+  emailConfirmed: boolean;
   mobile?: string;
   nationalId?: string;
   studentId?: string;

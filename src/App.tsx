@@ -63,7 +63,7 @@ function AppContent() {
       <div className="min-h-screen">
         <Navbar />
         <AppRouter />
-        <Toaster position="top-center" richColors expand={true} />
+        <Toaster position="top-right" richColors expand={true} closeButton />
       </div>
     </>
   );

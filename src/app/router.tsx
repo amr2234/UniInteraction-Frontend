@@ -37,10 +37,23 @@ const SettingsPage = lazy(() => import("@/features/admin/settings/SettingsPage")
 const LogsPage = lazy(() => import("@/features/admin/logs/LogsPage").then(m => ({ default: m.LogsPage })));
 const CalendarPage = lazy(() => import("@/features/calendar/pages/CalendarPage").then(m => ({ default: m.CalendarPage })));
 
-// Loading fallback component
+// Enhanced loading fallback with circular spinner matching app colors
 const LoadingFallback = () => (
-  <div className="flex items-center justify-center min-h-screen">
-    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+  <div className="flex items-center justify-center min-h-screen bg-[#F4F4F4]">
+    <div className="flex flex-col items-center gap-6">
+      {/* Circular spinner with app colors */}
+      <div className="relative w-16 h-16">
+        {/* Outer ring - primary color */}
+        <div className="absolute inset-0 rounded-full border-4 border-[#6CAEBD]/20"></div>
+        {/* Spinning ring - gradient */}
+        <div className="absolute inset-0 rounded-full border-4 border-transparent border-t-[#6CAEBD] border-r-[#875E9E] animate-spin"></div>
+      </div>
+      {/* Loading text */}
+      <div className="text-center">
+        <p className="text-sm font-medium text-[#2B2B2B] animate-pulse">جاري التحميل...</p>
+        <p className="text-xs text-[#6F6F6F] mt-1">Loading...</p>
+      </div>
+    </div>
   </div>
 );
 

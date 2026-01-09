@@ -55,34 +55,90 @@
     build: {
       target: 'esnext',
       outDir: 'build',
+      // Enable minification and compression
+      minify: 'terser',
+      terserOptions: {
+        compress: {
+          drop_console: true, // Remove console.logs in production
+          drop_debugger: true,
+        },
+      },
       rollupOptions: {
         output: {
-          manualChunks: {
+          // Optimize chunk splitting for better caching
+          manualChunks: (id) => {
             // Core React libraries
-            'react-vendor': ['react', 'react-dom', 'react-router-dom'],
-            // UI components library
-            'ui-vendor': [
-              '@radix-ui/react-dialog',
-              '@radix-ui/react-dropdown-menu',
-              '@radix-ui/react-select',
-              '@radix-ui/react-tooltip',
-              '@radix-ui/react-popover',
-            ],
-            // Form and validation libraries
-            'form-vendor': ['react-hook-form', '@hookform/resolvers', 'zod'],
-            // Data fetching and state management
-            'query-vendor': ['@tanstack/react-query'],
-            // Charts and visualization
-            'chart-vendor': ['recharts'],
-            // Other utilities
-            'utils-vendor': ['clsx', 'tailwind-merge', 'date-fns'],
+            if (id.includes('node_modules')) {
+              if (id.includes('react') || id.includes('react-dom') || id.includes('react-router')) {
+                return 'react-vendor';
+              }
+              // UI components library - split by radix-ui
+              if (id.includes('@radix-ui')) {
+                return 'ui-vendor';
+              }
+              // Form and validation libraries
+              if (id.includes('react-hook-form') || id.includes('zod') || id.includes('@hookform')) {
+                return 'form-vendor';
+              }
+              // Data fetching and state management
+              if (id.includes('@tanstack/react-query')) {
+                return 'query-vendor';
+              }
+              // Charts and visualization
+              if (id.includes('recharts')) {
+                return 'chart-vendor';
+              }
+              // Date utilities
+              if (id.includes('date-fns')) {
+                return 'date-vendor';
+              }
+              // Other utilities
+              if (id.includes('clsx') || id.includes('tailwind-merge')) {
+                return 'utils-vendor';
+              }
+              // All other node_modules
+              return 'vendor';
+            }
+              
+            // Split large feature modules
+            if (id.includes('src/features/requests')) {
+              return 'requests-feature';
+            }
+            if (id.includes('src/features/admin')) {
+              return 'admin-feature';
+            }
+            if (id.includes('src/features/dashboard')) {
+              return 'dashboard-feature';
+            }
           },
+          // Optimize chunk file names
+          chunkFileNames: 'assets/js/[name]-[hash].js',
+          entryFileNames: 'assets/js/[name]-[hash].js',
+          assetFileNames: 'assets/[ext]/[name]-[hash].[ext]',
         },
       },
       chunkSizeWarningLimit: 1000,
+      // Enable source maps for production debugging (optional, disable for smaller build)
+      sourcemap: false,
     },
     server: {
       port: 3000,
       open: true,
+      // Enable compression for faster dev server
+      middlewareMode: false,
+      // Optimize dependencies pre-bundling
+      hmr: {
+        overlay: true,
+      },
+    },
+    // Optimize dependency pre-bundling
+    optimizeDeps: {
+      include: [
+        'react',
+        'react-dom',
+        'react-router-dom',
+        '@tanstack/react-query',
+      ],
+      exclude: [],
     },
   });
