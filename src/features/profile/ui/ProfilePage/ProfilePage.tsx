@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { User, Mail, ArrowRight, Edit, Lock, LogOut, CheckCircle, Camera, Loader2 } from "lucide-react";
 import { useProfilePageLogic } from "./ProfilePage.logic";
 
@@ -223,31 +224,30 @@ export function ProfilePage() {
             <Card className="p-6">
               <div className="text-center">
                 <div className="relative inline-block mb-4">
-                  {/* Profile Picture Display - Centered */}
-                  <div className="w-32 h-32 bg-gradient-to-br from-[#115740] to-[#1C4E80] rounded-full flex items-center justify-center overflow-hidden mx-auto">
-                    {profilePicture ? (
-                      <img 
-                        src={profilePicture} 
-                        alt={formData.nameAr}
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <User className="w-16 h-16 text-white" />
-                    )}
-                  </div>
+                  {/* Profile Picture Display - Using Avatar Component */}
+                  <Avatar className="w-32 h-32 mx-auto rounded-full">
+                    <AvatarImage
+                      src={profilePicture || undefined}
+                      alt={formData.nameAr}
+                      className="object-cover rounded-full"
+                    />
+                    <AvatarFallback className="bg-gradient-to-br from-[#115740] to-[#1C4E80] text-white rounded-full">
+                      <User className="w-16 h-16" />
+                    </AvatarFallback>
+                  </Avatar>
                   
                   {/* Upload/Loading Overlay */}
                   {isUploadingPicture && (
-                    <div className="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center mx-auto" style={{ width: '8rem', height: '8rem' }}>
+                    <div className="absolute inset-0 w-32 h-32 mx-auto bg-black/50 rounded-full flex items-center justify-center">
                       <Loader2 className="w-8 h-8 text-white animate-spin" />
                     </div>
                   )}
                   
-                  {/* Camera Button - Positioned relative to centered image */}
+                  {/* Camera Button */}
                   <button
                     onClick={handleChangePhotoClick}
                     disabled={isUploadingPicture}
-                    className="absolute bottom-0 right-1/2 transform translate-x-16 bg-[#115740] hover:bg-[#0d4230] text-white p-2 rounded-full shadow-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="absolute bottom-0 right-0 bg-[#115740] hover:bg-[#0d4230] text-white p-2 rounded-full shadow-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     title={t('profile.changePhoto')}
                   >
                     <Camera className="w-4 h-4" />

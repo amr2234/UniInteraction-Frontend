@@ -79,24 +79,12 @@ export const useProfilePageLogic = () => {
         nationalId: profileData.nationalId || "",
       });
 
-      if (profileData.profilePictureId) {
-        profileApi
-          .getAttachment(profileData.profilePictureId)
-          .then((filePath) => {
-            if (filePath) {
-              console.log("Profile picture file path:", filePath);
-
-              const baseUrl = import.meta.env.VITE_API_BASE_URL;
-              const fullUrl = baseUrl.replace("/api", "") + filePath;
-              setProfilePicture(fullUrl);
-            }
-          })
-          .catch((error) => {
-            console.error("Failed to fetch profile picture:", error);
-            setProfilePicture(null);
-          });
-      } else if (profileData.profilePicture) {
-        setProfilePicture(profileData.profilePicture);
+      // Use profilePictureUrl directly from backend (stored in localStorage)
+      if (profileData.profilePictureUrl) {
+        const staticBaseUrl = import.meta.env.VITE_STATIC_BASE_URL || 'http://localhost:5193';
+        const fullUrl = `${staticBaseUrl}${profileData.profilePictureUrl}`;
+        console.log('Profile Picture URL:', fullUrl);
+        setProfilePicture(fullUrl);
       } else {
         setProfilePicture(null);
       }

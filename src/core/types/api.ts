@@ -79,7 +79,7 @@ export interface UserInfo {
   permissions?: string[]; 
   isActive?: boolean;
   isInternal?: boolean;
-  profilePicture?: string; 
+  profilePictureUrl?: string; // Profile picture URL from backend
   profilePictureId?: number; 
 }
 

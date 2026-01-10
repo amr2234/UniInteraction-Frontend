@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import * as AvatarPrimitive from "@radix-ui/react-avatar@1.1.3";
+import * as AvatarPrimitive from "@radix-ui/react-avatar";
 
 import { cn } from "./utils";
 
@@ -13,9 +13,10 @@ function Avatar({
     <AvatarPrimitive.Root
       data-slot="avatar"
       className={cn(
-        "relative flex size-10 shrink-0 overflow-hidden rounded-full",
+        "relative flex size-10 shrink-0 overflow-hidden rounded-full border-0",
         className,
       )}
+      style={{ aspectRatio: '1/1' }}
       {...props}
     />
   );
@@ -28,7 +29,8 @@ function AvatarImage({
   return (
     <AvatarPrimitive.Image
       data-slot="avatar-image"
-      className={cn("aspect-square size-full", className)}
+      className={cn("size-full rounded-full object-cover", className)}
+      style={{ aspectRatio: '1/1' }}
       {...props}
     />
   );

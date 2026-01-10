@@ -77,6 +77,37 @@ export const authApi = {
             userProfileData = await apiRequest.get<UserInfo>("/auth/me");
 
             if (userProfileData) {
+              // Fetch profile picture URL if profilePictureId exists
+              if (userProfileData.profilePictureId) {
+                try {
+                  // Try the correct endpoint first
+                  let filePath: string | null = null;
+                  try {
+                    filePath = await apiRequest.get<string>(
+                      `/attachments/${userProfileData.profilePictureId}`
+                    );
+                  } catch (err) {
+                    // Fallback to typo endpoint if main one fails
+                    console.warn('Trying fallback endpoint /attachmnt/');
+                    filePath = await apiRequest.get<string>(
+                      `/attachmnt/${userProfileData.profilePictureId}`
+                    );
+                  }
+                  
+                  // Validate that we got a valid file path, not HTML
+                  if (filePath && typeof filePath === 'string' && !filePath.includes('<!DOCTYPE') && !filePath.includes('<html>')) {
+                    let profilePictureUrl = filePath;
+                    if (filePath.includes('wwwroot')) {
+                      profilePictureUrl = filePath.split('wwwroot')[1].replace(/\\/g, '/');
+                    }
+                    userProfileData.profilePictureUrl = profilePictureUrl;
+                    console.log('Loaded profile picture URL on login:', profilePictureUrl);
+                  }
+                } catch (attachmentError) {
+                  console.warn("Failed to fetch profile picture:", attachmentError);
+                }
+              }
+
               try {
                 localStorage.setItem(
                   "userProfile",
@@ -215,6 +246,37 @@ export const authApi = {
       try {
         const userProfileData = await apiRequest.get<UserInfo>("/auth/me");
         if (userProfileData) {
+          // Fetch profile picture URL if profilePictureId exists
+          if (userProfileData.profilePictureId) {
+            try {
+              // Try the correct endpoint first
+              let filePath: string | null = null;
+              try {
+                filePath = await apiRequest.get<string>(
+                  `/attachments/${userProfileData.profilePictureId}`
+                );
+              } catch (err) {
+                // Fallback to typo endpoint if main one fails
+                console.warn('Trying fallback endpoint /attachmnt/');
+                filePath = await apiRequest.get<string>(
+                  `/attachmnt/${userProfileData.profilePictureId}`
+                );
+              }
+              
+              // Validate that we got a valid file path, not HTML
+              if (filePath && typeof filePath === 'string' && !filePath.includes('<!DOCTYPE') && !filePath.includes('<html>')) {
+                let profilePictureUrl = filePath;
+                if (filePath.includes('wwwroot')) {
+                  profilePictureUrl = filePath.split('wwwroot')[1].replace(/\\/g, '/');
+                }
+                userProfileData.profilePictureUrl = profilePictureUrl;
+                console.log('Loaded profile picture URL after verification:', profilePictureUrl);
+              }
+            } catch (attachmentError) {
+              console.warn("Failed to fetch profile picture:", attachmentError);
+            }
+          }
+
           try {
             localStorage.setItem("userProfile", JSON.stringify(userProfileData));
           } catch (error) {

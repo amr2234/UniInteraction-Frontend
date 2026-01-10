@@ -22,6 +22,7 @@ export interface UserManagementDto {
   createdAt: string;
   updatedAt?: string;
   lastLogin?: string;
+  profilePictureUrl?: string; // Profile picture URL from backend
 }
 
 /**

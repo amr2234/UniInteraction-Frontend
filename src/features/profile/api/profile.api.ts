@@ -12,9 +12,9 @@ class ProfileApi extends BaseApi<UserInfo> {
   }
 
   async getAttachment(attachmentId: number): Promise<string> {
-    const filePath = await this.customGet<string>(`/attachments/${attachmentId}`, { baseURL: '' });
+    const filePath = await this.customGet<string>(`/attachments/${attachmentId}`);
     
-    if (filePath && filePath.includes('wwwroot')) {
+    if (filePath && typeof filePath === 'string' && filePath.includes('wwwroot')) {
       const relativePath = filePath.split('wwwroot')[1].replace(/\\/g, '/');
       return relativePath;
     }
@@ -48,7 +48,20 @@ class ProfileApi extends BaseApi<UserInfo> {
       headers: { 'Content-Type': 'multipart/form-data' },
     });
     
+    console.log('Upload profile picture response:', response);
+    
     if (response) {
+      // Backend returns filePath directly in the response!
+      if ((response as any).filePath) {
+        response.profilePictureUrl = (response as any).filePath;
+        console.log('Using filePath from response:', response.profilePictureUrl);
+      } else if (response.profilePictureUrl) {
+        console.log('Backend returned profilePictureUrl:', response.profilePictureUrl);
+      } else if (response.profilePictureId) {
+        // Fallback: try to fetch if backend doesn't provide filePath
+        console.warn('Backend did not return filePath, trying to fetch...');
+      }
+
       const currentProfile = localStorage.getItem('userProfile');
       if (currentProfile) {
         const parsedProfile = JSON.parse(currentProfile);
