@@ -35,10 +35,15 @@ export const useLoginPage = () => {
 
   // Redirect to dashboard if user is already authenticated with a VALID token
   useEffect(() => {
-    const token = localStorage.getItem('authToken');
-    // Only redirect if token exists AND is not expired
-    if (token && !isTokenExpired(token)) {
-      navigate('/dashboard', { replace: true });
+    try {
+      const token = localStorage.getItem('authToken');
+      // Only redirect if token exists AND is not expired
+      if (token && !isTokenExpired(token)) {
+        navigate('/dashboard', { replace: true });
+      }
+    } catch (error) {
+      // localStorage not available, user will stay on login page
+      console.warn('Failed to check authentication status', error);
     }
   }, [navigate]);
 
