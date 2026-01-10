@@ -27,48 +27,60 @@ export const decodeToken = (token: string): DecodedToken | null => {
 
 
 export const getUserPermissions = (): string[] => {
-  const userInfo = localStorage.getItem('userInfo');
-  if (userInfo) {
-    try {
-      const parsed = JSON.parse(userInfo);
-      return parsed.permissions || [];
-    } catch (error) {
+  try {
+    const userInfo = localStorage.getItem('userInfo');
+    if (userInfo) {
+      try {
+        const parsed = JSON.parse(userInfo);
+        return parsed.permissions || [];
+      } catch (error) {
+        // JSON parse error
+      }
     }
+
+    // Fallback to token
+    const token = localStorage.getItem('authToken');
+    if (!token) return [];
+
+    const decoded = decodeToken(token);
+    return decoded?.permissions || [];
+  } catch (error) {
+    console.warn('Failed to get user permissions from localStorage', error);
+    return [];
   }
-
-  
-  const token = localStorage.getItem('authToken');
-  if (!token) return [];
-
-  const decoded = decodeToken(token);
-  return decoded?.permissions || [];
 };
 
 
 export const getUserRoleIds = (): number[] => {
-  const userInfo = localStorage.getItem('userInfo');
-  if (userInfo) {
-    try {
-      const parsed = JSON.parse(userInfo);
-      return parsed.roleIds || [];
-    } catch (error) {
+  try {
+    const userInfo = localStorage.getItem('userInfo');
+    if (userInfo) {
+      try {
+        const parsed = JSON.parse(userInfo);
+        return parsed.roleIds || [];
+      } catch (error) {
+        // JSON parse error
+      }
     }
-  }
 
-  
-  const token = localStorage.getItem('authToken');
-  if (!token) return [];
+    // Fallback to token
+    const token = localStorage.getItem('authToken');
+    if (!token) return [];
 
-  const decoded = decodeToken(token);
-  if (decoded?.roleId) {
-    
-    if (Array.isArray(decoded.roleId)) {
-      return decoded.roleId.map(id => parseInt(id, 10));
-    } else {
-      return [parseInt(decoded.roleId, 10)];
+    const decoded = decodeToken(token);
+    if (decoded?.roleId) {
+      // Handle both array and single value
+      if (Array.isArray(decoded.roleId)) {
+        return decoded.roleId.map(id => parseInt(id, 10));
+      } else {
+        return [parseInt(decoded.roleId, 10)];
+      }
     }
+    return [];
+  } catch (error) {
+    console.warn('Failed to get user role IDs from localStorage', error);
+    return [];
   }
-  return [];
 };
 
 
@@ -124,8 +136,13 @@ export const hasAnyRoleId = (roleIds: number[]): boolean => {
 
 
 export const getCurrentUser = (): DecodedToken | null => {
-  const token = localStorage.getItem('authToken');
-  if (!token) return null;
+  try {
+    const token = localStorage.getItem('authToken');
+    if (!token) return null;
 
-  return decodeToken(token);
+    return decodeToken(token);
+  } catch (error) {
+    console.warn('Failed to get current user from localStorage', error);
+    return null;
+  }
 };

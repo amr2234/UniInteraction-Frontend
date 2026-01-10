@@ -26,10 +26,18 @@ export const authApi = {
       const expiresAt = data.expiresAt || "";
 
       if (accessToken) {
-        localStorage.setItem("authToken", accessToken);
+        try {
+          localStorage.setItem("authToken", accessToken);
+        } catch (error) {
+          console.warn("Failed to save auth token", error);
+        }
       }
       if (refreshToken) {
-        localStorage.setItem("refreshToken", refreshToken);
+        try {
+          localStorage.setItem("refreshToken", refreshToken);
+        } catch (error) {
+          console.warn("Failed to save refresh token", error);
+        }
       }
 
       const authResponse: AuthResponse = {
@@ -69,10 +77,14 @@ export const authApi = {
             userProfileData = await apiRequest.get<UserInfo>("/auth/me");
 
             if (userProfileData) {
-              localStorage.setItem(
-                "userProfile",
-                JSON.stringify(userProfileData)
-              );
+              try {
+                localStorage.setItem(
+                  "userProfile",
+                  JSON.stringify(userProfileData)
+                );
+              } catch (error) {
+                console.warn("Failed to save user profile", error);
+              }
             }
           } catch (profileError) {
             console.warn("Failed to fetch user profile:", profileError);
@@ -83,9 +95,12 @@ export const authApi = {
             roleIds: roleIds,
             userId: userId,
           };
-          localStorage.setItem("userInfo", JSON.stringify(userInfo));
-
-          window.dispatchEvent(new Event("localStorageUpdate"));
+          try {
+            localStorage.setItem("userInfo", JSON.stringify(userInfo));
+            window.dispatchEvent(new Event("localStorageUpdate"));
+          } catch (error) {
+            console.warn("Failed to save user info", error);
+          }
         }
       }
 
@@ -123,10 +138,18 @@ export const authApi = {
       const expiresAt = data.expiresAt || "";
 
       if (accessToken) {
-        localStorage.setItem("tempAuthToken", accessToken);
+        try {
+          localStorage.setItem("tempAuthToken", accessToken);
+        } catch (error) {
+          console.warn("Failed to save temp auth token", error);
+        }
       }
       if (refreshToken) {
-        localStorage.setItem("tempRefreshToken", refreshToken);
+        try {
+          localStorage.setItem("tempRefreshToken", refreshToken);
+        } catch (error) {
+          console.warn("Failed to save temp refresh token", error);
+        }
       }
 
       const authResponse: AuthResponse = {
@@ -161,24 +184,42 @@ export const authApi = {
       const needsPasswordSetup = response.needsPasswordSetup || false;
       const userEmail = response.email || email;
 
-      const tempToken = localStorage.getItem("tempAuthToken");
-      const tempRefresh = localStorage.getItem("tempRefreshToken");
+      let tempToken: string | null = null;
+      let tempRefresh: string | null = null;
+      try {
+        tempToken = localStorage.getItem("tempAuthToken");
+        tempRefresh = localStorage.getItem("tempRefreshToken");
+      } catch (error) {
+        console.warn("Failed to get temp tokens", error);
+      }
 
       if (!needsPasswordSetup) {
         if (tempToken) {
-          localStorage.setItem("authToken", tempToken);
-          localStorage.removeItem("tempAuthToken");
+          try {
+            localStorage.setItem("authToken", tempToken);
+            localStorage.removeItem("tempAuthToken");
+          } catch (error) {
+            console.warn("Failed to set authToken", error);
+          }
         }
         if (tempRefresh) {
-          localStorage.setItem("refreshToken", tempRefresh);
-          localStorage.removeItem("tempRefreshToken");
+          try {
+            localStorage.setItem("refreshToken", tempRefresh);
+            localStorage.removeItem("tempRefreshToken");
+          } catch (error) {
+            console.warn("Failed to set refreshToken", error);
+          }
         }
       }
 
       try {
         const userProfileData = await apiRequest.get<UserInfo>("/auth/me");
         if (userProfileData) {
-          localStorage.setItem("userProfile", JSON.stringify(userProfileData));
+          try {
+            localStorage.setItem("userProfile", JSON.stringify(userProfileData));
+          } catch (error) {
+            console.warn("Failed to save user profile", error);
+          }
 
           if (tempToken) {
             const decoded = decodeToken(tempToken);
@@ -208,8 +249,12 @@ export const authApi = {
                 roleIds: roleIds,
                 userId: userId,
               };
-              localStorage.setItem("userInfo", JSON.stringify(userInfo));
-              window.dispatchEvent(new Event("localStorageUpdate"));
+              try {
+                localStorage.setItem("userInfo", JSON.stringify(userInfo));
+                window.dispatchEvent(new Event("localStorageUpdate"));
+              } catch (error) {
+                console.warn("Failed to save user info", error);
+              }
             }
           }
         }
@@ -262,35 +307,59 @@ export const authApi = {
   },
 
   logout: (): void => {
-    localStorage.removeItem("authToken");
-    localStorage.removeItem("refreshToken");
-    localStorage.removeItem("userInfo");
-    localStorage.removeItem("userProfile");
+    try {
+      localStorage.removeItem("authToken");
+      localStorage.removeItem("refreshToken");
+      localStorage.removeItem("userInfo");
+      localStorage.removeItem("userProfile");
+    } catch (error) {
+      console.warn("Failed to clear localStorage on logout", error);
+    }
   },
 
   getToken: (): string | null => {
-    return localStorage.getItem("authToken");
+    try {
+      return localStorage.getItem("authToken");
+    } catch (error) {
+      console.warn("Failed to get token from localStorage", error);
+      return null;
+    }
   },
 
   isAuthenticated: (): boolean => {
-    const token = localStorage.getItem("authToken");
-    if (!token) return false;
+    try {
+      const token = localStorage.getItem("authToken");
+      if (!token) return false;
 
-    const decoded = decodeToken(token);
-    if (!decoded) return false;
+      const decoded = decodeToken(token);
+      if (!decoded) return false;
 
-    const currentTime = Date.now() / 1000;
-    return decoded.exp > currentTime;
+      const currentTime = Date.now() / 1000;
+      return decoded.exp > currentTime;
+    } catch (error) {
+      console.warn("Failed to check authentication", error);
+      return false;
+    }
   },
 
   getUserInfo: () => {
-    const userInfo = localStorage.getItem("userInfo");
-    return userInfo ? JSON.parse(userInfo) : null;
+    try {
+      const userInfo = localStorage.getItem("userInfo");
+      return userInfo ? JSON.parse(userInfo) : null;
+    } catch (error) {
+      console.warn("Failed to get user info from localStorage", error);
+      return null;
+    }
   },
 
   getUserProfile: (): UserInfo | null => {
-    const userProfile = localStorage.getItem("userProfile");
-    return userProfile ? JSON.parse(userProfile) : null;
+    try {
+      const userProfile = localStorage.getItem("userProfile");
+      return userProfile ? JSON.parse(userProfile) : null;
+    } catch (error) {
+      console.warn("Failed to get user profile from localStorage", error);
+      return null;
+    }
   },
 
   getProfile: async (): Promise<UserInfo> => {

@@ -3,9 +3,9 @@ import en from "./locales/en.json";
 import ar from "./locales/ar.json";
 
 // Force reload of translations
-const translations: Record<Language, TranslationKeys> = {
-  en: en as TranslationKeys,
-  ar: ar as TranslationKeys,
+const translations: Record<Language, any> = {
+  en: en,
+  ar: ar,
 };
 
 export class I18n {
@@ -13,7 +13,13 @@ export class I18n {
   private listeners: Set<(lang: Language) => void> = new Set();
 
   constructor() {
-    const savedLang = localStorage.getItem("language") as Language;
+    // Safely access localStorage with fallback
+    let savedLang: Language | null = null;
+    try {
+      savedLang = localStorage.getItem("language") as Language;
+    } catch (error) {
+      console.warn("localStorage not available, using default language", error);
+    }
     this.currentLanguage = savedLang && (savedLang === "en" || savedLang === "ar") ? savedLang : "ar";
     this.applyLanguageToDOM();
   }
@@ -25,7 +31,12 @@ export class I18n {
   setLanguage(lang: Language): void {
     if (lang !== this.currentLanguage) {
       this.currentLanguage = lang;
-      localStorage.setItem("language", lang);
+      // Safely store in localStorage
+      try {
+        localStorage.setItem("language", lang);
+      } catch (error) {
+        console.warn("Failed to save language to localStorage", error);
+      }
       this.applyLanguageToDOM();
       this.notifyListeners();
     }
@@ -69,6 +80,9 @@ export class I18n {
   }
 
   private applyLanguageToDOM(): void {
+    // Ensure document is ready
+    if (typeof document === 'undefined') return;
+    
     const html = document.documentElement;
     const direction = this.getDirection();
     
