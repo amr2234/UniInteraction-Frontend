@@ -72,61 +72,38 @@
       },
       rollupOptions: {
         output: {
+          // Ensure proper module initialization order
+          inlineDynamicImports: false,
           // Optimize chunk splitting for better caching
-          manualChunks: (id) => {
-            // Core React libraries
-            if (id.includes('node_modules')) {
-              if (id.includes('react') || id.includes('react-dom')) {
-                return 'react-vendor';
-              }
-              if (id.includes('react-router')) {
-                return 'router-vendor';
-              }
-              // UI components library - split by radix-ui
-              if (id.includes('@radix-ui')) {
-                return 'ui-vendor';
-              }
-              // Form and validation libraries
-              if (id.includes('react-hook-form') || id.includes('zod') || id.includes('@hookform')) {
-                return 'form-vendor';
-              }
-              // Data fetching and state management
-              if (id.includes('@tanstack/react-query')) {
-                return 'query-vendor';
-              }
-              // Charts and visualization
-              if (id.includes('recharts')) {
-                return 'chart-vendor';
-              }
-              // Date utilities
-              if (id.includes('date-fns')) {
-                return 'date-vendor';
-              }
-              // SignalR for real-time
-              if (id.includes('@microsoft/signalr')) {
-                return 'signalr-vendor';
-              }
-              // Lucide icons
-              if (id.includes('lucide-react')) {
-                return 'icons-vendor';
-              }
-              // Other utilities (clsx, tailwind-merge)
-              if (id.includes('clsx') || id.includes('tailwind-merge')) {
-                return 'utils-vendor';
-              }
-              // Don't create catch-all vendor chunk - let Vite handle remaining deps
-            }
-              
-            // Split large feature modules
-            if (id.includes('src/features/requests')) {
-              return 'requests-feature';
-            }
-            if (id.includes('src/features/admin')) {
-              return 'admin-feature';
-            }
-            if (id.includes('src/features/dashboard')) {
-              return 'dashboard-feature';
-            }
+          manualChunks: {
+            // Core React - always loaded first
+            'react-core': ['react', 'react-dom'],
+            'react-router': ['react-router-dom'],
+            // UI libraries
+            'ui-radix': [
+              '@radix-ui/react-accordion',
+              '@radix-ui/react-alert-dialog',
+              '@radix-ui/react-avatar',
+              '@radix-ui/react-checkbox',
+              '@radix-ui/react-dialog',
+              '@radix-ui/react-dropdown-menu',
+              '@radix-ui/react-label',
+              '@radix-ui/react-popover',
+              '@radix-ui/react-select',
+              '@radix-ui/react-separator',
+              '@radix-ui/react-switch',
+              '@radix-ui/react-tabs',
+              '@radix-ui/react-tooltip',
+              '@radix-ui/react-scroll-area',
+            ],
+            // Form libraries
+            'forms': ['react-hook-form', 'zod', '@hookform/resolvers'],
+            // Data fetching
+            'react-query': ['@tanstack/react-query'],
+            // Icons
+            'icons': ['lucide-react'],
+            // Utils
+            'utils': ['clsx', 'tailwind-merge', 'date-fns'],
           },
           // Optimize chunk file names
           chunkFileNames: 'assets/js/[name]-[hash].js',
