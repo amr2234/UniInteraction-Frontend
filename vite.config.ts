@@ -61,6 +61,13 @@
         compress: {
           drop_console: true, // Remove console.logs in production
           drop_debugger: true,
+          passes: 1, // Single pass to avoid over-optimization
+        },
+        mangle: {
+          safari10: true, // Fix Safari 10+ issues
+        },
+        format: {
+          comments: false, // Remove comments
         },
       },
       rollupOptions: {
@@ -69,8 +76,11 @@
           manualChunks: (id) => {
             // Core React libraries
             if (id.includes('node_modules')) {
-              if (id.includes('react') || id.includes('react-dom') || id.includes('react-router')) {
+              if (id.includes('react') || id.includes('react-dom')) {
                 return 'react-vendor';
+              }
+              if (id.includes('react-router')) {
+                return 'router-vendor';
               }
               // UI components library - split by radix-ui
               if (id.includes('@radix-ui')) {
@@ -92,12 +102,19 @@
               if (id.includes('date-fns')) {
                 return 'date-vendor';
               }
-              // Other utilities
+              // SignalR for real-time
+              if (id.includes('@microsoft/signalr')) {
+                return 'signalr-vendor';
+              }
+              // Lucide icons
+              if (id.includes('lucide-react')) {
+                return 'icons-vendor';
+              }
+              // Other utilities (clsx, tailwind-merge)
               if (id.includes('clsx') || id.includes('tailwind-merge')) {
                 return 'utils-vendor';
               }
-              // All other node_modules
-              return 'vendor';
+              // Don't create catch-all vendor chunk - let Vite handle remaining deps
             }
               
             // Split large feature modules
