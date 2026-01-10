@@ -29,12 +29,7 @@ export const createLeadershipFormSchema = (t: (key: string) => string) => {
         message: t("validation.englishOnly"),
       }),
 
-    departmentId: z.number().optional(),
-
-    displayOrder: z
-      .number()
-      .min(1, t("validation.displayOrderRequired"))
-      .default(1),
+    userId: z.number().optional(),
 
     isActive: z.boolean().default(true),
   });

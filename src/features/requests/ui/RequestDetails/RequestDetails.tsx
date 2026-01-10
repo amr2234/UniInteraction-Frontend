@@ -31,7 +31,6 @@ import {
   Send,
   Download,
   CheckCircle,
-  Circle,
   Edit,
   HelpCircle,
   Star,
@@ -63,13 +62,9 @@ export function RequestDetailsPage() {
   const isRTL = language === "ar";
   const {
     // State
-    newMessage,
-    statusNote,
     visitDateTime,
     responseText,
     attachments,
-    rating,
-    feedback,
     isRatingDialogOpen,
     isAssignDialogOpen,
     isDeleteDialogOpen,
@@ -106,16 +101,10 @@ export function RequestDetailsPage() {
     isUser,
     isSuperAdmin,
     canEditRequest,
-    canAssignRequests,
 
     // Handlers
-    setNewMessage,
-    setStatusNote,
     setVisitDateTime,
     setResponseText,
-    setAttachments,
-    setRating,
-    setFeedback,
     setIsRatingDialogOpen,
     setIsAssignDialogOpen,
     setIsDeleteDialogOpen,
@@ -137,14 +126,12 @@ export function RequestDetailsPage() {
     handleStatusChange,
     handleSubmitResponse,
     confirmSubmitResponse,
-    handleSubmitFeedback,
     handleOpenRatingDialog,
     handleRatingSubmit,
     handleAcceptVisit,
     handleFileChange,
     handleAssignDepartment,
     handleAssignLeadership,
-    handleThankYou,
     handleDownloadAttachment,
     handleDeleteRequest,
     confirmDeleteRequest,
@@ -158,6 +145,7 @@ export function RequestDetailsPage() {
     handleReactivateFieldChange,
     scheduleOrUpdateVisitMutation,
     requestRescheduleMutation,
+    acceptVisitMutation,
     completeVisitMutation,
     getDepartmentName,
     getLeadershipName,
@@ -781,7 +769,8 @@ export function RequestDetailsPage() {
                           <div className="grid grid-cols-2 gap-4">
                             <Button
                               variant="outline"
-                              className="h-14 border-3 border-orange-400 text-orange-600 hover:bg-orange-50 hover:border-orange-600 font-bold text-base rounded-xl shadow-md hover:shadow-lg transition-all"
+                              disabled={requestRescheduleMutation.isPending}
+                              className="h-14 border-3 border-orange-400 text-orange-600 hover:bg-orange-50 hover:border-orange-600 font-bold text-base rounded-xl shadow-md hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                               onClick={() => {
                                 if (request.visitId) {
                                   requestRescheduleMutation.mutate({ visitId: request.visitId });
@@ -789,17 +778,18 @@ export function RequestDetailsPage() {
                               }}
                             >
                               <RefreshCw className="w-5 h-5 mr-2" />
-                              {t("requests.requestReschedule")}
+                              {requestRescheduleMutation.isPending ? t("common.loading") : t("requests.requestReschedule")}
                             </Button>
                             <Button
                               variant="outline"
-                              className="h-14 border-3 border-orange-400 text-orange-600 hover:bg-orange-50 hover:border-orange-600 font-bold text-base rounded-xl shadow-md hover:shadow-lg transition-all"
+                              disabled={acceptVisitMutation.isPending}
+                              className="h-14 border-3 border-green-400 text-green-600 hover:bg-green-50 hover:border-green-600 font-bold text-base rounded-xl shadow-md hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                               onClick={() => {
                                 handleAcceptVisit?.();
                               }}
                             >
                               <CheckCircle className="w-5 h-5 mr-2" />
-                              {t("requests.acceptDate")}
+                              {acceptVisitMutation.isPending ? t("common.loading") : t("requests.acceptDate")}
                             </Button>
                           </div>
                         )}
@@ -811,7 +801,8 @@ export function RequestDetailsPage() {
                           {request.visitStatus === VisitStatus.RESCHEDULED &&
                             visitDateTime && (
                               <Button
-                                className="w-full h-14 bg-gradient-to-r from-orange-600 via-amber-600 to-yellow-600 hover:from-orange-700 hover:via-amber-700 hover:to-yellow-700 text-white font-bold text-lg rounded-xl shadow-lg hover:shadow-xl transition-all"
+                                disabled={scheduleOrUpdateVisitMutation.isPending}
+                                className="w-full h-14 bg-gradient-to-r from-orange-600 via-amber-600 to-yellow-600 hover:from-orange-700 hover:via-amber-700 hover:to-yellow-700 text-white font-bold text-lg rounded-xl shadow-lg hover:shadow-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                                 onClick={() => {
                                   if (
                                     request.id &&
@@ -829,12 +820,21 @@ export function RequestDetailsPage() {
                                   }
                                 }}
                               >
-                                <CalendarIcon className="w-5 h-5 mr-2" />
-                                {t("requests.rescheduleToNewDate")}
+                                {scheduleOrUpdateVisitMutation.isPending ? (
+                                  <>
+                                    <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                                    {t("common.saving")}
+                                  </>
+                                ) : (
+                                  <>
+                                    <CalendarIcon className="w-5 h-5 mr-2" />
+                                    {t("requests.rescheduleToNewDate")}
+                                  </>
+                                )}
                               </Button>
                             )}
 
-                          {/* Edit/Save Button - ONLY if status = Scheduled */}
+                          {/* Edit/Save Button - ONLY if status = Scheduled AND date changed AND not in RESCHEDULED status */}
                           {request.visitStatus === VisitStatus.SCHEDULED &&
                             visitDateTime &&
                             visitDateTime !==
@@ -842,7 +842,7 @@ export function RequestDetailsPage() {
                                 .toISOString()
                                 .slice(0, 16) && (
                               <Button
-                                className="w-full h-14 bg-[#115740] hover:bg-[#0d4230] text-white font-bold text-lg rounded-xl shadow-lg hover:shadow-xl transition-all"
+                                className="w-full h-14 bg-[#115740] hover:bg-[#0d4230] text-white font-bold text-lg rounded-xl shadow-lg hover:shadow-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                                 disabled={scheduleOrUpdateVisitMutation.isPending}
                                 onClick={() => {
                                   if (

@@ -40,6 +40,11 @@ class UsersApi extends BaseApi<
     if (filters?.pageSize)
       params.append("pageSize", filters.pageSize.toString());
     if (filters?.sortOrder === "desc") params.append("isDesc", "true");
+    
+    // Send enablePagination parameter to backend
+    if (filters?.enablePagination === false) {
+      params.append("enablePagination", "false");
+    }
 
     const queryString = params.toString();
     return this.customGet<PaginatedResponse<UserManagementDto>>(

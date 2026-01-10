@@ -7,18 +7,16 @@ import {
   useDeleteLeadership,
   useToggleLeadershipStatus,
 } from "@/features/admin/leadership/hooks/useLeadership";
-import { useDepartmentsLookup } from "@/features/lookups/hooks/useLookups";
 import type { UniversityLeadershipDto } from "@/core/types/api";
 import { formatDateArabic } from "@/core/utils/dateUtils";
 
 export const useLeadershipManagement = () => {
   const navigate = useNavigate();
-  const { t, language } = useI18n();
+  const { t } = useI18n();
 
   const [filters, setFilters] = useState({
     searchTerm: "",
     statusFilter: "all",
-    departmentFilter: "all",
     pageNumber: 1,
     pageSize: 10,
   });
@@ -32,7 +30,6 @@ export const useLeadershipManagement = () => {
     () => ({
       searchTerm: filters.searchTerm || undefined,
       isActive: filters.statusFilter === "all" ? undefined : filters.statusFilter === "active",
-      departmentId: filters.departmentFilter === "all" ? undefined : Number(filters.departmentFilter),
       pageNumber: filters.pageNumber,
       pageSize: filters.pageSize,
     }),
@@ -43,7 +40,6 @@ export const useLeadershipManagement = () => {
   const { data, isLoading, error } = useLeadership(queryFilters);
   const deleteLeadershipMutation = useDeleteLeadership();
   const toggleStatusMutation = useToggleLeadershipStatus();
-  const { data: departments = [] } = useDepartmentsLookup();
 
   
   const handleFilterChange = useCallback((field: string, value: string | number) => {
@@ -60,10 +56,6 @@ export const useLeadershipManagement = () => {
 
   const handleStatusFilterChange = useCallback((value: string) => {
     handleFilterChange("statusFilter", value);
-  }, [handleFilterChange]);
-
-  const handleDepartmentFilterChange = useCallback((value: string) => {
-    handleFilterChange("departmentFilter", value);
   }, [handleFilterChange]);
 
   const handlePageChange = useCallback((newPage: number) => {
@@ -115,13 +107,6 @@ export const useLeadershipManagement = () => {
     setSelectedLeader(null);
   }, []);
 
-  const getDepartmentName = useCallback((departmentId?: number) => {
-    if (!departmentId) return "-";
-    const department = departments.find((dept) => dept.id === departmentId);
-    if (!department) return "-";
-    return language === "ar" ? department.nameAr : (department.nameEn || department.nameAr);
-  }, [departments, language]);
-
   return {
     
     leadership: data?.items || [],
@@ -134,8 +119,6 @@ export const useLeadershipManagement = () => {
     
     searchTerm: filters.searchTerm,
     statusFilter: filters.statusFilter,
-    departmentFilter: filters.departmentFilter,
-    departments,
 
     
     isDeleteDialogOpen,
@@ -146,7 +129,6 @@ export const useLeadershipManagement = () => {
     
     handleSearchChange,
     handleStatusFilterChange,
-    handleDepartmentFilterChange,
     handlePageChange,
     handleAddLeader,
     handleEditLeader,
@@ -155,6 +137,5 @@ export const useLeadershipManagement = () => {
     handleDeleteConfirm,
     handleDeleteCancel,
     formatDate: formatDateArabic,
-    getDepartmentName,
   };
 };

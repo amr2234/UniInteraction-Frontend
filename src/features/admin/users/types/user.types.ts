@@ -57,6 +57,7 @@ export interface UserFilters {
   pageSize?: number;
   sortBy?: string;
   sortOrder?: 'asc' | 'desc';
+  enablePagination?: boolean; // Default true, set false for dropdowns
 }
 
 /**

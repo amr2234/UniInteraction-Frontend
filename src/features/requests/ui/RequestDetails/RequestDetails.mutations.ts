@@ -262,12 +262,15 @@ export const useRequestMutations = (id: string | undefined, t: (key: string) => 
       return requestsApi.deleteRequest(requestId);
     },
     onSuccess: async () => {
+      // Navigate immediately for better UX
+      navigate("/dashboard/track");
+      
+      // Invalidate queries after navigation to refresh list page
+      toast.success(t("requests.deleteSuccess") || "Request deleted successfully");
       await queryClient.invalidateQueries({ queryKey: queryKeys.requests.all });
       await queryClient.invalidateQueries({
         queryKey: queryKeys.requests.list(),
       });
-      toast.success(t("requests.deleteSuccess") || "Request deleted successfully");
-      navigate("/dashboard/track");
     },
     onError: () => {
       toast.error(t("requests.deleteFailed") || "Failed to delete request");

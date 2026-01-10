@@ -168,7 +168,6 @@ export function LeadershipForm() {
     isConfirmDialogOpen,
     setIsConfirmDialogOpen,
     currentFormData,
-    departments,
     users,
     isLoadingUsers,
     userSearchTerm,
@@ -274,15 +273,6 @@ export function LeadershipForm() {
                                   ({selectedUser.email})
                                 </span>
                               )}
-                              {selectedUser.leadershipPositionAr && (
-                                <span className="text-xs text-blue-600 ml-2">
-                                  -{" "}
-                                  {language === "ar"
-                                    ? selectedUser.leadershipPositionAr
-                                    : selectedUser.leadershipPositionEn ||
-                                      selectedUser.leadershipPositionAr}
-                                </span>
-                              )}
                             </span>
                           ) : (
                             t("leadership.selectUser")
@@ -297,7 +287,6 @@ export function LeadershipForm() {
 
                                   setValue("nameAr", "");
                                   setValue("nameEn", "");
-                                  setValue("departmentId", undefined);
                                 }}
                               />
                             )}
@@ -333,15 +322,6 @@ export function LeadershipForm() {
                                       shouldDirty: true,
                                     });
 
-                                    if (user.departmentId) {
-                                      setValue(
-                                        "departmentId",
-                                        typeof user.departmentId === "string"
-                                          ? parseInt(user.departmentId)
-                                          : user.departmentId,
-                                        { shouldDirty: true }
-                                      );
-                                    }
                                     setUserComboboxOpen(false);
                                   }}
                                 >
@@ -360,14 +340,6 @@ export function LeadershipForm() {
                                           ? user.nameAr
                                           : user.nameEn || user.nameAr}
                                       </span>
-                                      {user.leadershipPositionAr && (
-                                        <span className="text-xs text-blue-600 bg-blue-50 px-2 py-0.5 rounded">
-                                          {language === "ar"
-                                            ? user.leadershipPositionAr
-                                            : user.leadershipPositionEn ||
-                                              user.leadershipPositionAr}
-                                        </span>
-                                      )}
                                     </div>
                                     {user.email && (
                                       <span className="text-xs text-gray-500">
@@ -437,47 +409,7 @@ export function LeadershipForm() {
               />
             </div>
 
-            {}
-            <Controller
-              name="departmentId"
-              control={control}
-              render={({ field }) => (
-                <FormField
-                  label={t("leadership.departmentLabel")}
-                  error={errors.departmentId?.message}
-                  hint={watch("userId") ? "" : t("leadership.selectUser")}
-                >
-                  <Select
-                    value={field.value?.toString()}
-                    onValueChange={(value: string) =>
-                      field.onChange(parseInt(value))
-                    }
-                    disabled={!watch("userId")}
-                  >
-                    <SelectTrigger
-                      className={`rounded-xl mt-2 ${
-                        !watch("userId") ? "bg-gray-50" : ""
-                      }`}
-                    >
-                      <SelectValue
-                        placeholder={t("leadership.selectDepartment")}
-                      />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {departments.map((dept) => (
-                        <SelectItem key={dept.id} value={dept.id.toString()}>
-                          {language === "ar"
-                            ? dept.nameAr
-                            : dept.nameEn || dept.nameAr}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </FormField>
-              )}
-            />
-
-            {}
+            {/* Active Status Toggle (Edit Mode Only) */}
             {isEditMode && (
               <Controller
                 name="isActive"

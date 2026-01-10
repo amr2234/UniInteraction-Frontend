@@ -181,6 +181,22 @@ export const useRequestDetailsLogic = () => {
     }
   }, [request?.universityLeadershipId, state.selectedLeadershipId]);
 
+  // Sync visitDateTime with request.visitDate for staff when viewing visit details
+  useEffect(() => {
+    if (
+      request?.visitDate &&
+      request?.requestTypeId === RequestType.VISIT &&
+      (isAdmin || isSuperAdmin || isEmployee) &&
+      (request.visitStatus === VisitStatus.SCHEDULED || request.visitStatus === VisitStatus.RESCHEDULED)
+    ) {
+      const dateTimeValue = new Date(request.visitDate).toISOString().slice(0, 16);
+      // Only update if different to avoid unnecessary re-renders
+      if (state.visitDateTime !== dateTimeValue) {
+        updateState({ visitDateTime: dateTimeValue });
+      }
+    }
+  }, [request?.visitDate, request?.visitStatus, request?.requestTypeId, isAdmin, isSuperAdmin, isEmployee, state.visitDateTime]);
+
   useEffect(() => {
     if (
       (isAdmin || isSuperAdmin) &&
@@ -349,6 +365,7 @@ export const useRequestDetailsLogic = () => {
       handleReactivateFieldChange: () => {},
       scheduleOrUpdateVisitMutation: { mutate: () => {}, isPending: false } as any,
       requestRescheduleMutation: { mutate: () => {}, isPending: false } as any,
+      acceptVisitMutation: { mutate: () => {}, isPending: false } as any,
       completeVisitMutation: { mutate: () => {}, isPending: false } as any,
       getDepartmentName: () => "",
       getLeadershipName: () => "",

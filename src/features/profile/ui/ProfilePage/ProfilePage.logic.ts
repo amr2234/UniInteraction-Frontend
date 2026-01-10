@@ -311,26 +311,7 @@ export const useProfilePageLogic = () => {
       return;
     }
 
-    uploadPictureMutation.mutate(file, {
-      onSuccess: async (data) => {
-        if (data.profilePictureId) {
-          try {
-            const filePath = await profileApi.getAttachment(
-              data.profilePictureId
-            );
-            if (filePath) {
-              const baseUrl = import.meta.env.VITE_API_BASE_URL;
-              const fullUrl = baseUrl.replace("/api", "") + filePath;
-              setProfilePicture(fullUrl);
-            }
-          } catch (error) {
-            console.error("Failed to fetch uploaded profile picture:", error);
-          }
-        } else if (data.profilePicture) {
-          setProfilePicture(data.profilePicture);
-        }
-      },
-    });
+    uploadPictureMutation.mutate(file);
 
     if (fileInputRef.current) {
       fileInputRef.current.value = "";

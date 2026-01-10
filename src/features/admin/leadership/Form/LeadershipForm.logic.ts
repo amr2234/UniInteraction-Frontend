@@ -4,15 +4,20 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useI18n } from "@/i18n";
 import { createLeadershipFormSchema } from "./LeadershipForm.schema";
-import { LeadershipFormData, UseLeadershipFormReturn } from "./LeadershipForm.types";
+import {
+  LeadershipFormData,
+  UseLeadershipFormReturn,
+} from "./LeadershipForm.types";
 import { toast } from "sonner";
 import {
   useLeadershipById,
   useCreateLeadership,
   useUpdateLeadership,
 } from "@/features/admin/leadership/hooks/useLeadership";
-import { useDepartmentsLookup } from "@/features/lookups/hooks/useLookups";
-import { usersApi, UserManagementDto } from "@/features/admin/users/api/users.api";
+import {
+  usersApi,
+  UserManagementDto,
+} from "@/features/admin/users/api/users.api";
 import { UserRole } from "@/core/constants/roles";
 import type {
   CreateLeadershipPayload,
@@ -26,20 +31,21 @@ export const useLeadershipForm = (): UseLeadershipFormReturn => {
   const { t } = useI18n();
 
   const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false);
-  const [currentFormData, setCurrentFormData] = useState<LeadershipFormData | null>(null);
+  const [currentFormData, setCurrentFormData] =
+    useState<LeadershipFormData | null>(null);
   const [users, setUsers] = useState<UserManagementDto[]>([]);
   const [isLoadingUsers, setIsLoadingUsers] = useState(false);
   const [userSearchTerm, setUserSearchTerm] = useState("");
 
-  // API hooks
-  const { data: leadershipData, isLoading: isFetchingLeadership } = useLeadershipById(
-    parseInt(id || "0")
-  );
+  const { data: leadershipData, isLoading: isFetchingLeadership } =
+    useLeadershipById(parseInt(id || "0"));
   const createLeadershipMutation = useCreateLeadership();
   const updateLeadershipMutation = useUpdateLeadership();
-  const { data: departments = [] } = useDepartmentsLookup();
 
-  const isLoading = isFetchingLeadership || createLeadershipMutation.isPending || updateLeadershipMutation.isPending;
+  const isLoading =
+    isFetchingLeadership ||
+    createLeadershipMutation.isPending ||
+    updateLeadershipMutation.isPending;
 
   const validationSchema = useMemo(() => createLeadershipFormSchema(t), [t]);
 
@@ -58,7 +64,6 @@ export const useLeadershipForm = (): UseLeadershipFormReturn => {
       nameEn: "",
       positionTitleAr: "",
       positionTitleEn: "",
-      departmentId: undefined,
       userId: undefined,
       isActive: true,
     },
@@ -66,30 +71,21 @@ export const useLeadershipForm = (): UseLeadershipFormReturn => {
 
   const { isDirty } = formState;
 
-  // Fetch users for dropdown
   useEffect(() => {
     const fetchUsers = async () => {
       setIsLoadingUsers(true);
       try {
-        const response = await usersApi.getUsers({ 
+        const response = await usersApi.getUsers({
           searchTerm: userSearchTerm,
-          pageSize: 50,
-          isActive: true 
+          isActive: true,
+          enablePagination: false, // Get all users, not paginated
         });
-        // Filter users: 
-        // 1. Exclude visitors (roleId === 4 or UserRole.USER)
-        // 2. Show only those without leadership assignment or with current leadership
-        const availableUsers = (response.items || []).filter(
-          (user: any) => {
-            // Exclude visitors
-            const isNotVisitor = user.roleId !== UserRole.USER;
-            // Check leadership assignment
-            const hasNoLeadership = !user.leadershipId;
-            const hasCurrentLeadership = isEditMode && user.leadershipId === parseInt(id || "0");
-            
-            return isNotVisitor && (hasNoLeadership || hasCurrentLeadership);
-          }
-        );
+
+        const availableUsers = (response.items || []).filter((user: any) => {
+          return (
+            user.roleId === UserRole.ADMIN || user.roleId === UserRole.EMPLOYEE
+          );
+        });
         setUsers(availableUsers);
       } catch (error) {
         setUsers([]);
@@ -108,7 +104,6 @@ export const useLeadershipForm = (): UseLeadershipFormReturn => {
         nameEn: leadershipData.nameEn || "",
         positionTitleAr: leadershipData.positionTitleAr,
         positionTitleEn: leadershipData.positionTitleEn || "",
-        departmentId: leadershipData.departmentId,
         userId: leadershipData.userId,
         isActive: leadershipData.isActive,
       });
@@ -132,11 +127,13 @@ export const useLeadershipForm = (): UseLeadershipFormReturn => {
           nameEn: currentFormData.nameEn || undefined,
           positionTitleAr: currentFormData.positionTitleAr,
           positionTitleEn: currentFormData.positionTitleEn || undefined,
-          departmentId: currentFormData.departmentId,
-          userId: currentFormData.userId,
+          userId: currentFormData.userId || undefined,
           isActive: currentFormData.isActive,
         };
-        await updateLeadershipMutation.mutateAsync({ id: parseInt(id!), payload });
+        await updateLeadershipMutation.mutateAsync({
+          id: parseInt(id!),
+          payload,
+        });
         toast.success(t("leadership.updateSuccess"));
       } else {
         const payload: CreateLeadershipPayload = {
@@ -144,8 +141,7 @@ export const useLeadershipForm = (): UseLeadershipFormReturn => {
           nameEn: currentFormData.nameEn || undefined,
           positionTitleAr: currentFormData.positionTitleAr,
           positionTitleEn: currentFormData.positionTitleEn || undefined,
-          departmentId: currentFormData.departmentId,
-          userId: currentFormData.userId,
+          userId: currentFormData.userId || undefined,
         };
         await createLeadershipMutation.mutateAsync(payload);
         toast.success(t("leadership.createSuccess"));
@@ -153,11 +149,24 @@ export const useLeadershipForm = (): UseLeadershipFormReturn => {
 
       navigate("/admin/leadership");
     } catch (error: any) {
-      const backendMessage = error?.response?.data?.message || error?.message || "";
-      const errorMessage = backendMessage || (isEditMode ? t("leadership.updateError") : t("leadership.createError"));
+      const backendMessage =
+        error?.response?.data?.message || error?.message || "";
+      const errorMessage =
+        backendMessage ||
+        (isEditMode
+          ? t("leadership.updateError")
+          : t("leadership.createError"));
       toast.error(errorMessage);
     }
-  }, [currentFormData, isEditMode, id, createLeadershipMutation, updateLeadershipMutation, navigate, t]);
+  }, [
+    currentFormData,
+    isEditMode,
+    id,
+    createLeadershipMutation,
+    updateLeadershipMutation,
+    navigate,
+    t,
+  ]);
 
   const handleCancel = useCallback(() => {
     navigate("/admin/leadership");
@@ -183,10 +192,6 @@ export const useLeadershipForm = (): UseLeadershipFormReturn => {
 
     currentFormData,
 
-    // Departments for dropdown
-    departments,
-
-    // Users for dropdown
     users,
     isLoadingUsers,
     userSearchTerm,

@@ -43,15 +43,12 @@ export function LeadershipManagement() {
     isLoading,
     searchTerm,
     statusFilter,
-    departmentFilter,
-    departments,
     isDeleteDialogOpen,
     selectedLeader,
     isDeleting,
     isToggling,
     handleSearchChange,
     handleStatusFilterChange,
-    handleDepartmentFilterChange,
     handlePageChange,
     handleAddLeader,
     handleEditLeader,
@@ -60,7 +57,6 @@ export function LeadershipManagement() {
     handleDeleteConfirm,
     handleDeleteCancel,
     formatDate,
-    getDepartmentName,
   } = useLeadershipManagement();
 
   if (isLoading) {
@@ -101,7 +97,7 @@ export function LeadershipManagement() {
 
         {/* Filters */}
         <Card className="p-6 mb-6 rounded-xl border-0 shadow-soft bg-white">
-          <div className="grid md:grid-cols-3 gap-4">
+          <div className="grid md:grid-cols-2 gap-4">
             {/* Search */}
             <div className="relative">
               <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-[#6F6F6F] w-5 h-5" />
@@ -124,21 +120,6 @@ export function LeadershipManagement() {
                 <SelectItem value="inactive">{t("leadership.inactive")}</SelectItem>
               </SelectContent>
             </Select>
-
-            {/* Department Filter */}
-            <Select value={departmentFilter} onValueChange={handleDepartmentFilterChange}>
-              <SelectTrigger className="rounded-xl">
-                <SelectValue placeholder={t("form.department")} />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">{t("leadership.allDepartments")}</SelectItem>
-                {departments.map((dept) => (
-                  <SelectItem key={dept.id} value={dept.id.toString()}>
-                    {dept.nameAr}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
           </div>
         </Card>
 
@@ -154,9 +135,6 @@ export function LeadershipManagement() {
                   </TableHead>
                   <TableHead className="text-center font-semibold text-gray-700 w-[200px]">
                     {t("leadership.leaderPosition")}
-                  </TableHead>
-                  <TableHead className="text-center font-semibold text-gray-700 w-[150px]">
-                    {t("form.department")}
                   </TableHead>
                   <TableHead className="text-center font-semibold text-gray-700 w-[180px]">
                     {t("leadership.assignedUser")}
@@ -211,17 +189,14 @@ export function LeadershipManagement() {
                         </div>
                       </TableCell>
                       <TableCell className="text-center overflow-hidden">
-                        <p style={{ wordBreak: 'break-all', maxWidth: '12.5rem', marginLeft: 'auto', marginRight: 'auto' }}>{getDepartmentName(leader.departmentId)}</p>
-                      </TableCell>
-                      <TableCell className="text-center overflow-hidden">
                         {leader.userId ? (
-                          <div style={{ wordBreak: 'break-all', maxWidth: '11.25rem', marginLeft: 'auto', marginRight: 'auto' }}>
-                            <p className="font-medium text-[#2B2B2B]">
-                              {leader.userNameAr || leader.userNameEn || `User #${leader.userId}`}
-                            </p>
-                          </div>
+                          <Badge className="bg-green-100 text-green-800 hover:bg-green-200">
+                            {t("leadership.assigned")}
+                          </Badge>
                         ) : (
-                          <p className="text-xs text-gray-400">{t("leadership.noUserAssigned")}</p>
+                          <Badge variant="secondary" className="bg-gray-100 text-gray-600">
+                            {t("leadership.notAssigned")}
+                          </Badge>
                         )}
                       </TableCell>
                       <TableCell className="text-center">

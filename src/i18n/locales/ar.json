@@ -1366,6 +1366,8 @@
     "selectUser": "اختر مستخدم",
     "noUserFound": "لم يتم العثور على مستخدم",
     "userAssigned": "المستخدم المعين",
+    "assigned": "معين",
+    "notAssigned": "غير معين",
     "noUserAssigned": "غير معين"
   },
   "categories": {

@@ -1344,6 +1344,8 @@
     "selectUser": "Select User",
     "noUserFound": "No user found",
     "userAssigned": "Assigned User",
+    "assigned": "Assigned",
+    "notAssigned": "Not Assigned",
     "noUserAssigned": "Not Assigned"
   },
   "categories": {

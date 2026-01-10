@@ -1,12 +1,11 @@
 import { UseFormReturn } from "react-hook-form";
-import { UserDto } from "@/core/types/api";
+import { UserManagementDto } from "@/features/admin/users/api/users.api";
 
 export interface LeadershipFormData {
   nameAr: string;
   nameEn?: string;
   positionTitleAr: string;
   positionTitleEn?: string;
-  departmentId?: number;
   userId?: number;
   isActive?: boolean;
 }
@@ -36,11 +35,8 @@ export interface UseLeadershipFormReturn {
   // Current form data for confirmation
   currentFormData: LeadershipFormData | null;
 
-  // Departments for dropdown
-  departments: { id: number; nameAr: string; nameEn?: string }[];
-
   // Users for dropdown
-  users: UserDto[];
+  users: UserManagementDto[];
   isLoadingUsers: boolean;
   userSearchTerm: string;
   setUserSearchTerm: (term: string) => void;
