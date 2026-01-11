@@ -21,8 +21,22 @@ const useLocalStorageSubscription = () => {
         window.removeEventListener('localStorageUpdate', callback);
       };
     },
-    () => localStorage.getItem('userInfo'),
-    () => localStorage.getItem('userInfo')
+    () => {
+      try {
+        return localStorage.getItem('userInfo');
+      } catch (error) {
+        console.warn('Failed to get userInfo from localStorage', error);
+        return null;
+      }
+    },
+    () => {
+      try {
+        return localStorage.getItem('userInfo');
+      } catch (error) {
+        console.warn('Failed to get userInfo from localStorage (SSR)', error);
+        return null;
+      }
+    }
   );
 };
 
@@ -97,7 +111,10 @@ export const useHasRoleId = (roleId: number): boolean => {
 
 
 export const useUserRoleIds = (): number[] => {
+  // Subscribe to localStorage changes
+  const userInfo = useLocalStorageSubscription();
+  
   return useMemo(() => {
     return getUserRoleIds();
-  }, []);
+  }, [userInfo]);
 };

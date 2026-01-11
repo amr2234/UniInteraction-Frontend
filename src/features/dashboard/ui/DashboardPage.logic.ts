@@ -46,14 +46,16 @@ export const useDashboardPage = () => {
 
   // Fetch only recent requests for employee dashboard (limit to 2) - more efficient than fetching all
   // For non-employees, don't fetch at all since they don't need recent requests section
+  // IMPORTANT: Only fetch when we're actually on the dashboard page to avoid duplicate API calls
   const { data: allRequests = [] } = useUserRequests(
     isEmployee
       ? {
           pageNumber: 1,
           pageSize: 2,
+          enablePagination: true, // Always use pagination
         }
       : undefined,
-    isEmployee // Only enable pagination for employees
+    isEmployee // Only enable query for employees
   );
 
   // Ensure allRequests is always an array

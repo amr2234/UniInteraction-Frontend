@@ -79,9 +79,8 @@ export const useProfilePageLogic = () => {
         nationalId: profileData.nationalId || "",
       });
 
-      // Use profilePictureUrl directly from backend (stored in localStorage)
       if (profileData.profilePictureUrl) {
-        const staticBaseUrl = import.meta.env.VITE_STATIC_BASE_URL || 'http://localhost:5193';
+        const staticBaseUrl = import.meta.env.VITE_STATIC_BASE_URL;
         const fullUrl = `${staticBaseUrl}${profileData.profilePictureUrl}`;
         console.log('Profile Picture URL:', fullUrl);
         setProfilePicture(fullUrl);

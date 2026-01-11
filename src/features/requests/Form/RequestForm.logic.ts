@@ -89,27 +89,30 @@ export const useRequestForm = (
 
   const { errors, isSubmitting, isDirty } = formState;
 
-  // Watch hasRelatedComplaint to conditionally fetch requests (AFTER useForm)
+  
   const hasRelatedComplaint = watch("hasRelatedComplaint");
 
-  // Fetch user's previous complaint/inquiry requests (for linking visits)
-  // Only fetch when user clicks "Yes" (hasRelatedComplaint === true)
+  
+  
   const isVisitForm = requestTypeId === REQUEST_TYPES.VISIT;
   
   const { data: userRequestsResponse, isLoading: isLoadingUserRequests, error: userRequestsError } = useUserRequests(
     isVisitForm && userProfile?.id && hasRelatedComplaint === true
       ? {
           userId: userProfile.id,
-          requestTypeId: REQUEST_TYPES.COMPLAINT, // Type 2 = Complaint/Inquiry
+          requestTypeId: REQUEST_TYPES.COMPLAINT, 
+          enablePagination: true, 
+          pageNumber: 1,
+          pageSize: 50, 
         }
       : undefined,
-    false // enablePagination=false to get all user's complaints without pagination
+    true 
   );
   
-  // Extract items from paginated response
+  
   const userRequests = useMemo(() => {
     if (!userRequestsResponse) return [];
-    // Backend returns paginated format {items: [], pageNumber, totalCount, ...}
+    
     return (userRequestsResponse as any).items || [];
   }, [userRequestsResponse]);
 
@@ -164,7 +167,7 @@ export const useRequestForm = (
     async (data: RequestFormData) => {
       try {
 
-        // Build base payload
+        
         const payload: CreateRequestPayload = {
           userId: userProfile?.id,
           email: data.email,
@@ -196,7 +199,7 @@ export const useRequestForm = (
           }
         }
 
-        // Remove undefined fields to prevent null values in backend
+        
         const cleanPayload = Object.fromEntries(
           Object.entries(payload).filter(([_, value]) => value !== undefined)
         ) as CreateRequestPayload;

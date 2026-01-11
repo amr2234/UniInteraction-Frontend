@@ -247,6 +247,7 @@
     "availableServices": "الخدمات المتاحة",
     "adminPanel": "لوحة التحكم الإدارية",
     "requestsOverTime": "الطلبات خلال الأشهر الأخيرة",
+    "requestsByType": "الطلبات حسب النوع",
     "requestTypesDistribution": "توزيع أنواع الطلبات",
     "viewAllRequests": "عرض جميع الطلبات ←",
     "viewAll": "عرض الكل",

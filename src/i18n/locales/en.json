@@ -246,6 +246,7 @@
     "availableServices": "Available Services",
     "adminPanel": "Admin Control Panel",
     "requestsOverTime": "Requests Over Time",
+    "requestsByType": "Requests by Type",
     "requestTypesDistribution": "Request Types Distribution",
     "viewAllRequests": "View All Requests →",
     "viewAll": "View All",

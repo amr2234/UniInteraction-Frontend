@@ -40,10 +40,10 @@ export function LoginPage() {
         <div className="absolute bottom-0 right-0 w-96 h-96 bg-white rounded-full blur-3xl"></div>
       </div>
 
-      <Card className="w-full max-w-md p-8 relative z-10 rounded-2xl border-0 shadow-soft-lg">
-        <div className="text-center mb-6 items-center justify-center">
-          <div className="flex items-center justify-center mb-6">
-            <img src={logoImage} alt={t("common.appName")} className="h-16" />
+      <Card className="w-full max-w-2xl p-6 relative z-10 rounded-2xl border-0 shadow-soft-lg">
+        <div className="text-center mb-4 items-center justify-center">
+          <div className="flex items-center justify-center mb-4">
+            <img src={logoImage} alt={t("common.appName")} className="h-12" />
           </div>
           <h2 className="text-[#2B2B2B] mb-2 text-center">{t("auth.login")}</h2>
           <p className="text-[#6F6F6F] text-center">{t("common.appName")}</p>
@@ -51,10 +51,11 @@ export function LoginPage() {
 
         {!showNafathLogin ? (
           <>
-            <div className="mb-6">
+            {/* Nafaz Login Button - Hidden for now */}
+            {/* <div className="mb-4">
               <Button
                 onClick={toggleLoginMethod}
-                className="w-full gradient-primary hover:opacity-90 h-14 gap-3 rounded-xl shadow-soft"
+                className="w-full gradient-primary hover:opacity-90 h-12 gap-3 rounded-xl shadow-soft"
                 size="lg"
                 type="button"
               >
@@ -66,14 +67,14 @@ export function LoginPage() {
               </p>
             </div>
 
-            <div className="relative my-6">
+            <div className="relative my-4">
               <Separator />
               <span className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white px-4 text-sm text-[#6F6F6F]">
                 {t("common.or")}
               </span>
-            </div>
+            </div> */}
 
-            <form onSubmit={handleCredentialsLogin} className="space-y-4">
+            <form onSubmit={handleCredentialsLogin} className="space-y-3">
           <div>
             <Label htmlFor="email" className="text-[#2B2B2B]">
               {t("auth.email")}
@@ -138,8 +139,8 @@ export function LoginPage() {
             {login.isPending ? t("common.loading") : t("auth.login")}
           </Button>
         </form>
-
-        <div className="mt-6 pt-6 border-t text-center">
+        
+        <div className="mt-4 pt-4 border-t text-center">
           <p className="text-sm text-[#6F6F6F]">
             {t("auth.dontHaveAccount")}{" "}
             <Link to="/register" className="text-[#6CAEBD] hover:text-[#875E9E] transition">
@@ -151,7 +152,7 @@ export function LoginPage() {
         ) : (
           <>
             {nafathStep === 'nationalId' ? (
-              <form onSubmit={handleNafathRequestOtp} className="space-y-4">
+              <form onSubmit={handleNafathRequestOtp} className="space-y-3">
                 <div>
                   <Label htmlFor="nationalId" className="text-[#2B2B2B]">
                     {t("form.nationalId")}
@@ -177,7 +178,7 @@ export function LoginPage() {
                   )}
                 </div>
 
-                <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+                <div className="bg-blue-50 border border-blue-200 rounded-xl p-3">
                   <div className="flex gap-3">
                     <Shield className="w-5 h-5 text-[#6CAEBD] mt-0.5 flex-shrink-0" />
                     <div className="text-sm text-[#2B2B2B]">
@@ -212,17 +213,17 @@ export function LoginPage() {
                 </Button>
               </form>
             ) : (
-               <div className="space-y-4">
-                <div className="bg-gradient-to-br from-[#4A9B8E] to-[#3A8A7E] rounded-3xl p-8 text-white shadow-lg">
+               <div className="space-y-3">
+                <div className="bg-gradient-to-br from-[#4A9B8E] to-[#3A8A7E] rounded-3xl p-6 text-white shadow-lg">
                   <div className="text-center">
-                    <div className="flex justify-center mb-6">
-                      <img src={nafathLogo} alt="نفاذ" className="h-16 rounded-2xl" />
+                    <div className="flex justify-center mb-4">
+                      <img src={nafathLogo} alt="نفاذ" className="h-12 rounded-2xl" />
                     </div>
                     
-                    <p className="text-base font-semibold mb-4 text-white">{t("auth.verificationNumber")}</p>
+                    <p className="text-base font-semibold mb-3 text-white">{t("auth.verificationNumber")}</p>
                     
-                    <div className="bg-white rounded-2xl py-8 px-6 mb-4">
-                      <div className="text-8xl font-bold tracking-[0.3em] font-mono text-[#4A9B8E]">
+                    <div className="bg-white rounded-2xl py-6 px-6 mb-3">
+                      <div className="text-7xl font-bold tracking-[0.3em] font-mono text-[#4A9B8E]">
                         {nafathSession?.randomNumber || '00'}
                       </div>
                     </div>
@@ -231,7 +232,7 @@ export function LoginPage() {
                   </div>
                 </div>
 
-                <div className="bg-green-50 border border-green-200 rounded-xl p-4">
+                <div className="bg-green-50 border border-green-200 rounded-xl p-3">
                   <div className="flex items-start gap-3">
                     <div className="w-8 h-8 rounded-full bg-green-500 flex items-center justify-center flex-shrink-0 mt-1">
                       <span className="text-white text-lg">✓</span>
@@ -247,7 +248,7 @@ export function LoginPage() {
                   </div>
                 </div>
 
-                <div className="flex items-center justify-center gap-2 py-4">
+                <div className="flex items-center justify-center gap-2 py-3">
                   <div className="w-2 h-2 bg-[#6CAEBD] rounded-full animate-pulse"></div>
                   <div className="w-2 h-2 bg-[#6CAEBD] rounded-full animate-pulse" style={{ animationDelay: '0.2s' }}></div>
                   <div className="w-2 h-2 bg-[#6CAEBD] rounded-full animate-pulse" style={{ animationDelay: '0.4s' }}></div>
@@ -268,7 +269,7 @@ export function LoginPage() {
           </>
         )}
 
-        <div className="mt-6 text-center">
+        <div className="mt-4 text-center">
           <Link to="/">
             <Button variant="ghost" className="text-[#6F6F6F] hover:text-[#6CAEBD]">
               {t("navigation.backToHome")}

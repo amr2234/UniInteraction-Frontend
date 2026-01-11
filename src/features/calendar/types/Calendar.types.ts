@@ -4,16 +4,7 @@
  */
 
 import { EventInput } from "@fullcalendar/core";
-
-/**
- * Visit status enumeration
- */
-export enum VisitStatus {
-  PENDING = 1,
-  APPROVED = 2,
-  COMPLETED = 3,
-  REJECTED = 4,
-}
+import { VisitStatus } from "@/core/constants/visitStatuses";
 
 /**
  * Calendar view types supported by FullCalendar
@@ -35,7 +26,7 @@ export interface VisitRequest {
   leadershipNameEn: string;
   reason: string;
   location: string;
-  statusId: VisitStatus;
+  statusId: number; // Use number type for VisitStatus from core
   email?: string;
   phone?: string;
   notes?: string;
@@ -54,7 +45,7 @@ export interface CalendarEvent extends EventInput {
   textColor?: string;
   extendedProps?: {
     visitRequest: VisitRequest;
-    statusId: VisitStatus;
+    statusId: number; // Use number type for VisitStatus
   };
 }
 

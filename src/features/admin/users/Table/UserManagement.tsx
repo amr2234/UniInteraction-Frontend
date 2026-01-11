@@ -44,6 +44,7 @@ import {
 import { useI18n } from "@/i18n";
 import { useUserManagement } from "./UserManagement.logic";
 import { UserRole } from "@/core/constants/roles";
+import { UserTableRow, UserTableRowSkeleton, UserTableEmptyRow } from "./UserManagement.components";
 
 export function UserManagement() {
   const { t, language } = useI18n();
@@ -92,7 +93,7 @@ export function UserManagement() {
           {t("navigation.goToDashboard")}
         </Button>
 
-        {}
+        {/* Header */}
         <div className="mb-8 flex items-center justify-between">
           <div>
             <h1 className="text-[#2B2B2B] mb-2">{t("users.manageUsers")}</h1>
@@ -107,7 +108,7 @@ export function UserManagement() {
           </Button>
         </div>
 
-        {}
+        {/* Filters */}
         <Card className="p-6 mb-6 rounded-xl border-0 shadow-soft bg-white">
           <div className="grid md:grid-cols-4 gap-4">
             <div className="relative">
@@ -167,7 +168,7 @@ export function UserManagement() {
           </div>
         </Card>
 
-        {}
+        {/* Users Table */}
         <Card className="rounded-xl border-0 shadow-soft bg-white overflow-hidden">
           <div className="overflow-x-auto">
             <Table className="w-full table-fixed">
@@ -210,151 +211,35 @@ export function UserManagement() {
               </TableHeader>
               <TableBody>
                 {isLoading ? (
-                  <TableRow>
-                    <TableCell
-                      colSpan={11}
-                      className="text-center py-8 text-gray-500"
-                    >
-                      {t("common.loading")}
-                    </TableCell>
-                  </TableRow>
+                  Array.from({ length: 5 }).map((_, i) => (
+                    <UserTableRowSkeleton key={i} />
+                  ))
                 ) : users.length === 0 ? (
-                  <TableRow>
-                    <TableCell
-                      colSpan={11}
-                      className="text-center py-8 text-gray-500"
-                    >
-                      {t("common.noData")}
-                    </TableCell>
-                  </TableRow>
+                  <UserTableEmptyRow t={t} colSpan={11} />
                 ) : (
                   users.map((user) => (
-                    <TableRow key={user.id} className="hover:bg-gray-50">
-                      <TableCell className="text-center overflow-hidden">
-                        <div>
-                          <p className="font-medium text-[#2B2B2B]" style={{ wordBreak: 'break-all', maxWidth: '12.5rem', marginLeft: 'auto', marginRight: 'auto' }}>
-                            {getUserFullName(user)}
-                          </p>
-                          {language === "en" && user.nameAr && user.nameEn && (
-                            <p className="text-xs text-gray-500" style={{ wordBreak: 'break-all', maxWidth: '12.5rem', marginLeft: 'auto', marginRight: 'auto' }}>
-                              {user.nameAr}
-                            </p>
-                          )}
-                          {language === "ar" && user.nameEn && (
-                            <p className="text-xs text-gray-500" dir="ltr" style={{ wordBreak: 'break-all', maxWidth: '12.5rem', marginLeft: 'auto', marginRight: 'auto' }}>
-                              {user.nameEn}
-                            </p>
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-center overflow-hidden">
-                        <Badge
-                          variant="outline"
-                          className={
-                            user.roleId === UserRole.ADMIN
-                              ? "border-red-500 text-red-700 bg-red-50"
-                              : user.roleId === UserRole.EMPLOYEE
-                              ? "border-blue-500 text-blue-700 bg-blue-50"
-                              : "border-purple-500 text-purple-700 bg-purple-50"
-                          }
-                        >
-                          {ROLE_TRANSLATION_KEYS[user.roleId as UserRole]
-                            ? t(ROLE_TRANSLATION_KEYS[user.roleId as UserRole])
-                            : t("users.roles.unknown")}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-center overflow-hidden">
-                        <p style={{ wordBreak: 'break-all', maxWidth: '12.5rem', marginLeft: 'auto', marginRight: 'auto' }}>{user.email}</p>
-                      </TableCell>
-                      <TableCell className="text-center overflow-hidden">
-                        {user.emailConfirmed ? (
-                          <div className="flex items-center justify-center gap-1 text-green-600">
-                            <CheckCircle className="w-4 h-4" />
-                            <span className="text-xs">{t("users.verified")}</span>
-                          </div>
-                        ) : (
-                          <div className="flex items-center justify-center gap-1 text-gray-400">
-                            <XCircle className="w-4 h-4" />
-                            <span className="text-xs">{t("users.notVerified")}</span>
-                          </div>
-                        )}
-                      </TableCell>
-                      <TableCell className="text-center overflow-hidden" dir="ltr">
-                        <p style={{ wordBreak: 'break-all', maxWidth: '8.125rem', marginLeft: 'auto', marginRight: 'auto' }}>{user.mobile || "-"}</p>
-                      </TableCell>
-                      <TableCell className="text-center overflow-hidden" dir="ltr">
-                        <p style={{ wordBreak: 'break-all', maxWidth: '8.125rem', marginLeft: 'auto', marginRight: 'auto' }}>{user.nationalId || "-"}</p>
-                      </TableCell>
-                      <TableCell className="text-center overflow-hidden">
-                        <p style={{ wordBreak: 'break-all', maxWidth: '8.125rem', marginLeft: 'auto', marginRight: 'auto' }}>{user.studentId || "-"}</p>
-                      </TableCell>
-                      <TableCell className="text-center overflow-hidden">
-                        <p style={{ wordBreak: 'break-all', maxWidth: '11.25rem', marginLeft: 'auto', marginRight: 'auto' }}>{getDepartmentName(user.departmentId)}</p>
-                      </TableCell>
-                      <TableCell className="text-center overflow-hidden">
-                        <Badge
-                          variant={user.isActive ? "default" : "secondary"}
-                          className={
-                            user.isActive
-                              ? "bg-green-500 hover:bg-green-600 text-black"
-                              : "bg-gray-400 hover:bg-gray-500 text-black"
-                          }
-                        >
-                          {user.isActive
-                            ? t("users.active")
-                            : t("users.inactive")}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-center overflow-hidden" dir="ltr">
-                        {formatDate(user.createdAt)}
-                      </TableCell>
-                      <TableCell className="text-center">
-                        <div className="flex items-center justify-center gap-2">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleEditUser(user.id)}
-                            className="text-blue-600 hover:text-blue-800 hover:bg-blue-50"
-                          >
-                            <Edit className="w-4 h-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleToggleActive(user)}
-                            disabled={isToggling}
-                            className={
-                              user.isActive
-                                ? "text-green-600 hover:text-green-800 hover:bg-green-50"
-                                : "text-orange-600 hover:text-orange-800 hover:bg-orange-50"
-                            }
-                          >
-                            {user.isActive ? (
-                              <UserCheck className="w-4 h-4" />
-                            ) : (
-                              <UserX className="w-4 h-4" />
-                            )}
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleDeleteClick(user)}
-                            disabled={user.roleId === UserRole.SUPER_ADMIN}
-                            className="text-red-600 hover:text-red-800 hover:bg-red-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                            title={user.roleId === UserRole.SUPER_ADMIN ? t("users.cannotDeleteSuperAdmin") : t("common.delete")}
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
+                    <UserTableRow
+                      key={user.id}
+                      user={user}
+                      language={language}
+                      t={t}
+                      getUserFullName={getUserFullName}
+                      getDepartmentName={getDepartmentName}
+                      formatDate={formatDate}
+                      ROLE_TRANSLATION_KEYS={ROLE_TRANSLATION_KEYS}
+                      handleEditUser={handleEditUser}
+                      handleToggleActive={handleToggleActive}
+                      handleDeleteClick={handleDeleteClick}
+                      isToggling={isToggling}
+                      UserRole={UserRole}
+                    />
                   ))
                 )}
               </TableBody>
             </Table>
           </div>
 
-          {}
+          {/* Pagination */}
           {totalPages > 1 && (
             <div className="flex items-center justify-between px-6 py-4 border-t">
               <div className="text-sm text-gray-600">
@@ -408,7 +293,7 @@ export function UserManagement() {
         </Card>
       </div>
 
-      {}
+      {/* Delete Confirmation Dialog */}
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={handleDeleteCancel}>
         <AlertDialogContent>
           <AlertDialogHeader>

@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { useI18n } from "@/i18n";
 import { authApi } from "@/features/auth/api/auth.api";
 import { useUserRole } from "@/core/hooks";
@@ -27,15 +28,17 @@ export const useLandingPage = () => {
     sortOrder: 'asc',
   });
 
-  // Map FAQs from paginated response
-  const faqs = faqsData?.items
-    ?.map((faq) => ({
-      question: language === "ar" ? faq.questionAr : faq.questionEn || faq.questionAr,
-      answer: language === "ar" ? faq.answerAr : faq.answerEn || faq.answerAr,
-    })) || [];
+  // Map FAQs from paginated response - Memoized
+  const faqs = useMemo(() => {
+    return faqsData?.items
+      ?.map((faq) => ({
+        question: language === "ar" ? faq.questionAr : faq.questionEn || faq.questionAr,
+        answer: language === "ar" ? faq.answerAr : faq.answerEn || faq.answerAr,
+      })) || [];
+  }, [faqsData?.items, language]);
 
-  // Main services configuration
-  const mainServices = [
+  // Main services configuration - Memoized
+  const mainServices = useMemo(() => [
     {
       icon: HelpCircle,
       title: t("landing.services.inquiry"),
@@ -63,10 +66,10 @@ export const useLandingPage = () => {
       color: "text-[#6CAEBD]",
       bgColor: "bg-gradient-to-br from-[#6CAEBD]/10 to-[#875E9E]/10",
     },
-  ];
+  ], [t]);
 
-  // Features configuration
-  const features = [
+  // Features configuration - Memoized
+  const features = useMemo(() => [
     {
       icon: Shield,
       title: t("landing.features.security"),
@@ -88,17 +91,17 @@ export const useLandingPage = () => {
       color: "text-[#6CAEBD]",
       bgColor: "bg-[#6CAEBD]/10",
     },
-  ];
+  ], [t]);
 
-  // Statistics configuration
-  const stats = [
+  // Statistics configuration - Memoized
+  const stats = useMemo(() => [
     { number: "+15,000", label: t("landing.stats.students") },
     { number: "+50,000", label: t("landing.stats.completedRequests") },
     { number: "98%", label: t("landing.stats.satisfaction") },
-  ];
+  ], [t]);
 
-  // User types configuration
-  const userTypes = [
+  // User types configuration - Memoized
+  const userTypes = useMemo(() => [
     {
       icon: GraduationCap,
       title: t("landing.userTypes.students"),
@@ -117,7 +120,7 @@ export const useLandingPage = () => {
       description: t("landing.userTypes.visitorsDesc"),
       color: "text-[#EABB4E]",
     },
-  ];
+  ], [t]);
 
   return {
     t,

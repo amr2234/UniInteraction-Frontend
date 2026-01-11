@@ -44,13 +44,22 @@ export function ProfilePage() {
             <ArrowRight className="w-5 h-5" />
             <span>{t("navigation.profile")}</span>
           </button>
-          <div className="flex items-center gap-4">
-            <div className="w-16 h-16 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-2xl flex items-center justify-center">
-              <User className="w-8 h-8 text-white" />
+          
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="w-16 h-16 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-2xl flex items-center justify-center">
+                <User className="w-8 h-8 text-white" />
+              </div>
+              <div>
+                <h1 className="text-[#115740]">{t("profile.title")}</h1>
+                <p className="text-gray-600">{t("profile.subtitle")}</p>
+              </div>
             </div>
-            <div>
-              <h1 className="text-[#115740]">{t("profile.title")}</h1>
-              <p className="text-gray-600">{t("profile.subtitle")}</p>
+            
+            {/* Email Verified Badge - Small, at top right */}
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-green-50 rounded-lg border border-green-200">
+              <CheckCircle className="w-3.5 h-3.5 text-green-600" />
+              <span className="text-xs font-medium text-green-700">{t("profile.emailVerified")}</span>
             </div>
           </div>
         </div>
@@ -310,26 +319,7 @@ export function ProfilePage() {
               </div>
             </Card>
 
-            {/* Connected Accounts */}
-            <Card className="p-6">
-              <h4 className="text-[#115740] mb-4">{t("profile.connectedAccounts")}</h4>
-              <div className="space-y-3">
-                {/* Email Verified Status */}
-                <div className="flex items-center justify-between p-3 bg-green-50 rounded-xl">
-                  <div className="flex items-center gap-3">
-                    <Mail className="w-5 h-5 text-green-600" />
-                    <div>
-                      <p className="text-sm font-medium text-gray-900">{t("profile.emailVerified")}</p>
-                      <p className="text-xs text-gray-500">{formData.email}</p>
-                    </div>
-                  </div>
-                  <span className="text-xs text-green-600 flex items-center gap-1">
-                    <CheckCircle className="w-3 h-3" />
-                    {t("profile.verified")}
-                  </span>
-                </div>
-              </div>
-            </Card>
+
           </div>
         </div>
       </div>

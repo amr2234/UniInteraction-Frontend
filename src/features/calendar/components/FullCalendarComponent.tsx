@@ -236,6 +236,10 @@ export function FullCalendarComponent() {
               selectMirror={false}
               dayHeaderFormat={{ weekday: "short" }}
               nowIndicator={true}
+              validRange={{
+                start: new Date(new Date().getFullYear() - 1, 0, 1), // Allow viewing past year
+                end: new Date(new Date().getFullYear() + 2, 11, 31), // Allow viewing 2 years ahead
+              }}
             />
           </div>
         )}
@@ -243,31 +247,31 @@ export function FullCalendarComponent() {
         {/* Legend */}
         <div className="mt-6 pt-4 border-t border-gray-200">
           <p className="text-xs text-[#6F6F6F] font-medium mb-3">
-            {isRTL ? "الحالات:" : "Status Legend:"}
+            {isRTL ? "حالات الزيارات:" : "Visit Status Legend:"}
           </p>
           <div className="flex flex-wrap gap-4">
             <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full bg-[#EABB4E]"></div>
-              <span className="text-xs text-[#6F6F6F]">
-                {isRTL ? "قيد الانتظار" : "Pending"}
-              </span>
-            </div>
-            <div className="flex items-center gap-2">
               <div className="w-3 h-3 rounded-full bg-[#6CAEBD]"></div>
               <span className="text-xs text-[#6F6F6F]">
-                {isRTL ? "مؤكد" : "Approved"}
+                {isRTL ? "مجدولة" : "Scheduled"}
               </span>
             </div>
             <div className="flex items-center gap-2">
               <div className="w-3 h-3 rounded-full bg-[#115740]"></div>
               <span className="text-xs text-[#6F6F6F]">
-                {isRTL ? "مكتمل" : "Completed"}
+                {isRTL ? "مقبولة" : "Accepted"}
               </span>
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full bg-[#DC2626]"></div>
+              <div className="w-3 h-3 rounded-full bg-[#EABB4E]"></div>
               <span className="text-xs text-[#6F6F6F]">
-                {isRTL ? "مرفوض" : "Rejected"}
+                {isRTL ? "تحتاج إعادة جدولة" : "Needs Rescheduling"}
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 rounded-full bg-[#875E9E]"></div>
+              <span className="text-xs text-[#6F6F6F]">
+                {isRTL ? "مكتملة" : "Completed"}
               </span>
             </div>
           </div>

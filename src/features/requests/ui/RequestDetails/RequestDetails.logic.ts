@@ -161,7 +161,9 @@ export const useRequestDetailsLogic = () => {
       const response = await requestsApi.getUserRequests({
         userId: request.userId,
         requestTypeId: RequestType.COMPLAINT,
-        enablePagination: false,
+        enablePagination: true, // Use pagination for consistency
+        pageNumber: 1,
+        pageSize: 50, // Get up to 50 complaints for linking
       });
       return Array.isArray(response) ? response : (response as any)?.items || [];
     },

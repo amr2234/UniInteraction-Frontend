@@ -28,7 +28,7 @@ export function RegisterPage() {
         <div className="absolute bottom-0 right-0 w-96 h-96 bg-white rounded-full blur-3xl"></div>
       </div>
 
-      <Card className="w-full max-w-md p-8 relative z-10 rounded-2xl border-0 shadow-soft-lg my-8">
+      <Card className="w-full max-w-3xl p-8 relative z-10 rounded-2xl border-0 shadow-soft-lg my-8">
         <div className="text-center mb-8">
           <div className="flex items-center justify-center mb-6">
             <img src={logoImage} alt={t("common.appName")} className="h-16" />
@@ -38,238 +38,246 @@ export function RegisterPage() {
         </div>
 
         <form onSubmit={handleRegister} className="space-y-4">
-          <div>
-            <Label htmlFor="nameAr" className="text-[#2B2B2B]">
-              {t("form.fullNameAr")} <span className="text-red-500">*</span>
-            </Label>
-            <div className="relative mt-2">
-              <User className="absolute right-3 top-1/2 transform -translate-y-1/2 text-[#6F6F6F] w-5 h-5" />
-              <Input
-                id="nameAr"
-                type="text"
-                placeholder={t("auth.fullNameArPlaceholder")}
-                value={formData.nameAr}
-                onChange={(e) => {
-                  handleInputChange("nameAr", e.target.value);
-                }}
-                className={`pr-10 rounded-xl ${errors.nameAr ? 'border-red-500 focus:ring-red-500' : ''}`}
-                disabled={register.isPending}
-              />
-            </div>
-            {errors.nameAr && (
-              <p className="text-red-500 text-sm mt-1">{errors.nameAr}</p>
-            )}
-          </div>
-
-          <div>
-            <Label htmlFor="nameEn" className="text-[#2B2B2B]">
-              {t("form.fullNameEn")} ({t("form.optional")})
-            </Label>
-            <div className="relative mt-2">
-              <User className="absolute right-3 top-1/2 transform -translate-y-1/2 text-[#6F6F6F] w-5 h-5" />
-              <Input
-                id="nameEn"
-                type="text"
-                placeholder="Enter name in English"
-                value={formData.nameEn}
-                onChange={(e) => handleInputChange("nameEn", e.target.value)}
-                className={`pr-10 rounded-xl ${errors.nameEn ? 'border-red-500 focus:ring-red-500' : ''}`}
-                dir="ltr"
-                disabled={register.isPending}
-              />
-            </div>
-            {errors.nameEn && (
-              <p className="text-red-500 text-sm mt-1">{errors.nameEn}</p>
-            )}
-          </div>
-
-          <div>
-            <Label htmlFor="username" className="text-[#2B2B2B]">
-              {t("form.username")} <span className="text-red-500">*</span>
-            </Label>
-            <div className="relative mt-2">
-              <User className="absolute right-3 top-1/2 transform -translate-y-1/2 text-[#6F6F6F] w-5 h-5" />
-              <Input
-                id="username"
-                type="text"
-                placeholder={t("auth.usernamePlaceholder")}
-                value={formData.username}
-                onChange={(e) => {
-                  handleInputChange("username", e.target.value);
-                }}
-                className={`pr-10 rounded-xl ${errors.username ? 'border-red-500 focus:ring-red-500' : ''}`}
-                disabled={register.isPending}
-              />
-            </div>
-            {errors.username && (
-              <p className="text-red-500 text-sm mt-1">{errors.username}</p>
-            )}
-          </div>
-
-          <div>
-            <Label htmlFor="email" className="text-[#2B2B2B]">
-              {t("auth.email")} <span className="text-red-500">*</span>
-            </Label>
-            <div className="relative mt-2">
-              <Mail className="absolute right-3 top-1/2 transform -translate-y-1/2 text-[#6F6F6F] w-5 h-5" />
-              <Input
-                id="email"
-                type="email"
-                placeholder="example@email.com"
-                value={formData.email}
-                onChange={(e) => {
-                  handleInputChange("email", e.target.value);
-                }}
-                className={`pr-10 rounded-xl ${errors.email ? 'border-red-500 focus:ring-red-500' : ''}`}
-                dir="ltr"
-                disabled={register.isPending}
-              />
-            </div>
-            {errors.email && (
-              <p className="text-red-500 text-sm mt-1">{errors.email}</p>
-            )}
-          </div>
-
-          <div>
-            <Label htmlFor="password" className="text-[#2B2B2B]">
-              {t("auth.password")} <span className="text-red-500">*</span>
-            </Label>
-            <div className="relative mt-2">
-              <Input
-                id="password"
-                type="password"
-                placeholder={t("auth.passwordPlaceholder")}
-                value={formData.password}
-                onChange={(e) => {
-                  handleInputChange("password", e.target.value);
-                }}
-                className={`pr-10 rounded-xl ${errors.password ? 'border-red-500 focus:ring-red-500' : ''}`}
-                disabled={register.isPending}
-              />
-            </div>
-            {errors.password && (
-              <p className="text-red-500 text-sm mt-1">{errors.password}</p>
-            )}
-          </div>
-
-          <div>
-            <Label htmlFor="confirmPassword" className="text-[#2B2B2B]">
-              {t("auth.confirmPassword")} <span className="text-red-500">*</span>
-            </Label>
-            <div className="relative mt-2">
-              <Input
-                id="confirmPassword"
-                type="password"
-                placeholder={t("auth.confirmPasswordPlaceholder")}
-                value={formData.confirmPassword}
-                onChange={(e) => {
-                  handleInputChange("confirmPassword", e.target.value);
-                }}
-                className={`pr-10 rounded-xl ${errors.confirmPassword ? 'border-red-500 focus:ring-red-500' : ''}`}
-                disabled={register.isPending}
-              />
-            </div>
-            {errors.confirmPassword && (
-              <p className="text-red-500 text-sm mt-1">{errors.confirmPassword}</p>
-            )}
-          </div>
-
-          <div>
-            <Label htmlFor="mobile" className="text-[#2B2B2B]">
-              {t("form.mobile")} <span className="text-red-500">*</span>
-            </Label>
-            <div className="relative mt-2">
-              <Phone className="absolute right-3 top-1/2 transform -translate-y-1/2 text-[#6F6F6F] w-5 h-5" />
-              <Input
-                id="mobile"
-                type="tel"
-                placeholder="05xxxxxxxx"
-                value={formData.mobile}
-                onChange={(e) => {
-                  handleInputChange("mobile", e.target.value);
-                }}
-                className={`pr-10 rounded-xl ${errors.mobile ? 'border-red-500 focus:ring-red-500' : ''}`}
-                dir="ltr"
-                disabled={register.isPending}
-              />
-            </div>
-            {errors.mobile && (
-              <p className="text-red-500 text-sm mt-1">{errors.mobile}</p>
-            )}
-          </div>
-
-          <div>
-            <Label htmlFor="isStudent" className="text-[#2B2B2B] mb-3 block">
-              {t("auth.isStudent")} <span className="text-red-500">*</span>
-            </Label>
-            <RadioGroup
-              value={formData.isStudent ? "true" : "false"}
-              onValueChange={(value: string) => handleInputChange("isStudent", value === "true")}
-              className="flex gap-6"
-            >
-              <div className="flex items-center space-x-2 space-x-reverse">
-                <RadioGroupItem value="false" id="not-student" />
-                <Label htmlFor="not-student" className="pl-2 cursor-pointer text-[#2B2B2B]">
-                  {t("requests.no")}
+          <div className="grid md:grid-cols-2 gap-4">
+            {/* Left Column */}
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="nameAr" className="text-[#2B2B2B]">
+                  {t("form.fullNameAr")} <span className="text-red-500">*</span>
                 </Label>
+                <div className="relative mt-2">
+                  <User className="absolute right-3 top-1/2 transform -translate-y-1/2 text-[#6F6F6F] w-5 h-5" />
+                  <Input
+                    id="nameAr"
+                    type="text"
+                    placeholder={t("auth.fullNameArPlaceholder")}
+                    value={formData.nameAr}
+                    onChange={(e) => {
+                      handleInputChange("nameAr", e.target.value);
+                    }}
+                    className={`pr-10 rounded-xl ${errors.nameAr ? 'border-red-500 focus:ring-red-500' : ''}`}
+                    disabled={register.isPending}
+                  />
+                </div>
+                {errors.nameAr && (
+                  <p className="text-red-500 text-sm mt-1">{errors.nameAr}</p>
+                )}
               </div>
-              <div className="flex items-center space-x-2 space-x-reverse">
-                <RadioGroupItem value="true" id="is-student" />
-                <Label htmlFor="is-student" className="pl-2 cursor-pointer text-[#2B2B2B]">
-                  {t("requests.yes")}
-                </Label>
-              </div>
-            </RadioGroup>
-          </div>
 
-          {formData.isStudent && (
-            <div>
-              <Label htmlFor="studentId" className="text-[#2B2B2B]">
-                {t("auth.studentId")} <span className="text-red-500">*</span>
-              </Label>
-              <div className="relative mt-2">
-                <IdCard className="absolute right-3 top-1/2 transform -translate-y-1/2 text-[#6F6F6F] w-5 h-5" />
-                <Input
-                  id="studentId"
-                  type="text"
-                  placeholder={t("auth.studentIdPlaceholder")}
-                  value={formData.studentId || ""}
-                  onChange={(e) => {
-                    handleInputChange("studentId", e.target.value);
-                  }}
-                  className={`pr-10 rounded-xl ${errors.studentId ? 'border-red-500 focus:ring-red-500' : ''}`}
-                  dir="ltr"
-                  disabled={register.isPending}
-                />
+              <div>
+                <Label htmlFor="nameEn" className="text-[#2B2B2B]">
+                  {t("form.fullNameEn")} ({t("form.optional")})
+                </Label>
+                <div className="relative mt-2">
+                  <User className="absolute right-3 top-1/2 transform -translate-y-1/2 text-[#6F6F6F] w-5 h-5" />
+                  <Input
+                    id="nameEn"
+                    type="text"
+                    placeholder="Enter name in English"
+                    value={formData.nameEn}
+                    onChange={(e) => handleInputChange("nameEn", e.target.value)}
+                    className={`pr-10 rounded-xl ${errors.nameEn ? 'border-red-500 focus:ring-red-500' : ''}`}
+                    dir="ltr"
+                    disabled={register.isPending}
+                  />
+                </div>
+                {errors.nameEn && (
+                  <p className="text-red-500 text-sm mt-1">{errors.nameEn}</p>
+                )}
               </div>
-              {errors.studentId && (
-                <p className="text-red-500 text-sm mt-1">{errors.studentId}</p>
+
+              <div>
+                <Label htmlFor="username" className="text-[#2B2B2B]">
+                  {t("form.username")} <span className="text-red-500">*</span>
+                </Label>
+                <div className="relative mt-2">
+                  <User className="absolute right-3 top-1/2 transform -translate-y-1/2 text-[#6F6F6F] w-5 h-5" />
+                  <Input
+                    id="username"
+                    type="text"
+                    placeholder={t("auth.usernamePlaceholder")}
+                    value={formData.username}
+                    onChange={(e) => {
+                      handleInputChange("username", e.target.value);
+                    }}
+                    className={`pr-10 rounded-xl ${errors.username ? 'border-red-500 focus:ring-red-500' : ''}`}
+                    disabled={register.isPending}
+                  />
+                </div>
+                {errors.username && (
+                  <p className="text-red-500 text-sm mt-1">{errors.username}</p>
+                )}
+              </div>
+
+              <div>
+                <Label htmlFor="email" className="text-[#2B2B2B]">
+                  {t("auth.email")} <span className="text-red-500">*</span>
+                </Label>
+                <div className="relative mt-2">
+                  <Mail className="absolute right-3 top-1/2 transform -translate-y-1/2 text-[#6F6F6F] w-5 h-5" />
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="example@email.com"
+                    value={formData.email}
+                    onChange={(e) => {
+                      handleInputChange("email", e.target.value);
+                    }}
+                    className={`pr-10 rounded-xl ${errors.email ? 'border-red-500 focus:ring-red-500' : ''}`}
+                    dir="ltr"
+                    disabled={register.isPending}
+                  />
+                </div>
+                {errors.email && (
+                  <p className="text-red-500 text-sm mt-1">{errors.email}</p>
+                )}
+              </div>
+
+              <div>
+                <Label htmlFor="mobile" className="text-[#2B2B2B]">
+                  {t("form.mobile")} <span className="text-red-500">*</span>
+                </Label>
+                <div className="relative mt-2">
+                  <Phone className="absolute right-3 top-1/2 transform -translate-y-1/2 text-[#6F6F6F] w-5 h-5" />
+                  <Input
+                    id="mobile"
+                    type="tel"
+                    placeholder="05xxxxxxxx"
+                    value={formData.mobile}
+                    onChange={(e) => {
+                      handleInputChange("mobile", e.target.value);
+                    }}
+                    className={`pr-10 rounded-xl ${errors.mobile ? 'border-red-500 focus:ring-red-500' : ''}`}
+                    dir="ltr"
+                    disabled={register.isPending}
+                  />
+                </div>
+                {errors.mobile && (
+                  <p className="text-red-500 text-sm mt-1">{errors.mobile}</p>
+                )}
+              </div>
+            </div>
+
+            {/* Right Column */}
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="password" className="text-[#2B2B2B]">
+                  {t("auth.password")} <span className="text-red-500">*</span>
+                </Label>
+                <div className="relative mt-2">
+                  <Input
+                    id="password"
+                    type="password"
+                    placeholder={t("auth.passwordPlaceholder")}
+                    value={formData.password}
+                    onChange={(e) => {
+                      handleInputChange("password", e.target.value);
+                    }}
+                    className={`pr-10 rounded-xl ${errors.password ? 'border-red-500 focus:ring-red-500' : ''}`}
+                    disabled={register.isPending}
+                  />
+                </div>
+                {errors.password && (
+                  <p className="text-red-500 text-sm mt-1">{errors.password}</p>
+                )}
+              </div>
+
+              <div>
+                <Label htmlFor="confirmPassword" className="text-[#2B2B2B]">
+                  {t("auth.confirmPassword")} <span className="text-red-500">*</span>
+                </Label>
+                <div className="relative mt-2">
+                  <Input
+                    id="confirmPassword"
+                    type="password"
+                    placeholder={t("auth.confirmPasswordPlaceholder")}
+                    value={formData.confirmPassword}
+                    onChange={(e) => {
+                      handleInputChange("confirmPassword", e.target.value);
+                    }}
+                    className={`pr-10 rounded-xl ${errors.confirmPassword ? 'border-red-500 focus:ring-red-500' : ''}`}
+                    disabled={register.isPending}
+                  />
+                </div>
+                {errors.confirmPassword && (
+                  <p className="text-red-500 text-sm mt-1">{errors.confirmPassword}</p>
+                )}
+              </div>
+
+              <div>
+                <Label htmlFor="isStudent" className="text-[#2B2B2B] mb-3 block">
+                  {t("auth.isStudent")} <span className="text-red-500">*</span>
+                </Label>
+                <RadioGroup
+                  value={formData.isStudent ? "true" : "false"}
+                  onValueChange={(value: string) => handleInputChange("isStudent", value === "true")}
+                  className="flex gap-6"
+                >
+                  <div className="flex items-center space-x-2 space-x-reverse">
+                    <RadioGroupItem value="false" id="not-student" />
+                    <Label htmlFor="not-student" className="pl-2 cursor-pointer text-[#2B2B2B]">
+                      {t("requests.no")}
+                    </Label>
+                  </div>
+                  <div className="flex items-center space-x-2 space-x-reverse">
+                    <RadioGroupItem value="true" id="is-student" />
+                    <Label htmlFor="is-student" className="pl-2 cursor-pointer text-[#2B2B2B]">
+                      {t("requests.yes")}
+                    </Label>
+                  </div>
+                </RadioGroup>
+              </div>
+
+              {formData.isStudent && (
+                <div>
+                  <Label htmlFor="studentId" className="text-[#2B2B2B]">
+                    {t("auth.studentId")} <span className="text-red-500">*</span>
+                  </Label>
+                  <div className="relative mt-2">
+                    <IdCard className="absolute right-3 top-1/2 transform -translate-y-1/2 text-[#6F6F6F] w-5 h-5" />
+                    <Input
+                      id="studentId"
+                      type="text"
+                      placeholder={t("auth.studentIdPlaceholder")}
+                      value={formData.studentId || ""}
+                      onChange={(e) => {
+                        handleInputChange("studentId", e.target.value);
+                      }}
+                      className={`pr-10 rounded-xl ${errors.studentId ? 'border-red-500 focus:ring-red-500' : ''}`}
+                      dir="ltr"
+                      disabled={register.isPending}
+                    />
+                  </div>
+                  {errors.studentId && (
+                    <p className="text-red-500 text-sm mt-1">{errors.studentId}</p>
+                  )}
+                </div>
               )}
-            </div>
-          )}
 
-          <div>
-            <Label htmlFor="nationalId" className="text-[#2B2B2B]">
-              {t("form.nationalId")} <span className="text-red-500">*</span>
-            </Label>
-            <div className="relative mt-2">
-              <IdCard className="absolute right-3 top-1/2 transform -translate-y-1/2 text-[#6F6F6F] w-5 h-5" />
-              <Input
-                id="nationalId"
-                type="text"
-                placeholder="1234567890"
-                value={formData.nationalId}
-                onChange={(e) => {
-                  handleInputChange("nationalId", e.target.value);
-                }}
-                className={`pr-10 rounded-xl ${errors.nationalId ? 'border-red-500 focus:ring-red-500' : ''}`}
-                dir="ltr"
-                disabled={register.isPending}
-              />
+              <div>
+                <Label htmlFor="nationalId" className="text-[#2B2B2B]">
+                  {t("form.nationalId")} <span className="text-red-500">*</span>
+                </Label>
+                <div className="relative mt-2">
+                  <IdCard className="absolute right-3 top-1/2 transform -translate-y-1/2 text-[#6F6F6F] w-5 h-5" />
+                  <Input
+                    id="nationalId"
+                    type="text"
+                    placeholder="1234567890"
+                    value={formData.nationalId}
+                    onChange={(e) => {
+                      handleInputChange("nationalId", e.target.value);
+                    }}
+                    className={`pr-10 rounded-xl ${errors.nationalId ? 'border-red-500 focus:ring-red-500' : ''}`}
+                    dir="ltr"
+                    disabled={register.isPending}
+                  />
+                </div>
+                {errors.nationalId && (
+                  <p className="text-red-500 text-sm mt-1">{errors.nationalId}</p>
+                )}
+              </div>
             </div>
-            {errors.nationalId && (
-              <p className="text-red-500 text-sm mt-1">{errors.nationalId}</p>
-            )}
           </div>
 
           <Button

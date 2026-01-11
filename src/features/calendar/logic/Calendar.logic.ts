@@ -10,41 +10,42 @@ import { useI18n } from "@/i18n";
 import { toast } from "sonner";
 import { visitsApi } from "@/features/visits/api/visits.api";
 import { VisitDto } from "@/core/types/api";
+import { VisitStatus, getVisitStatusName } from "@/core/constants/visitStatuses";
 import {
   CalendarEvent,
   CalendarView,
   VisitRequest,
-  VisitStatus,
   VisitsApiResponse,
 } from "../types/Calendar.types";
 
 /**
  * Get color based on visit status
+ * Uses the actual VisitStatus constants from core
  */
-export const getStatusColor = (statusId: VisitStatus) => {
+export const getStatusColor = (statusId: number) => {
   switch (statusId) {
-    case VisitStatus.PENDING:
+    case VisitStatus.SCHEDULED: // 1
       return {
-        backgroundColor: "#EABB4E",
-        borderColor: "#D4A944",
-        textColor: "#FFFFFF",
-      };
-    case VisitStatus.APPROVED:
-      return {
-        backgroundColor: "#6CAEBD",
+        backgroundColor: "#6CAEBD", // Blue for scheduled
         borderColor: "#5E9CAA",
         textColor: "#FFFFFF",
       };
-    case VisitStatus.COMPLETED:
+    case VisitStatus.ACCEPTED: // 2
       return {
-        backgroundColor: "#115740",
+        backgroundColor: "#115740", // Green for accepted
         borderColor: "#0D4533",
         textColor: "#FFFFFF",
       };
-    case VisitStatus.REJECTED:
+    case VisitStatus.RESCHEDULED: // 3
       return {
-        backgroundColor: "#DC2626",
-        borderColor: "#B91C1C",
+        backgroundColor: "#EABB4E", // Yellow/Orange for needs rescheduling
+        borderColor: "#D4A944",
+        textColor: "#FFFFFF",
+      };
+    case VisitStatus.COMPLETED: // 4
+      return {
+        backgroundColor: "#875E9E", // Purple for completed
+        borderColor: "#6D4B7F",
         textColor: "#FFFFFF",
       };
     default:
@@ -66,10 +67,11 @@ export const transformVisitToEvent = (
   const colors = getStatusColor(visit.statusId);
   const name = language === "ar" ? visit.nameAr : visit.nameEn;
   const leadership = language === "ar" ? visit.leadershipNameAr : visit.leadershipNameEn;
+  const statusText = getVisitStatusName(visit.statusId, language);
   
   return {
     id: String(visit.id),
-    title: `${name} - ${leadership}`,
+    title: `${name} - ${leadership} (${statusText})`,
     start: new Date(visit.visitDateTime),
     end: new Date(visit.visitEndDateTime),
     ...colors,
@@ -115,19 +117,24 @@ export const useCalendarLogic = () => {
       const visitsData = await visitsApi.getAllVisits(leadershipId);
       
       // Transform VisitDto to calendar events
-      const calendarEvents = visitsData.map((visit: VisitDto) => ({
-        id: String(visit.id),
-        title: `${visit.requestNumber || `Visit ${visit.id}`} - ${visit.leadershipNameAr || visit.leadershipName || ''}`,
-        start: new Date(visit.visitDate),
-        end: new Date(visit.visitDate), // Single date visit
-        backgroundColor: getStatusColor(visit.status).backgroundColor,
-        borderColor: getStatusColor(visit.status).borderColor,
-        textColor: getStatusColor(visit.status).textColor,
-        extendedProps: {
-          visitRequest: visit as any, // Cast for compatibility
-          statusId: visit.status,
-        },
-      }));
+      const calendarEvents = visitsData.map((visit: VisitDto) => {
+        const colors = getStatusColor(visit.status);
+        const statusText = getVisitStatusName(visit.status, language as "ar" | "en");
+        
+        return {
+          id: String(visit.id),
+          title: `${visit.requestNumber || `Visit ${visit.id}`} - ${visit.leadershipNameAr || visit.leadershipName || ''} (${statusText})`,
+          start: new Date(visit.visitDate),
+          end: new Date(visit.visitDate), // Single date visit
+          backgroundColor: colors.backgroundColor,
+          borderColor: colors.borderColor,
+          textColor: colors.textColor,
+          extendedProps: {
+            visitRequest: visit as any, // Cast for compatibility
+            statusId: visit.status,
+          },
+        };
+      });
       
       setEvents(calendarEvents);
     } catch (error) {
@@ -135,7 +142,7 @@ export const useCalendarLogic = () => {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [language]);
 
   /**
    * Load visits on mount
@@ -175,14 +182,5 @@ export const useCalendarLogic = () => {
 
 /**
  * Get status text based on language
+ * Removed - using getVisitStatusName from core constants instead
  */
-export const getStatusText = (statusId: VisitStatus, language: "ar" | "en"): string => {
-  const statusTexts = {
-    [VisitStatus.PENDING]: { ar: "قيد الانتظار", en: "Pending" },
-    [VisitStatus.APPROVED]: { ar: "مؤكد", en: "Approved" },
-    [VisitStatus.COMPLETED]: { ar: "مكتمل", en: "Completed" },
-    [VisitStatus.REJECTED]: { ar: "مرفوض", en: "Rejected" },
-  };
-
-  return statusTexts[statusId]?.[language] || "Unknown";
-};
